@@ -50,6 +50,7 @@ import androidx.compose.runtime.remember
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.FragmentActivity
 import com.stagirite.ledger.data.LockDelay
+import com.stagirite.ledger.feedback.ReportKind
 import com.stagirite.ledger.reminders.Reminder
 import com.stagirite.ledger.security.AppLock
 import java.time.LocalTime
@@ -158,6 +159,8 @@ fun SettingsScreen(
             }
 
             Section("Your data") { DataSection(store, sync, lock) }
+
+            Section("Help & feedback") { FeedbackSection(lock) }
 
             Section("About") { AboutSection(onShowGuide) }
 
@@ -665,4 +668,25 @@ private fun java.io.InputStream.readNBytesCompat(limit: Int): ByteArray {
         out.write(buffer, 0, n)
     }
     return out.toByteArray()
+}
+
+@Composable
+private fun FeedbackSection(lock: AppLock) {
+    var writing by rememberSaveable { mutableStateOf<ReportKind?>(null) }
+    SettingRow(
+        title = "Report a bug",
+        detail = "Something broken or behaving oddly.",
+        action = "Report",
+        onClick = { writing = ReportKind.Bug },
+    )
+    Spacer(Modifier.height(12.dp))
+    SettingRow(
+        title = "Request a feature",
+        detail = "An idea that would make the ledger better.",
+        action = "Suggest",
+        onClick = { writing = ReportKind.Feature },
+    )
+    Spacer(Modifier.height(8.dp))
+    Note("Sent through GitHub or email, your choice. Reports never include your goals, notes or dates.")
+    writing?.let { FeedbackDialog(it, lock, onDismiss = { writing = null }) }
 }

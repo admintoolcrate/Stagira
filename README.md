@@ -26,6 +26,9 @@ A minimal Android app (**Stagirite** on your home screen) that does one thing: n
 - **Suggestions** when adding a goal (No alcohol, Exercise, Read …) fill in the icon and type.
 - **Personalise** — Aristotle passages, milestone celebrations, vibration, and the home page's
   summary and lower sections can each be turned off (all on by default).
+- **Bug reports and feature requests** — from Settings → Help & feedback, sent through GitHub
+  (pre-filled issue) or email (admin.toolcrate@gmail.com). Optional device details are shown
+  before sending; goal data is never included.
 - **Guide** — a short optional introduction on first launch, and an About page explaining the
   name, in Settings.
 - **Begin again** when you slip: the count restarts, the run is kept, and you get a short passage
