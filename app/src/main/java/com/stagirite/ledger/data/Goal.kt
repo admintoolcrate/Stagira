@@ -99,15 +99,20 @@ fun mergeGoals(a: List<Goal>, b: List<Goal>): List<Goal> =
         .sortedWith(compareBy({ it.createdAt }, { it.id }))
 
 object Milestones {
-    private val fixed = listOf(1L, 3, 7, 14, 21, 30, 60, 90, 180, 270, 365)
+    private val fixed = listOf(1L, 3, 7, 14, 21, 30, 60, 90, 100, 180, 270, 365)
 
-    /** The next milestone strictly greater than [days]; beyond a year, every further year. */
-    fun next(days: Long): Long =
-        fixed.firstOrNull { it > days } ?: ((days / 365) + 1) * 365
+    /** Every milestone up to [limit]: the fixed ladder, then each year, 500 days and every 1,000. */
+    fun upTo(limit: Long): List<Long> {
+        val years = (2..(limit / 365 + 1)).map { it * 365L }
+        val thousands = (1..(limit / 1000 + 1)).map { it * 1000L }
+        return (fixed + years + 500L + thousands).filter { it <= limit }.distinct().sorted()
+    }
+
+    /** The next milestone strictly greater than [days]. */
+    fun next(days: Long): Long = upTo(days + 1000).first { it > days }
 
     /** The most recent milestone reached, or 0 if none yet. */
-    fun previous(days: Long): Long =
-        if (days < 365) fixed.lastOrNull { it <= days } ?: 0 else (days / 365) * 365
+    fun previous(days: Long): Long = upTo(days).lastOrNull { it <= days } ?: 0
 
     fun isMilestone(days: Long): Boolean = days > 0 && previous(days) == days
 
@@ -116,6 +121,14 @@ object Milestones {
         val prev = previous(days)
         val next = next(days)
         return ((days - prev).toFloat() / (next - prev).toFloat()).coerceIn(0f, 1f)
+    }
+
+    /** A friendlier name where there is one: "1 week", "2 years". */
+    fun name(days: Long): String? = when {
+        days == 7L -> "1 week"
+        days == 14L || days == 21L -> "${days / 7} weeks"
+        days % 365 == 0L -> plural(days / 365, "year")
+        else -> null
     }
 }
 

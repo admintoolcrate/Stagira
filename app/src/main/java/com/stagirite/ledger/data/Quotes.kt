@@ -58,6 +58,31 @@ object Quotes {
         ),
     )
 
+    /** Words for reaching a milestone. */
+    val milestone = listOf(
+        Quote(
+            "It is correct therefore to say that a man becomes just by doing just actions and temperate " +
+                "by doing temperate actions; and no one can have the remotest chance of becoming good without doing them.",
+            "II.4, 1105b",
+        ),
+        Quote(
+            "In a word, our moral dispositions are formed as a result of the corresponding activities.",
+            "II.1, 1103b",
+        ),
+        Quote(
+            "Mark me, my friend, \u2019tis long-continued training, And training in the end becomes men\u2019s nature.",
+            "VII.10, 1152a",
+            "Aristotle quoting the poet Evenus.",
+        ),
+        Quote(
+            "Moreover, to be happy takes a complete lifetime; for one swallow does not make spring, nor does one fine day\u2026",
+            "I.7, 1098a",
+        ),
+    )
+
+    fun forMilestone(goal: Goal, days: Long): Quote =
+        milestone[(goal.id.hashCode() + days.toInt()).absoluteValue % milestone.size]
+
     val emptyLedger = Quote(
         "…one swallow does not make spring, nor does one fine day…",
         "I.7, 1098a",

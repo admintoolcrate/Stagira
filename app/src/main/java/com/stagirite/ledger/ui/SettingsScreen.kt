@@ -13,6 +13,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -86,60 +87,59 @@ fun SettingsScreen(
                 .padding(padding)
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
-                .padding(horizontal = 20.dp),
+                .padding(horizontal = 16.dp),
         ) {
-            Section("Appearance")
-            val modes = ThemeMode.entries
-            SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
-                modes.forEachIndexed { i, mode ->
-                    SegmentedButton(
-                        selected = settings.theme == mode,
-                        onClick = { settings.updateTheme(mode) },
-                        shape = SegmentedButtonDefaults.itemShape(i, modes.size),
-                        icon = {},
-                        colors = SegmentedButtonDefaults.colors(
-                            activeContainerColor = MaterialTheme.colorScheme.primary,
-                            activeContentColor = MaterialTheme.colorScheme.onPrimary,
-                        ),
-                    ) { Text(mode.name) }
+            Section("Appearance") {
+                val modes = ThemeMode.entries
+                SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
+                    modes.forEachIndexed { i, mode ->
+                        SegmentedButton(
+                            selected = settings.theme == mode,
+                            onClick = { settings.updateTheme(mode) },
+                            shape = SegmentedButtonDefaults.itemShape(i, modes.size),
+                            icon = {},
+                            colors = SegmentedButtonDefaults.colors(
+                                activeContainerColor = MaterialTheme.colorScheme.primary,
+                                activeContentColor = MaterialTheme.colorScheme.onPrimary,
+                            ),
+                        ) { Text(mode.name) }
+                    }
                 }
             }
 
-            Section("Lock")
-            LockSection(settings, lock)
+            Section("Lock") { LockSection(settings, lock) }
 
-            Section("Reminder")
-            ReminderSection(settings, lock)
+            Section("Reminder") { ReminderSection(settings, lock) }
 
-            Section("Sync")
-            SyncSection(sync, lock)
+            Section("Sync") { SyncSection(sync, lock) }
 
-            Section("Privacy")
-            SwitchRow(
-                title = "Hide in recent apps",
-                detail = if (settings.appLock) "On while the app lock is on."
-                else "Blank the app in the app switcher and block screenshots.",
-                checked = settings.secureWindow,
-                onChange = settings::updateHideInRecents,
-                enabled = !settings.appLock,
-            )
-            Spacer(Modifier.height(12.dp))
-            Note(
-                "Your ledger lives on this phone. There are no ads, no analytics and no accounts " +
-                    "of ours. The only time anything leaves the device is if you turn on sync, " +
-                    "and then only to your own Google Drive.",
-            )
+            Section("Privacy") {
+                SwitchRow(
+                    title = "Hide in recent apps",
+                    detail = if (settings.appLock) "On while the app lock is on."
+                    else "Blank the app in the app switcher and block screenshots.",
+                    checked = settings.secureWindow,
+                    onChange = settings::updateHideInRecents,
+                    enabled = !settings.appLock,
+                )
+                Spacer(Modifier.height(12.dp))
+                Note(
+                    "Your ledger lives on this phone. There are no ads, no analytics and no accounts " +
+                        "of ours. The only time anything leaves the device is if you turn on sync, " +
+                        "and then only to your own Google Drive.",
+                )
+            }
 
-            Section("Your data")
-            DataSection(store, sync, lock)
+            Section("Your data") { DataSection(store, sync, lock) }
 
-            Section("Sources")
-            Note(
-                "Quotations are from Aristotle, Nicomachean Ethics, translated by H. Rackham " +
-                    "(Loeb Classical Library; London: William Heinemann, 1926), as published by " +
-                    "the Perseus Digital Library under CC BY-SA 4.0. References give book and " +
-                    "chapter, then the standard Bekker page.",
-            )
+            Section("Sources") {
+                Note(
+                    "Quotations are from Aristotle, Nicomachean Ethics, translated by H. Rackham " +
+                        "(Loeb Classical Library; London: William Heinemann, 1926), as published by " +
+                        "the Perseus Digital Library under CC BY-SA 4.0. References give book and " +
+                        "chapter, then the standard Bekker page.",
+                )
+            }
 
             Spacer(Modifier.height(40.dp))
         }
@@ -174,6 +174,10 @@ private fun SyncSection(sync: SyncManager, lock: AppLock) {
                 "can't see anything else in your Drive. You can add a passphrase so it's " +
                 "encrypted before it leaves your phone.",
         )
+        sync.connectError?.let {
+            Spacer(Modifier.height(12.dp))
+            Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
+        }
         Spacer(Modifier.height(16.dp))
         OutlinedButton(onClick = connect, enabled = !sync.busy) { Text("Connect Google account") }
         return
@@ -344,16 +348,10 @@ private fun DataSection(store: GoalStore, sync: SyncManager, lock: AppLock) {
 }
 
 @Composable
-private fun Section(title: String) {
-    Spacer(Modifier.height(32.dp))
-    Text(
-        title,
-        style = MaterialTheme.typography.labelLarge,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-    )
-    Spacer(Modifier.height(4.dp))
-    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-    Spacer(Modifier.height(16.dp))
+private fun Section(title: String, content: @Composable ColumnScope.() -> Unit) {
+    Spacer(Modifier.height(24.dp))
+    SectionHeading(title)
+    LedgerCard(content = content)
 }
 
 @Composable

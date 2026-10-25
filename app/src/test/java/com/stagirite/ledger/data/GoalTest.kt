@@ -124,14 +124,28 @@ class GoalTest {
         assertEquals(1, Milestones.next(0))
         assertEquals(3, Milestones.next(1))
         assertEquals(30, Milestones.next(21))
-        assertEquals(730, Milestones.next(365))
-        assertEquals(1095, Milestones.next(800))
+        assertEquals(100, Milestones.next(90))
+        assertEquals(500, Milestones.next(365))
+        assertEquals(730, Milestones.next(500))
+        assertEquals(1000, Milestones.next(800))
+        assertEquals(1095, Milestones.next(1000))
         assertEquals(0f, Milestones.progress(0), 0f)
         assertEquals(0.5f, Milestones.progress(45), 0.001f)
         assertTrue(Milestones.isMilestone(30))
         assertTrue(Milestones.isMilestone(730))
+        assertTrue(Milestones.isMilestone(1000))
         assertFalse(Milestones.isMilestone(31))
         assertFalse(Milestones.isMilestone(0))
+        assertEquals(listOf(1L, 3, 7, 14, 21, 30, 60, 90, 100), Milestones.upTo(100))
+    }
+
+    @Test
+    fun milestoneNames() {
+        assertEquals("1 week", Milestones.name(7))
+        assertEquals("3 weeks", Milestones.name(21))
+        assertEquals("1 year", Milestones.name(365))
+        assertEquals("2 years", Milestones.name(730))
+        assertEquals(null, Milestones.name(100))
     }
 
     @Test

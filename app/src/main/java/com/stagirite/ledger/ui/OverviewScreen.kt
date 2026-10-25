@@ -79,51 +79,53 @@ private fun OverviewContent(
     onOpen: (Goal) -> Unit,
     modifier: Modifier,
 ) {
-    run {
-        val stats = goals.map { it.stats(today) }
-        val best = goals.zip(stats).maxBy { it.second.current }
-        val monthStart = YearMonth.from(today).atDay(1)
-        val monthDays = (0..today.dayOfMonth - 1).map { monthStart.plusDays(it.toLong()) }
-        val monthStates = monthDays.map { overviewDayState(goals, it, today) }.filter { it != DayState.Untracked }
-        val monthClean = monthStates.count { it == DayState.Kept }
+    val stats = goals.map { it.stats(today) }
+    val best = goals.zip(stats).maxBy { it.second.current }
+    val monthStart = YearMonth.from(today).atDay(1)
+    val monthStates = (0 until today.dayOfMonth)
+        .map { overviewDayState(goals, monthStart.plusDays(it.toLong()), today) }
+        .filter { it != DayState.Untracked }
+    val monthClean = monthStates.count { it == DayState.Kept }
+    val keptAll = stats.sumOf { it.daysKept }
+    val trackedAll = stats.sumOf { it.daysTracked }.coerceAtLeast(1)
 
-        Column(
-            modifier
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 24.dp),
-        ) {
+    Column(
+        modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(horizontal = 16.dp),
+    ) {
+        LedgerCard {
             Row(Modifier.fillMaxWidth()) {
                 Figure("${goals.size}", if (goals.size == 1) "Goal" else "Goals", Modifier.weight(1f))
-                Figure("${stats.sumOf { it.daysKept }}", "Days kept, all goals", Modifier.weight(1f))
+                Figure("$keptAll", "Days kept", Modifier.weight(1f))
             }
             Row(Modifier.fillMaxWidth()) {
+                Figure("${(keptAll.toDouble() / trackedAll * 100).roundToInt()}%", "Of all days kept", Modifier.weight(1f))
                 Figure(
-                    "${(stats.sumOf { it.daysKept }.toDouble() / stats.sumOf { it.daysTracked }.coerceAtLeast(1) * 100).roundToInt()}%",
-                    "Of days kept",
-                    Modifier.weight(1f),
-                )
-                Figure(
-                    if (monthStates.isEmpty()) "–" else "$monthClean/${monthStates.size}",
+                    if (monthStates.isEmpty()) "\u2013" else "$monthClean/${monthStates.size}",
                     "Clean days this month",
                     Modifier.weight(1f),
                 )
             }
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(4.dp))
             Text(
                 "Longest current run: ${best.first.title}, ${plural(best.second.current, "day")}.",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
+        }
 
-            Spacer(Modifier.height(40.dp))
-            SectionHeading("Coming up")
-            upcomingMilestones(goals, today).forEach { up ->
+        Spacer(Modifier.height(28.dp))
+        SectionHeading("Coming up")
+        LedgerCard(padding = 0.dp) {
+            val ups = upcomingMilestones(goals, today)
+            ups.forEachIndexed { i, up ->
                 Row(
                     Modifier
                         .fillMaxWidth()
                         .clickable { onOpen(up.goal) }
-                        .padding(vertical = 12.dp),
+                        .padding(horizontal = 20.dp, vertical = 14.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Column(Modifier.weight(1f)) {
@@ -139,11 +141,13 @@ private fun OverviewContent(
                         style = MaterialTheme.typography.labelLarge,
                     )
                 }
-                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                if (i < ups.lastIndex) HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
             }
+        }
 
-            Spacer(Modifier.height(40.dp))
-            SectionHeading("All goals")
+        Spacer(Modifier.height(28.dp))
+        SectionHeading("All goals")
+        LedgerCard {
             MonthCalendar(
                 month = YearMonth.parse(month),
                 today = today,
@@ -152,36 +156,37 @@ private fun OverviewContent(
                 onMonthChange = { onMonth(it.toString()) },
             )
             Text(
-                "A day is kept when no goal slipped that day.",
+                "A day counts as kept when no goal slipped that day.",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(top = 8.dp),
             )
+        }
 
-            Spacer(Modifier.height(40.dp))
-            SectionHeading("By goal")
-            goals.zip(stats).forEach { (goal, s) ->
+        Spacer(Modifier.height(28.dp))
+        SectionHeading("By goal")
+        LedgerCard(padding = 0.dp) {
+            goals.zip(stats).forEachIndexed { i, (goal, s) ->
                 Row(
                     Modifier
                         .fillMaxWidth()
                         .clickable { onOpen(goal) }
-                        .padding(vertical = 12.dp),
+                        .padding(horizontal = 20.dp, vertical = 14.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Column(Modifier.weight(1f)) {
                         Text(goal.title, style = MaterialTheme.typography.bodyLarge, maxLines = 1, overflow = TextOverflow.Ellipsis)
                         Text(
-                            "Longest ${plural(s.longest, "day")} · ${(s.keptRate * 100).roundToInt()}% kept · " +
-                                "${s.freshStarts} fresh ${if (s.freshStarts == 1) "start" else "starts"}",
+                            "Longest ${plural(s.longest, "day")} \u00B7 ${(s.keptRate * 100).roundToInt()}% kept",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
                     Text("${s.current}", style = MaterialTheme.typography.titleLarge)
                 }
-                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                if (i < goals.lastIndex) HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
             }
-            Spacer(Modifier.height(48.dp))
         }
+        Spacer(Modifier.height(40.dp))
     }
 }

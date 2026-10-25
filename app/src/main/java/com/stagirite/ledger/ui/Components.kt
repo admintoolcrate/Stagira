@@ -1,6 +1,18 @@
 package com.stagirite.ledger.ui
 
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Surface
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
@@ -15,7 +27,6 @@ import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -83,25 +94,66 @@ fun ThinProgress(progress: Float, modifier: Modifier = Modifier) {
     )
 }
 
-/** A small grey heading with a hairline under it. */
+/** A small, spaced-out capital label above a group. */
 @Composable
 fun SectionHeading(title: String, modifier: Modifier = Modifier) {
-    Column(modifier.fillMaxWidth()) {
-        Text(
-            title,
-            style = MaterialTheme.typography.labelLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        Spacer(Modifier.height(4.dp))
-        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-        Spacer(Modifier.height(16.dp))
+    Text(
+        title.uppercase(),
+        style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 1.4.sp),
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = modifier.padding(start = 4.dp, bottom = 8.dp),
+    )
+}
+
+/** A flat, rounded panel that groups related content. */
+@Composable
+fun LedgerCard(
+    modifier: Modifier = Modifier,
+    onClick: (() -> Unit)? = null,
+    padding: Dp = 20.dp,
+    content: @Composable ColumnScope.() -> Unit,
+) {
+    val shape = RoundedCornerShape(20.dp)
+    val color = MaterialTheme.colorScheme.surfaceContainerLow
+    if (onClick != null) {
+        Surface(onClick = onClick, modifier = modifier.fillMaxWidth(), shape = shape, color = color) {
+            Column(Modifier.padding(padding), content = content)
+        }
+    } else {
+        Surface(modifier = modifier.fillMaxWidth(), shape = shape, color = color) {
+            Column(Modifier.padding(padding), content = content)
+        }
+    }
+}
+
+/** A thin ring filling clockwise from the top, with [content] in the middle. */
+@Composable
+fun ProgressRing(
+    progress: Float,
+    modifier: Modifier = Modifier,
+    stroke: Dp = 4.dp,
+    content: @Composable () -> Unit,
+) {
+    val track = MaterialTheme.colorScheme.outlineVariant
+    val ink = MaterialTheme.colorScheme.onBackground
+    Box(modifier, contentAlignment = Alignment.Center) {
+        Canvas(Modifier.fillMaxSize()) {
+            val w = stroke.toPx()
+            val inset = w / 2
+            val arcSize = Size(size.width - w, size.height - w)
+            drawArc(track, 0f, 360f, false, Offset(inset, inset), arcSize, style = Stroke(w))
+            if (progress > 0f) {
+                drawArc(ink, -90f, 360f * progress, false, Offset(inset, inset), arcSize, style = Stroke(w, cap = StrokeCap.Round))
+            }
+        }
+        content()
     }
 }
 
 /** A headline figure with a label underneath. */
 @Composable
 fun Figure(value: String, label: String, modifier: Modifier = Modifier) {
-    Column(modifier.padding(vertical = 8.dp)) {
+    Column(modifier.padding(vertical = 10.dp)) {
         Text(value, style = MaterialTheme.typography.headlineSmall)
         Text(
             label,

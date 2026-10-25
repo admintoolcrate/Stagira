@@ -61,7 +61,9 @@ def main():
     quotes = re.findall(r'Quote\(\s*((?:"(?:[^"\\]|\\.)*"\s*\+?\s*)+),\s*"([^"]+)"', src)
     failures = 0
     for parts, ref in quotes:
-        text = "".join(re.findall(r'"((?:[^"\\]|\\.)*)"', parts)).strip("…")
+        raw = "".join(re.findall(r'"((?:[^"\\]|\\.)*)"', parts))
+        # Read the string as Kotlin will: decode \uXXXX escapes.
+        text = re.sub(r"\\u([0-9A-Fa-f]{4})", lambda m: chr(int(m.group(1), 16)), raw).strip("…")
         book, rest = ref.split(".", 1)
         chapter, page = rest.split(", ")
         prefix = f"{ROMAN[book]}.{chapter}."

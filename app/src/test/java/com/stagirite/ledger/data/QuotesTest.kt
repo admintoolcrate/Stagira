@@ -12,7 +12,7 @@ class QuotesTest {
 
     @Test
     fun everyQuoteIsCited() {
-        (Quotes.slip + Quotes.emptyLedger).forEach {
+        (Quotes.slip + Quotes.milestone + Quotes.emptyLedger).forEach {
             assertTrue(it.text.isNotBlank())
             assertTrue(it.ref, Regex("""[IVX]+\.\d+, 1\d{3}[ab]""").matches(it.ref))
             assertTrue(it.citation.contains("tr. H. Rackham"))

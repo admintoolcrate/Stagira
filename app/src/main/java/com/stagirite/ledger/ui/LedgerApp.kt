@@ -27,7 +27,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
+import com.stagirite.ledger.data.Goal
 import com.stagirite.ledger.data.GoalStore
+import com.stagirite.ledger.data.Milestones
+import com.stagirite.ledger.data.Quotes
+import com.stagirite.ledger.data.plural
 import com.stagirite.ledger.data.Settings
 import com.stagirite.ledger.security.AppLock
 import com.stagirite.ledger.sync.SyncManager
@@ -97,6 +101,16 @@ fun LedgerApp(store: GoalStore, settings: Settings, sync: SyncManager, lock: App
             Tab.Overview -> OverviewScreen(store.goals, today, onOpen = { openId = it.id }, bottomBar = navBar)
             Tab.Settings -> SettingsScreen(store, settings, sync, lock, bottomBar = navBar)
         }
+    }
+
+    // Celebrate a milestone reached today, once per goal and run.
+    val milestoneGoal = store.goals.firstOrNull { g ->
+        val d = g.daysKept(today)
+        Milestones.isMilestone(d) && !settings.isCelebrated(celebrationKey(g, d))
+    }
+    if (milestoneGoal != null && openGoal == null) {
+        val d = milestoneGoal.daysKept(today)
+        MilestoneDialog(milestoneGoal, d, onDismiss = { settings.markCelebrated(celebrationKey(milestoneGoal, d)) })
     }
 
     when (val state = sync.state) {
@@ -188,5 +202,33 @@ fun PassphraseDialog(
         dismissButton = {
             TextButton(onClick = onDismiss, enabled = !busy) { Text(dismiss) }
         },
+    )
+}
+
+private fun celebrationKey(goal: Goal, days: Long) = "${goal.id}:${goal.currentStart.toEpochDay()}:$days"
+
+@Composable
+private fun MilestoneDialog(goal: Goal, days: Long, onDismiss: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Column {
+                Text(plural(days, "day"), style = MaterialTheme.typography.displaySmall)
+                Milestones.name(days)?.let {
+                    Text(it, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
+        },
+        text = {
+            Column {
+                Text(
+                    "${goal.title}: ${plural(days, "day")} kept, since ${goal.currentStart.format(mediumDate)}.",
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+                Spacer(Modifier.height(20.dp))
+                QuoteBlock(Quotes.forMilestone(goal, days))
+            }
+        },
+        confirmButton = { TextButton(onClick = onDismiss) { Text("Onward") } },
     )
 }

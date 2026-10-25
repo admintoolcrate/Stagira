@@ -73,12 +73,17 @@ class SyncManager(
     var encrypted by mutableStateOf(vault.load() != null)
         private set
 
+    /** Why the last attempt to connect failed, while still not connected. */
+    var connectError by mutableStateOf<String?>(null)
+        private set
+
     /**
      * Asks Google for access to the app data folder. Returns an [IntentSender] when
      * Google needs to show its account picker / consent screen; pass the result
      * of that to [onAuthorizationResult].
      */
     suspend fun connect(activity: Activity): IntentSender? = try {
+        connectError = null
         val result = Identity.getAuthorizationClient(activity).authorize(request).await()
         if (result.hasResolution()) {
             result.pendingIntent?.intentSender
@@ -87,7 +92,7 @@ class SyncManager(
             null
         }
     } catch (e: Exception) {
-        state = SyncState.Failed(describe(e))
+        connectFailed(e)
         null
     }
 
@@ -96,7 +101,7 @@ class SyncManager(
             val result = Identity.getAuthorizationClient(activity).getAuthorizationResultFromIntent(data)
             onAuthorized(result.accessToken)
         } catch (e: ApiException) {
-            if (e.statusCode != CommonStatusCodes.CANCELED) state = SyncState.Failed(describe(e))
+            if (e.statusCode != CommonStatusCodes.CANCELED) connectFailed(e)
         }
     }
 
@@ -192,12 +197,19 @@ class SyncManager(
 
     private fun onAuthorized(token: String?) {
         if (token == null) {
-            state = SyncState.Failed("Google didn't grant access.")
+            connectFailed(null)
             return
         }
+        connectError = null
         if (!connected) prefs.edit().putBoolean("connected", true).putBoolean("setupPending", true).apply()
         state = SyncState.Idle
         scope.launch { sync(token) }
+    }
+
+    /** Before the first connection, a failure leaves sync off and says why. */
+    private fun connectFailed(e: Exception?) {
+        val message = e?.let(::describe) ?: "Google didn't grant access."
+        if (connected) state = SyncState.Failed(message) else connectError = message
     }
 
     private suspend fun sync(givenToken: String? = null) = mutex.withLock {
@@ -299,7 +311,8 @@ class SyncManager(
 
     private fun describe(e: Exception): String = when {
         e is ApiException && e.statusCode == CommonStatusCodes.DEVELOPER_ERROR ->
-            "Google sign-in isn't configured for this build. See the README."
+            "Google doesn't recognise this app yet. It has to be registered with Google once " +
+                "before sync can work (see \u201CSetting up Google sign-in\u201D in the README)."
         e is ApiException && e.statusCode == CommonStatusCodes.NETWORK_ERROR ->
             "No connection. Will try again later."
         e is DriveException && (e.code == 401 || e.code == 403) ->

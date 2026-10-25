@@ -20,7 +20,11 @@ A minimal Android app that does one thing: name a habit you're keeping —
   last 30 days; a chart of every run's length (tap a bar for its dates).
 - **Overview** — all goals at a glance: totals, clean days this month, milestones coming up, a
   combined calendar, and a line per goal.
-- Milestones at 1, 3, 7, 14, 21, 30, 60, 90, 180, 270, 365 days, then yearly, marked on the day.
+- **Milestones** at 1, 3, 7, 14, 21, 30, 60, 90, 100, 180, 270 and 365 days, then 500, every
+  1,000 and every year. Each goal has a Milestones tab (reached ones with their dates, the next few
+  with the dates they'll fall on), and reaching one shows a short celebration with an Aristotle
+  passage.
+- **Log a slip** in two taps: Today, Yesterday, or another day from a calendar, with Undo.
 - **App lock** with fingerprint, face or screen lock, locking immediately or after 1 or 5 minutes.
 - **Daily reminder** (optional) at a time you choose. It never names your goals.
 - Undo after deleting a goal; edit a goal's name, note or start date.
@@ -90,7 +94,10 @@ Google only lets an app use Drive once it's registered. This is free and takes a
      (the fixed debug key in `app/debug.keystore`, used by every debug build including the CI APK)
 
 No keys or IDs go into the code: Google recognises the app by its package name and signature.
-If you see "Google sign-in isn't configured for this build", one of these steps is missing.
+
+**If "Connect Google account" fails** with "Google doesn't recognise this app yet", one of the
+steps above is missing — most often the Android OAuth client (step 4), or your account not being
+added as a test user (step 3). Changes in Google Cloud can take a few minutes to apply.
 
 For a Play Store release, sign with your own release key, add its SHA-1 as a second Android
 client, and publish the consent screen.

@@ -7,6 +7,7 @@ import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.sp
 
 // Monochrome: ink on paper, paper on ink. No accent colour.
 private val LightColors = lightColorScheme(
@@ -17,15 +18,15 @@ private val LightColors = lightColorScheme(
     secondary = Color(0xFF6B6B68),
     secondaryContainer = Color(0xFFEDEDEA),
     onSecondaryContainer = Color(0xFF141414),
-    background = Color(0xFFFAFAF8),
+    background = Color(0xFFF4F4F1),
     onBackground = Color(0xFF141414),
-    surface = Color(0xFFFAFAF8),
+    surface = Color(0xFFF4F4F1),
     onSurface = Color(0xFF141414),
     surfaceVariant = Color(0xFFEDEDEA),
     onSurfaceVariant = Color(0xFF6B6B68),
     surfaceContainerLowest = Color(0xFFFFFFFF),
-    surfaceContainerLow = Color(0xFFF5F5F2),
-    surfaceContainer = Color(0xFFF2F2EF),
+    surfaceContainerLow = Color(0xFFFFFFFF),
+    surfaceContainer = Color(0xFFF4F4F1),
     surfaceContainerHigh = Color(0xFFF0F0ED),
     surfaceContainerHighest = Color(0xFFEDEDEA),
     outline = Color(0xFFBDBDB8),
@@ -48,7 +49,7 @@ private val DarkColors = darkColorScheme(
     surfaceVariant = Color(0xFF242424),
     onSurfaceVariant = Color(0xFF9A9A97),
     surfaceContainerLowest = Color(0xFF0A0A0A),
-    surfaceContainerLow = Color(0xFF161616),
+    surfaceContainerLow = Color(0xFF191919),
     surfaceContainer = Color(0xFF1A1A1A),
     surfaceContainerHigh = Color(0xFF1F1F1F),
     surfaceContainerHighest = Color(0xFF242424),
@@ -59,10 +60,13 @@ private val DarkColors = darkColorScheme(
 
 private val LedgerTypography = Typography().run {
     copy(
-        displayLarge = displayLarge.copy(fontWeight = FontWeight.Thin),
-        displayMedium = displayMedium.copy(fontWeight = FontWeight.Light),
-        displaySmall = displaySmall.copy(fontWeight = FontWeight.Light),
+        displayLarge = displayLarge.copy(fontWeight = FontWeight.Thin, letterSpacing = (-2).sp),
+        displayMedium = displayMedium.copy(fontWeight = FontWeight.Light, letterSpacing = (-1).sp),
+        displaySmall = displaySmall.copy(fontWeight = FontWeight.Light, letterSpacing = (-0.5).sp),
         headlineSmall = headlineSmall.copy(fontWeight = FontWeight.Light),
+        titleLarge = titleLarge.copy(fontWeight = FontWeight.Medium),
+        titleMedium = titleMedium.copy(fontWeight = FontWeight.Medium),
+        labelMedium = labelMedium.copy(letterSpacing = 0.2.sp),
     )
 }
 

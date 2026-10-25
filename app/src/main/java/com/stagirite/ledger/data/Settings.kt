@@ -66,6 +66,16 @@ class Settings(context: Context) {
         prefs.edit().putBoolean("reminder", on).putInt("reminderMinutes", minutes).apply()
     }
 
+    /** Milestones already celebrated on this device, as "goalId:runStart:days". */
+    private var celebrated by mutableStateOf(prefs.getStringSet("celebrated", emptySet())!!.toSet())
+
+    fun isCelebrated(key: String) = key in celebrated
+
+    fun markCelebrated(key: String) {
+        celebrated = celebrated + key
+        prefs.edit().putStringSet("celebrated", celebrated).apply()
+    }
+
     private inline fun <reified T : Enum<T>> enumOr(name: String?, default: T): T =
         runCatching { enumValueOf<T>(name!!) }.getOrDefault(default)
 }
