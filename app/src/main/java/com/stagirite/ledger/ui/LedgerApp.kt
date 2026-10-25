@@ -124,6 +124,8 @@ private fun LedgerAppContent(
     val today by rememberToday()
     var inSettings by rememberSaveable { mutableStateOf(false) }
     var inWeekly by rememberSaveable { mutableStateOf(false) }
+    // Home has two tabs: the ledger of goals, and the overview of them all.
+    var onOverview by rememberSaveable { mutableStateOf(false) }
     var openId by rememberSaveable { mutableStateOf<String?>(null) }
     LaunchedEffect(openWeekly) {
         if (openWeekly) {
@@ -138,6 +140,7 @@ private fun LedgerAppContent(
             openId = null
             inSettings = false
             inWeekly = false
+            onOverview = false
         }
     }
     LaunchedEffect(openGoalRequest) {
@@ -210,24 +213,39 @@ private fun LedgerAppContent(
         rawOpen != null -> "goal:${rawOpen.id}"
         inWeekly -> "weekly"
         inSettings -> "settings"
+        onOverview -> "overview"
         else -> "home"
     }
     BackHandler(enabled = screen != "home") {
         when {
             openId != null -> openId = null
             inWeekly -> inWeekly = false
-            else -> inSettings = false
+            inSettings -> inSettings = false
+            else -> onOverview = false
         }
     }
+    val homeNav = @Composable { HomeNav(onOverview) { onOverview = it } }
+    val setUpBackup = rememberBackupSetup(store, settings, lock)
+    // Nudge only people with no copy anywhere, after their first week, and not more than monthly.
+    val now = System.currentTimeMillis()
+    val showBackupPrompt = store.goals.isNotEmpty() &&
+        settings.backupUri == null && sync.state == SyncState.Off &&
+        now - settings.firstUseAt > 7 * 86_400_000L &&
+        now - settings.lastBackupAt > 30 * 86_400_000L &&
+        now > settings.backupNudgeAfter
 
     AnimatedContent(
         targetState = screen,
         transitionSpec = {
-            // Deeper screens come in from the right; going back reverses it.
-            val forward = initialState == "home"
-            val dx = if (forward) 1 else -1
-            (fadeIn(tween(240)) + slideInHorizontally(tween(280)) { dx * it / 10 }) togetherWith
-                (fadeOut(tween(160)) + slideOutHorizontally(tween(280)) { -dx * it / 14 })
+            // Deeper screens come in from the right; going back reverses it. The two tabs just cross-fade.
+            val tabs = setOf("home", "overview")
+            if (initialState in tabs && targetState in tabs) {
+                fadeIn(tween(200)) togetherWith fadeOut(tween(120))
+            } else {
+                val dx = if (initialState in tabs) 1 else -1
+                (fadeIn(tween(240)) + slideInHorizontally(tween(280)) { dx * it / 10 }) togetherWith
+                    (fadeOut(tween(160)) + slideOutHorizontally(tween(280)) { -dx * it / 14 })
+            }
         },
         label = "screen",
     ) { target ->
@@ -335,6 +353,22 @@ private fun LedgerAppContent(
                 onWeekly = { inWeekly = true },
                 quick = quick,
                 onQuickHandled = onQuickHandled,
+                bottomBar = homeNav,
+                showHoldHint = !settings.holdHintSeen,
+                onHintSeen = settings::updateHoldHintSeen,
+            )
+        }
+        target == "overview" -> {
+            OverviewDashboard(
+                goals = shown,
+                today = today,
+                onOpen = { openId = it.id },
+                onWeekly = { inWeekly = true },
+                onSettings = { inSettings = true },
+                bottomBar = homeNav,
+                showBackupPrompt = showBackupPrompt,
+                onSetUpBackup = setUpBackup,
+                onDismissBackup = { settings.snoozeBackupNudge() },
             )
         }
         target == "weekly" -> {

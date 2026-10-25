@@ -125,6 +125,53 @@ class Settings(context: Context) {
 
     private fun save(key: String, value: Boolean) = prefs.edit().putBoolean(key, value).apply()
 
+    /** The file the automatic backup is written to, or null when it's off. */
+    var backupUri by mutableStateOf(prefs.getString("backupUri", null))
+        private set
+
+    /** When the ledger was last backed up or exported, in milliseconds; 0 if never. */
+    var lastBackupAt by mutableStateOf(prefs.getLong("lastBackupAt", 0))
+        private set
+
+    /** True when the backup file stopped being writable and the backup was turned off. */
+    var backupFailed by mutableStateOf(prefs.getBoolean("backupFailed", false))
+        private set
+
+    internal val backupHash: Int get() = prefs.getInt("backupHash", 0)
+
+    fun updateBackupUri(uri: String?, failed: Boolean = false) {
+        backupUri = uri
+        backupFailed = failed
+        prefs.edit().putString("backupUri", uri).putInt("backupHash", 0).putBoolean("backupFailed", failed).apply()
+    }
+
+    fun markBackedUp(hash: Int = backupHash) {
+        lastBackupAt = System.currentTimeMillis()
+        prefs.edit().putLong("lastBackupAt", lastBackupAt).putInt("backupHash", hash).apply()
+    }
+
+    /** First run on this device, for not nagging anyone in their first week. */
+    val firstUseAt: Long = prefs.getLong("firstUseAt", 0).takeIf { it > 0 }
+        ?: System.currentTimeMillis().also { prefs.edit().putLong("firstUseAt", it).apply() }
+
+    /** The Overview's backup nudge is snoozed until this time. */
+    var backupNudgeAfter by mutableStateOf(prefs.getLong("backupNudgeAfter", 0))
+        private set
+
+    fun snoozeBackupNudge(days: Int = 30) {
+        backupNudgeAfter = System.currentTimeMillis() + days * 86_400_000L
+        prefs.edit().putLong("backupNudgeAfter", backupNudgeAfter).apply()
+    }
+
+    /** The one-time tip about holding +. */
+    var holdHintSeen by mutableStateOf(prefs.getBoolean("holdHintSeen", false))
+        private set
+
+    fun updateHoldHintSeen() {
+        holdHintSeen = true
+        prefs.edit().putBoolean("holdHintSeen", true).apply()
+    }
+
     var widgetStyle by mutableStateOf(enumOr(prefs.getString("widgetStyle", null), WidgetStyle.Solid))
         private set
 

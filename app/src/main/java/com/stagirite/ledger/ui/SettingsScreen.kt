@@ -1,5 +1,6 @@
 package com.stagirite.ledger.ui
 
+import com.stagirite.ledger.backup.AutoBackup
 import android.Manifest
 import android.app.Activity
 import android.content.pm.PackageManager
@@ -188,7 +189,7 @@ fun SettingsScreen(
 
             Section("Sync", group = "Your data") { SyncSection(sync, lock) }
 
-            Section("Backup and export") { DataSection(store, sync, lock) }
+            Section("Backup and export") { DataSection(store, settings, sync, lock) }
 
             LocalSupport.current?.let { support -> Section("Plus, tips and ads", group = "Support Stagira") { SupportSection(support) } }
 
@@ -360,15 +361,17 @@ private fun SyncSection(sync: SyncManager, lock: AppLock) {
 }
 
 @Composable
-private fun DataSection(store: GoalStore, sync: SyncManager, lock: AppLock) {
+private fun DataSection(store: GoalStore, settings: Settings, sync: SyncManager, lock: AppLock) {
     val context = LocalContext.current
+    val setUpBackup = rememberBackupSetup(store, settings, lock)
     val exporter = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri ->
         if (uri == null) return@rememberLauncherForActivityResult
         val ok = runCatching {
             context.contentResolver.openOutputStream(uri)!!.use {
-                it.write(LedgerCodec.encode(store.goals).toByteArray())
+                it.write(AutoBackup.contents(store).toByteArray())
             }
         }.isSuccess
+        if (ok) settings.markBackedUp()
         Toast.makeText(context, if (ok) "Exported" else "Couldn't export", Toast.LENGTH_SHORT).show()
     }
     val importer = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
@@ -390,9 +393,28 @@ private fun DataSection(store: GoalStore, sync: SyncManager, lock: AppLock) {
         }
     }
 
+    if (settings.backupUri == null) {
+        SettingRow(
+            title = "Automatic backup",
+            detail = if (settings.backupFailed) "The backup file couldn\u2019t be written any more, so backup stopped. Choose a place again."
+            else "Keep a copy in a file you choose, such as in your Drive, updated after each change. On a new phone, restore it with Import.",
+            action = "Set up",
+            onClick = setUpBackup,
+        )
+    } else {
+        SettingRow(
+            title = "Automatic backup is on",
+            detail = settings.lastBackupAt.takeIf { it > 0 }?.let {
+                "Last saved " + DateUtils.getRelativeTimeSpanString(it, System.currentTimeMillis(), DateUtils.MINUTE_IN_MILLIS)
+            } ?: "Saved after your next change.",
+            action = "Turn off",
+            onClick = { settings.updateBackupUri(null) },
+        )
+    }
+    Spacer(Modifier.height(12.dp))
     SettingRow(
         title = "Export",
-        detail = "Save your goals to a file. The file isn't encrypted.",
+        detail = "Save a copy now. Like the backup, the file isn\u2019t encrypted, though private titles stay sealed.",
         action = "Export",
         onClick = {
             lock.expectReturn()
@@ -693,14 +715,6 @@ private fun PersonaliseSection(settings: Settings) {
         Triple("Passages from Aristotle", "When you begin again, at milestones, on an empty page and in the guide.", settings.quotes to settings::updateQuotes),
         Triple("Milestone celebrations", "A moment to mark each milestone the day you reach it.", settings.celebrations to settings::updateCelebrations),
         Triple("Vibration", "A light buzz when you log a slip or reach a milestone.", settings.haptics to settings::updateHaptics),
-        Triple(
-            "More on the home page",
-            "The month\u2019s summary and this week above your goals; what\u2019s coming up and a calendar below.",
-            (settings.homeSummary || settings.homeExtras) to { on: Boolean ->
-                settings.updateHomeSummary(on)
-                settings.updateHomeExtras(on)
-            },
-        ),
     )
     rows.forEachIndexed { i, (title, detail, state) ->
         SwitchRow(title = title, detail = detail, checked = state.first, onChange = state.second)

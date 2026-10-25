@@ -174,10 +174,13 @@ fun GoalListScreen(
     onWeekly: () -> Unit,
     quick: String? = null,
     onQuickHandled: () -> Unit = {},
+    /** The Goals / Overview switcher. */
+    bottomBar: @Composable () -> Unit = {},
+    showHoldHint: Boolean = false,
+    onHintSeen: () -> Unit = {},
 ) {
     var adding by rememberSaveable { mutableStateOf(false) }
     val plus = LocalPlus.current
-    val prefs = LocalUiPrefs.current
     // The title starts large and tucks into a slim bar as the list scrolls.
     val scroll = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
     var menu by remember { mutableStateOf(false) }
@@ -254,6 +257,7 @@ fun GoalListScreen(
             )
         },
         snackbarHost = { SnackbarHost(snackbar) },
+        bottomBar = bottomBar,
         floatingActionButton = {
             // Tap for a new goal; hold for quick logging (a slip, an urge resisted, the weekly review).
             Surface(
@@ -295,28 +299,20 @@ fun GoalListScreen(
                         modifier = Modifier.padding(start = Space.xs, bottom = Space.m),
                     )
                 }
-                if (goals.isNotEmpty() && prefs.homeSummary) {
-                    item(key = "summary") { SummaryCard(goals, today) }
-                    item(key = "week") {
-                        val w = weekReview(goals, today)
-                        LedgerCard(modifier = Modifier.padding(top = Space.m), onClick = {
-                            if (plus.has) onWeekly() else plus.offer("The weekly review is part of Plus.")
-                        }) {
+                if (showHoldHint && goals.isNotEmpty()) {
+                    item(key = "hint") {
+                        // Shown once: the hold gestures are otherwise easy to miss.
+                        LedgerCard(modifier = Modifier.padding(bottom = Space.l)) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
-                                Column(Modifier.weight(1f)) {
-                                    Text("This week", style = MaterialTheme.typography.titleSmall)
-                                    Text(
-                                        "${w.cleanDays}/${w.activeDays} clean days \u00B7 ${plural(w.slips.toLong(), "slip")}" +
-                                            if (w.urges > 0) " \u00B7 ${w.urges} resisted" else "",
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    )
-                                }
-                                Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = "Open weekly review")
+                                Text(
+                                    "Tip: hold + to log a slip or an urge for any goal without opening it.",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    modifier = Modifier.weight(1f),
+                                )
+                                TextButton(onClick = onHintSeen) { Text("Got it") }
                             }
                         }
                     }
-                    item(key = "goals-heading") { SectionHeading("Goals", Modifier.padding(top = Space.xxl)) }
                 }
                 // The goals as a ledger: ruled lines, counts in a column on the right.
                 items(goals, key = { it.id }) { goal ->
@@ -337,14 +333,6 @@ fun GoalListScreen(
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.padding(8.dp),
                         )
-                    }
-                }
-                if (goals.isNotEmpty() && prefs.homeExtras) {
-                    item(key = "coming-heading") { SectionHeading("Coming up", Modifier.padding(top = Space.xxl)) }
-                    item(key = "coming") { ComingUpCard(goals, today, onOpen) }
-                    item(key = "calendar-heading") { SectionHeading("All goals", Modifier.padding(top = Space.xxl)) }
-                    item(key = "calendar") {
-                        CombinedCalendarCard(goals, today)
                     }
                 }
                 if (archived.isNotEmpty()) {

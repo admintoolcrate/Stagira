@@ -1,5 +1,7 @@
 package com.stagirite.ledger
 
+import com.stagirite.ledger.backup.AutoBackup
+import kotlin.concurrent.thread
 import android.content.Intent
 import android.graphics.Color
 import android.os.Bundle
@@ -115,6 +117,8 @@ class MainActivity : FragmentActivity() {
             app.lock.onBackground()
             // Private titles are hidden again whenever the app is left.
             app.privateTitles.lock()
+            // Refresh the automatic backup, off the main thread (the file may live with a cloud provider).
+            thread(name = "backup") { AutoBackup.runIfNeeded(applicationContext, app.store, app.settings) }
         }
         app.sync.requestSync()
     }
