@@ -23,6 +23,8 @@ object LedgerCodec {
                     .put("icon", g.icon)
                     .put("kind", g.kind?.name ?: "")
                     .put("sealed", g.sealed ?: "")
+                    .put("target", g.target ?: 0)
+                    .put("archived", g.archived)
                     .put("created", g.createdAt)
                     .put("updated", g.updatedAt)
                     .put("deleted", g.deleted)
@@ -55,6 +57,8 @@ object LedgerCodec {
                 icon = o.optString("icon"),
                 kind = GoalKind.entries.firstOrNull { it.name == o.optString("kind") },
                 sealed = o.optString("sealed").ifEmpty { null },
+                target = o.optLong("target").takeIf { it > 0 },
+                archived = o.optBoolean("archived"),
                 createdAt = o.optLong("created"),
                 updatedAt = o.optLong("updated"),
                 deleted = o.optBoolean("deleted"),

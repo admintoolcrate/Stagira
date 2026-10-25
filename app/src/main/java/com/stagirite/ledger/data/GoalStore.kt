@@ -16,23 +16,34 @@ class GoalStore(context: Context) {
     /** Called after every local change, so sync can push it. */
     var onChange: () -> Unit = {}
 
-    val goals: List<Goal> get() = all.filter { !it.deleted }
+    /** Active goals: not deleted, not archived. */
+    val goals: List<Goal> get() = all.filter { !it.deleted && !it.archived }
+
+    val archived: List<Goal> get() = all.filter { !it.deleted && it.archived }
 
     /** Everything including tombstones, for sync and export. */
     val snapshot: List<Goal> get() = all.toList()
 
     fun find(id: String): Goal? = all.firstOrNull { it.id == id && !it.deleted }
 
-    fun add(title: String, since: LocalDate, reason: String = "", icon: String = "", kind: GoalKind? = null, sealed: String? = null) {
+    fun add(
+        title: String,
+        since: LocalDate,
+        reason: String = "",
+        icon: String = "",
+        kind: GoalKind? = null,
+        sealed: String? = null,
+        target: Long? = null,
+    ) {
         val now = System.currentTimeMillis()
         val goal = Goal(UUID.randomUUID().toString(), "", since, createdAt = now, updatedAt = now)
-            .edit(title, since, reason, now, icon, kind, sealed)
+            .edit(title, since, reason, now, icon, kind, sealed, target)
         all.add(goal)
         changed()
     }
 
-    fun edit(id: String, title: String, since: LocalDate, reason: String, icon: String, kind: GoalKind?, sealed: String?) =
-        replace(id) { it.edit(title, since, reason, System.currentTimeMillis(), icon, kind, sealed) }
+    fun edit(id: String, title: String, since: LocalDate, reason: String, icon: String, kind: GoalKind?, sealed: String?, target: Long?) =
+        replace(id) { it.edit(title, since, reason, System.currentTimeMillis(), icon, kind, sealed, target) }
 
     /** Applies [change] to every goal it alters (returns non-null for). */
     fun updateAll(change: (Goal) -> Goal?) {
@@ -42,6 +53,12 @@ class GoalStore(context: Context) {
         }
         if (any) changed()
     }
+
+    fun setArchived(id: String, archived: Boolean) =
+        replace(id) { it.copy(archived = archived, updatedAt = System.currentTimeMillis()) }
+
+    fun setTarget(id: String, target: Long?) =
+        replace(id) { it.copy(target = target, updatedAt = System.currentTimeMillis()) }
 
     fun moveCurrentStart(id: String, day: LocalDate) =
         replace(id) { it.moveCurrentStart(day, System.currentTimeMillis()) }

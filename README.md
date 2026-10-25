@@ -17,6 +17,13 @@ A minimal Android app (**Stagirite** on your home screen) that does one thing: n
 - **Private titles** — show a cover name ("No more corn") while the real name and note stay
   encrypted behind a PIN. Long-press the app's name on the Goals screen to reveal them; they hide
   again when you leave the app.
+- **Home-screen widget** — up to four goals and their counts. Private goals show their cover
+  names, and while the app lock is on it shows only "Locked".
+- **Targets** — an optional aim per goal (30, 90, 180 or 365 days); the ring fills towards it.
+- **Archive** — hide finished or paused goals without losing them; restore any time.
+- **Quick actions** — long-press a goal on the list to log a slip today or archive it, with Undo.
+- **Sort** — as added, longest current run, next milestone, or name.
+- **Suggestions** when adding a goal (No alcohol, Exercise, Read …) fill in the icon and type.
 - **Guide** — a short optional introduction on first launch, and an About page explaining the
   name, in Settings.
 - **Begin again** when you slip: the count restarts, the run is kept, and you get a short passage
@@ -157,6 +164,7 @@ app/src/main/java/com/stagirite/ledger/
   sync/SyncManager.kt     sign-in, sync and encryption state
   security/AppLock.kt     fingerprint / screen-lock gate
   reminders/Reminder.kt   optional daily notification
+  widget/LedgerWidget.kt  home-screen widget (Jetpack Glance)
   ui/                     Compose screens: goals, goal page, overview, settings, calendar, chart
 ```
 

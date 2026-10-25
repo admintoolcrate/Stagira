@@ -32,11 +32,14 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
@@ -54,6 +57,8 @@ import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.SuggestionChip
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -69,7 +74,9 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -79,6 +86,8 @@ import com.stagirite.ledger.data.Goal
 import com.stagirite.ledger.data.GoalIcons
 import com.stagirite.ledger.data.GoalKind
 import com.stagirite.ledger.data.Milestones
+import com.stagirite.ledger.data.SortOrder
+import com.stagirite.ledger.data.goalTemplates
 import com.stagirite.ledger.data.Quotes
 import com.stagirite.ledger.data.dayState
 import com.stagirite.ledger.data.describeSpan
@@ -102,6 +111,7 @@ data class GoalDraft(
     val kind: GoalKind?,
     val private: Boolean,
     val realTitle: String?,
+    val target: Long? = null,
 )
 
 /** What the goal screens need to know about private titles. */
@@ -125,12 +135,20 @@ fun GoalListScreen(
     today: LocalDate,
     snackbar: SnackbarHostState,
     privacy: PrivacyUi,
+    archived: List<Goal>,
+    sortOrder: SortOrder,
+    onSort: (SortOrder) -> Unit,
     onOpen: (Goal) -> Unit,
     onAdd: (GoalDraft) -> Unit,
+    onQuickSlip: (Goal) -> Unit,
+    onArchive: (Goal, Boolean) -> Unit,
     onTitleLongPress: () -> Unit,
     bottomBar: @Composable () -> Unit,
 ) {
     var adding by rememberSaveable { mutableStateOf(false) }
+    var menu by remember { mutableStateOf(false) }
+    var showArchived by rememberSaveable { mutableStateOf(false) }
+    var actionsFor by rememberSaveable { mutableStateOf<String?>(null) }
 
     Scaffold(
         topBar = {
@@ -144,6 +162,33 @@ fun GoalListScreen(
                             style = MaterialTheme.typography.labelMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
+                    }
+                },
+                actions = {
+                    Box {
+                        IconButton(onClick = { menu = true }) {
+                            Icon(Icons.Filled.MoreVert, contentDescription = "Sort")
+                        }
+                        DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
+                            Text(
+                                "SORT BY",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                            )
+                            SortOrder.entries.forEach { order ->
+                                DropdownMenuItem(
+                                    text = { Text(order.label) },
+                                    onClick = {
+                                        onSort(order)
+                                        menu = false
+                                    },
+                                    trailingIcon = {
+                                        if (order == sortOrder) Icon(Icons.Filled.Check, contentDescription = "Selected")
+                                    },
+                                )
+                            }
+                        }
                     }
                 },
                 colors = plainTopBarColors(),
@@ -161,7 +206,7 @@ fun GoalListScreen(
             }
         },
     ) { padding ->
-        if (goals.isEmpty()) {
+        if (goals.isEmpty() && archived.isEmpty()) {
             EmptyState(Modifier.padding(padding))
         } else {
             LazyColumn(
@@ -169,8 +214,71 @@ fun GoalListScreen(
                 verticalArrangement = Arrangement.spacedBy(12.dp),
                 modifier = Modifier.padding(padding),
             ) {
-                items(goals, key = { it.id }) { goal -> GoalCard(goal, today, onClick = { onOpen(goal) }) }
+                items(goals, key = { it.id }) { goal ->
+                    GoalCard(goal, today, onClick = { onOpen(goal) }, onLongClick = { actionsFor = goal.id })
+                }
+                if (goals.isEmpty()) {
+                    item {
+                        Text(
+                            "No active goals. Tap + to add one, or restore one below.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(8.dp),
+                        )
+                    }
+                }
+                if (archived.isNotEmpty()) {
+                    item(key = "archived") {
+                        TextButton(onClick = { showArchived = !showArchived }) {
+                            Text(if (showArchived) "Hide archived" else "Archived (${archived.size})")
+                        }
+                    }
+                    if (showArchived) {
+                        items(archived, key = { it.id }) { goal ->
+                            LedgerCard(onClick = { onOpen(goal) }) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    GoalIcon(goal.icon, tile = 36.dp)
+                                    if (goal.icon.isNotEmpty()) Spacer(Modifier.width(12.dp))
+                                    Column(Modifier.weight(1f)) {
+                                        Text(goal.title, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                        Text(
+                                            "Archived \u00B7 ${plural(goal.daysKept(today), "day")}",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.outline,
+                                        )
+                                    }
+                                    TextButton(onClick = { onArchive(goal, false) }) { Text("Restore") }
+                                }
+                            }
+                        }
+                    }
+                }
             }
+        }
+    }
+
+    actionsFor?.let { id ->
+        val goal = goals.firstOrNull { it.id == id }
+        if (goal == null) {
+            actionsFor = null
+        } else {
+            QuickActionsSheet(
+                goal = goal,
+                today = today,
+                onDismiss = { actionsFor = null },
+                onSlip = {
+                    actionsFor = null
+                    onQuickSlip(goal)
+                },
+                onOpen = {
+                    actionsFor = null
+                    onOpen(goal)
+                },
+                onArchive = {
+                    actionsFor = null
+                    onArchive(goal, true)
+                },
+            )
         }
     }
 
@@ -212,11 +320,11 @@ private fun EmptyState(modifier: Modifier = Modifier) {
 }
 
 @Composable
-private fun GoalCard(goal: Goal, today: LocalDate, onClick: () -> Unit) {
+private fun GoalCard(goal: Goal, today: LocalDate, onClick: () -> Unit, onLongClick: () -> Unit) {
     val days = goal.daysKept(today)
     val next = Milestones.next(days)
     val milestoneToday = Milestones.isMilestone(days)
-    LedgerCard(onClick = onClick) {
+    LedgerCard(onClick = onClick, onLongClick = onLongClick) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             if (goal.icon.isNotEmpty()) {
                 GoalIcon(goal.icon)
@@ -227,8 +335,12 @@ private fun GoalCard(goal: Goal, today: LocalDate, onClick: () -> Unit) {
                 Text(goal.title, style = MaterialTheme.typography.titleMedium, maxLines = 2, overflow = TextOverflow.Ellipsis)
                 Spacer(Modifier.height(4.dp))
                 Text(
-                    if (milestoneToday) "Milestone today"
-                    else "${plural(next - days, "day")} to ${plural(next, "day")}",
+                    when {
+                        milestoneToday -> "Milestone today"
+                        goal.target != null && days >= goal.target -> "Target of ${plural(goal.target, "day")} reached"
+                        goal.target != null -> "$days of ${plural(goal.target, "day")}"
+                        else -> "${plural(next - days, "day")} to ${plural(next, "day")}"
+                    },
                     style = MaterialTheme.typography.bodySmall,
                     color = if (milestoneToday) MaterialTheme.colorScheme.onBackground
                     else MaterialTheme.colorScheme.onSurfaceVariant,
@@ -245,7 +357,44 @@ private fun GoalCard(goal: Goal, today: LocalDate, onClick: () -> Unit) {
             }
         }
         Spacer(Modifier.height(16.dp))
-        ThinProgress(Milestones.progress(days))
+        ThinProgress(goal.targetProgress(today) ?: Milestones.progress(days))
+    }
+}
+
+/** Long-press actions for a goal on the list. */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun QuickActionsSheet(
+    goal: Goal,
+    today: LocalDate,
+    onDismiss: () -> Unit,
+    onSlip: () -> Unit,
+    onOpen: () -> Unit,
+    onArchive: () -> Unit,
+) {
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+        containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+    ) {
+        Column(
+            Modifier
+                .padding(horizontal = 24.dp)
+                .navigationBarsPadding()
+                .padding(bottom = 16.dp),
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                GoalIcon(goal.icon, tile = 36.dp)
+                if (goal.icon.isNotEmpty()) Spacer(Modifier.width(12.dp))
+                Text(goal.title, style = MaterialTheme.typography.titleLarge, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            }
+            Spacer(Modifier.height(12.dp))
+            SlipOption("Log a ${goal.slipWord} today", today.format(mediumDate), enabled = !goal.isSlip(today), onClick = onSlip)
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+            SlipOption("Open", "Calendar, stats and history", enabled = true, onClick = onOpen)
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+            SlipOption("Archive", "Hide it from the list; restore any time", enabled = true, onClick = onArchive)
+        }
     }
 }
 
@@ -266,8 +415,10 @@ fun GoalDetailScreen(
     onSlip: (LocalDate) -> Unit,
     onRemoveSlip: (LocalDate) -> Unit,
     onMoveStart: (LocalDate) -> Unit,
+    onArchive: (Boolean) -> Unit,
     onDelete: () -> Unit,
 ) {
+    val haptics = LocalHapticFeedback.current
     var editing by rememberSaveable { mutableStateOf(false) }
     var slipSheet by rememberSaveable { mutableStateOf(false) }
     var pickingSlipDay by rememberSaveable { mutableStateOf(false) }
@@ -287,6 +438,7 @@ fun GoalDetailScreen(
 
     /** Logs a slip. Today's gets the Day 0 screen; a past one gets an undo bar. */
     val logSlip: (LocalDate) -> Unit = { day ->
+        haptics.performHapticFeedback(HapticFeedbackType.LongPress)
         if (day == today) {
             endedRun = days
             onSlip(day)
@@ -339,6 +491,19 @@ fun GoalDetailScreen(
                 .padding(horizontal = 16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
+            if (goal.archived) {
+                LedgerCard {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            "Archived. It\u2019s kept, but hidden from your list, overview and widget.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.weight(1f),
+                        )
+                        TextButton(onClick = { onArchive(false) }) { Text("Restore") }
+                    }
+                }
+            }
             // The count
             LedgerCard(padding = 24.dp) {
                 Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
@@ -350,7 +515,7 @@ fun GoalDetailScreen(
                         }
                         Spacer(Modifier.height(16.dp))
                     }
-                    ProgressRing(Milestones.progress(days), Modifier.size(208.dp)) {
+                    ProgressRing(goal.targetProgress(today) ?: Milestones.progress(days), Modifier.size(208.dp)) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             Text("$days", style = MaterialTheme.typography.displayLarge, fontSize = 80.sp)
                             Text(
@@ -362,8 +527,12 @@ fun GoalDetailScreen(
                     }
                     Spacer(Modifier.height(16.dp))
                     Text(
-                        if (Milestones.isMilestone(days)) "Milestone reached today"
-                        else "${plural(next - days, "day")} to ${plural(next, "day")}",
+                        when {
+                            Milestones.isMilestone(days) -> "Milestone reached today"
+                            goal.target != null && days >= goal.target -> "Target of ${plural(goal.target, "day")} reached"
+                            goal.target != null -> "${plural(goal.target - days, "day")} to your target of ${goal.target}"
+                            else -> "${plural(next - days, "day")} to ${plural(next, "day")}"
+                        },
                         style = MaterialTheme.typography.bodyMedium,
                     )
                     TextButton(onClick = { movingStart = true }) {
@@ -512,6 +681,10 @@ fun GoalDetailScreen(
             onDelete = {
                 editing = false
                 onDelete()
+            },
+            onArchive = {
+                editing = false
+                onArchive(!goal.archived)
             },
         )
     }
@@ -763,6 +936,7 @@ private fun GoalDialog(
     cover: String? = null,
     latestSince: LocalDate? = null,
     onDelete: (() -> Unit)? = null,
+    onArchive: (() -> Unit)? = null,
 ) {
     val opened = editing?.let(privacy.open)
     // A private goal edited while locked: its real name stays sealed and untouched.
@@ -773,6 +947,7 @@ private fun GoalDialog(
     var icon by rememberSaveable { mutableStateOf(editing?.icon ?: "") }
     var kind by rememberSaveable { mutableStateOf(editing?.kind) }
     var private by rememberSaveable { mutableStateOf(editing?.isPrivate == true) }
+    var target by rememberSaveable { mutableStateOf(editing?.target) }
     var sinceEpochDay by rememberSaveable { mutableStateOf((editing?.since ?: today).toEpochDay()) }
     var picking by rememberSaveable { mutableStateOf(false) }
     var pickingIcon by rememberSaveable { mutableStateOf(false) }
@@ -787,6 +962,24 @@ private fun GoalDialog(
         title = { Text(heading) },
         text = {
             Column(Modifier.verticalScroll(rememberScrollState())) {
+                if (editing == null && title.isBlank()) {
+                    Text("Start from one of these, or write your own.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Spacer(Modifier.height(8.dp))
+                    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        goalTemplates.forEach { t ->
+                            SuggestionChip(
+                                onClick = {
+                                    title = t.title
+                                    icon = t.icon
+                                    kind = t.kind
+                                },
+                                label = { Text(t.title) },
+                                icon = { EmojiGlyph(t.icon, 16.sp) },
+                            )
+                        }
+                    }
+                    Spacer(Modifier.height(12.dp))
+                }
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Box(
                         Modifier
@@ -894,6 +1087,19 @@ private fun GoalDialog(
                     )
                 }
 
+                Spacer(Modifier.height(12.dp))
+                Text("Target (optional)", style = MaterialTheme.typography.bodyMedium)
+                Spacer(Modifier.height(4.dp))
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    listOf<Long?>(null, 30, 90, 180, 365).forEach { t ->
+                        FilterChip(
+                            selected = target == t,
+                            onClick = { target = t },
+                            label = { Text(t?.let { "$it days" } ?: "None") },
+                        )
+                    }
+                }
+
                 Spacer(Modifier.height(8.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text("Started", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
@@ -906,12 +1112,19 @@ private fun GoalDialog(
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
-                if (onDelete != null) {
+                if (onDelete != null || onArchive != null) {
                     Spacer(Modifier.height(16.dp))
-                    TextButton(
-                        onClick = { confirmDelete = true },
-                        colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error),
-                    ) { Text("Delete goal") }
+                    Row {
+                        if (onArchive != null) {
+                            TextButton(onClick = onArchive) { Text(if (editing?.archived == true) "Restore goal" else "Archive goal") }
+                        }
+                        if (onDelete != null) {
+                            TextButton(
+                                onClick = { confirmDelete = true },
+                                colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error),
+                            ) { Text("Delete goal") }
+                        }
+                    }
                 }
             }
         },
@@ -927,6 +1140,7 @@ private fun GoalDialog(
                             kind = kind,
                             private = private,
                             realTitle = if (private && !sealedAway) realTitle else null,
+                            target = target,
                         )
                     )
                 },

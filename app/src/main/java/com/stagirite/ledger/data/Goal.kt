@@ -41,6 +41,10 @@ data class Goal(
      * PIN. [title] is then the cover name shown to anyone else, and [reason] is empty.
      */
     val sealed: String? = null,
+    /** Optional aim in days, e.g. 90. */
+    val target: Long? = null,
+    /** Hidden from the list, overview and widget, but kept. */
+    val archived: Boolean = false,
     val createdAt: Long = 0,
     val updatedAt: Long = 0,
     val deleted: Boolean = false,
@@ -105,6 +109,7 @@ data class Goal(
         icon: String = this.icon,
         kind: GoalKind? = this.kind,
         sealed: String? = this.sealed,
+        target: Long? = this.target,
     ): Goal = copy(
         title = title.trim(),
         since = slips.firstOrNull()?.let { minOf(it, since) } ?: since,
@@ -112,11 +117,18 @@ data class Goal(
         icon = icon,
         kind = kind,
         sealed = sealed,
+        target = target?.takeIf { it > 0 },
         updatedAt = now,
     )
 
-    fun tombstone(now: Long): Goal =
-        copy(title = "", slips = emptyList(), reason = "", icon = "", kind = null, sealed = null, deleted = true, updatedAt = now)
+    fun tombstone(now: Long): Goal = copy(
+        title = "", slips = emptyList(), reason = "", icon = "", kind = null, sealed = null,
+        target = null, archived = false, deleted = true, updatedAt = now,
+    )
+
+    /** Progress towards [target], 0..1, or null with no target. */
+    fun targetProgress(today: LocalDate): Float? =
+        target?.let { (daysKept(today).toFloat() / it).coerceIn(0f, 1f) }
 }
 
 /**

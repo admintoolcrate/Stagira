@@ -14,3 +14,19 @@ object GoalIcons {
 
     val all: List<String> get() = groups.flatMap { it.second }
 }
+
+/** A ready-made goal to start from. */
+data class GoalTemplate(val title: String, val icon: String, val kind: GoalKind)
+
+val goalTemplates = listOf(
+    GoalTemplate("No alcohol", "🍺", GoalKind.Vice),
+    GoalTemplate("No smoking", "🚭", GoalKind.Vice),
+    GoalTemplate("Less phone", "📱", GoalKind.Vice),
+    GoalTemplate("No sugar", "🍬", GoalKind.Vice),
+    GoalTemplate("No gambling", "🎲", GoalKind.Vice),
+    GoalTemplate("Exercise", "🏃", GoalKind.Virtue),
+    GoalTemplate("Read", "📚", GoalKind.Virtue),
+    GoalTemplate("Meditate", "🧘", GoalKind.Virtue),
+    GoalTemplate("Journal", "✍", GoalKind.Virtue),
+    GoalTemplate("Early to bed", "🛌", GoalKind.Virtue),
+)

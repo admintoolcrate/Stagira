@@ -32,6 +32,11 @@ import com.stagirite.ledger.data.GoalStore
 import com.stagirite.ledger.data.Milestones
 import com.stagirite.ledger.data.Quotes
 import com.stagirite.ledger.data.plural
+import com.stagirite.ledger.data.sortGoals
+import com.stagirite.ledger.widget.LedgerWidget
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalHapticFeedback
 import com.stagirite.ledger.data.Settings
 import com.stagirite.ledger.security.AppLock
 import com.stagirite.ledger.security.PrivateTitles
@@ -67,7 +72,12 @@ fun LedgerApp(store: GoalStore, settings: Settings, sync: SyncManager, lock: App
     val navBar: @Composable () -> Unit = { LedgerNavBar(tab) { tab = it } }
 
     // Goals as they should be shown: real titles only while private titles are unlocked.
-    val shown = store.goals.map(vault::reveal)
+    val shown = sortGoals(store.goals.map(vault::reveal), settings.sortOrder, today)
+    val context = LocalContext.current
+    val haptics = LocalHapticFeedback.current
+
+    // Keep the home-screen widget in step with the lock and sort order.
+    LaunchedEffect(settings.appLock, settings.sortOrder) { runCatching { LedgerWidget.refresh(context) } }
     val rawOpen = openId?.let(store::find)
     val openGoal = rawOpen?.let(vault::reveal)
     val anySealed = store.goals.any { it.isPrivate }
@@ -103,7 +113,17 @@ fun LedgerApp(store: GoalStore, settings: Settings, sync: SyncManager, lock: App
             privacy = privacy,
             onBack = { openId = null },
             onEdit = { d ->
-                store.edit(rawOpen.id, d.title, d.since, d.reason, d.icon, d.kind, sealedFor(d, rawOpen))
+                store.edit(rawOpen.id, d.title, d.since, d.reason, d.icon, d.kind, sealedFor(d, rawOpen), d.target)
+            },
+            onArchive = { archive ->
+                store.setArchived(rawOpen.id, archive)
+                if (archive) {
+                    openId = null
+                    scope.launch {
+                        val r = snackbar.showSnackbar("Goal archived", actionLabel = "Undo")
+                        if (r == SnackbarResult.ActionPerformed) store.setArchived(rawOpen.id, false)
+                    }
+                }
             },
             onSlip = { store.recordSlip(rawOpen.id, it) },
             onRemoveSlip = { store.removeSlip(rawOpen.id, it) },
@@ -128,8 +148,26 @@ fun LedgerApp(store: GoalStore, settings: Settings, sync: SyncManager, lock: App
                 today = today,
                 snackbar = snackbar,
                 privacy = privacy,
+                archived = store.archived.map(vault::reveal),
+                sortOrder = settings.sortOrder,
+                onSort = settings::updateSortOrder,
                 onOpen = { openId = it.id },
-                onAdd = { d -> store.add(d.title, d.since, d.reason, d.icon, d.kind, sealedFor(d, null)) },
+                onAdd = { d -> store.add(d.title, d.since, d.reason, d.icon, d.kind, sealedFor(d, null), d.target) },
+                onQuickSlip = { g ->
+                    haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                    store.recordSlip(g.id, today)
+                    scope.launch {
+                        val r = snackbar.showSnackbar("${g.slipWord.replaceFirstChar { it.uppercase() }} logged for today", actionLabel = "Undo")
+                        if (r == SnackbarResult.ActionPerformed) store.removeSlip(g.id, today)
+                    }
+                },
+                onArchive = { g, archive ->
+                    store.setArchived(g.id, archive)
+                    if (archive) scope.launch {
+                        val r = snackbar.showSnackbar("Goal archived", actionLabel = "Undo")
+                        if (r == SnackbarResult.ActionPerformed) store.setArchived(g.id, false)
+                    }
+                },
                 onTitleLongPress = {
                     if (vault.unlocked) {
                         vault.lock()
@@ -213,6 +251,7 @@ fun LedgerApp(store: GoalStore, settings: Settings, sync: SyncManager, lock: App
     }
     if (milestoneGoal != null && openGoal == null) {
         val d = milestoneGoal.daysKept(today)
+        LaunchedEffect(milestoneGoal.id, d) { haptics.performHapticFeedback(HapticFeedbackType.LongPress) }
         MilestoneDialog(milestoneGoal, d, onDismiss = { settings.markCelebrated(celebrationKey(milestoneGoal, d)) })
     }
 

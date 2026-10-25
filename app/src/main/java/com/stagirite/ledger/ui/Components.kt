@@ -1,6 +1,8 @@
 package com.stagirite.ledger.ui
 
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.ColumnScope
@@ -129,16 +131,27 @@ fun SectionHeading(title: String, modifier: Modifier = Modifier) {
 }
 
 /** A flat, rounded panel that groups related content. */
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun LedgerCard(
     modifier: Modifier = Modifier,
     onClick: (() -> Unit)? = null,
+    onLongClick: (() -> Unit)? = null,
     padding: Dp = 20.dp,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     val shape = RoundedCornerShape(20.dp)
     val color = MaterialTheme.colorScheme.surfaceContainerLow
-    if (onClick != null) {
+    if (onClick != null && onLongClick != null) {
+        Surface(modifier = modifier.fillMaxWidth(), shape = shape, color = color) {
+            Column(
+                Modifier
+                    .combinedClickable(onClick = onClick, onLongClick = onLongClick)
+                    .padding(padding),
+                content = content,
+            )
+        }
+    } else if (onClick != null) {
         Surface(onClick = onClick, modifier = modifier.fillMaxWidth(), shape = shape, color = color) {
             Column(Modifier.padding(padding), content = content)
         }

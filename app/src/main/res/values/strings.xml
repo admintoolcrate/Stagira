@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">Stagirite</string>
+    <string name="widget_description">Your goals and their day counts</string>
 </resources>

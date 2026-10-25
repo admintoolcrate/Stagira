@@ -7,6 +7,13 @@ import androidx.compose.runtime.setValue
 
 enum class ThemeMode { System, Light, Dark }
 
+enum class SortOrder(val label: String) {
+    Added("As added"),
+    LongestRun("Longest current run"),
+    NextMilestone("Next milestone"),
+    Name("Name"),
+}
+
 enum class LockDelay(val label: String, val millis: Long) {
     Immediately("Immediately", 0),
     OneMinute("After 1 min", 60_000),
@@ -64,6 +71,14 @@ class Settings(context: Context) {
         reminder = on
         reminderMinutes = minutes
         prefs.edit().putBoolean("reminder", on).putInt("reminderMinutes", minutes).apply()
+    }
+
+    var sortOrder by mutableStateOf(enumOr(prefs.getString("sortOrder", null), SortOrder.Added))
+        private set
+
+    fun updateSortOrder(order: SortOrder) {
+        sortOrder = order
+        prefs.edit().putString("sortOrder", order.name).apply()
     }
 
     /** Whether the introductory guide has been seen or skipped. */

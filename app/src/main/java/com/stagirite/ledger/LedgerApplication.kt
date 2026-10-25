@@ -6,7 +6,9 @@ import com.stagirite.ledger.data.Settings
 import com.stagirite.ledger.security.AppLock
 import com.stagirite.ledger.security.PrivateTitles
 import com.stagirite.ledger.sync.SyncManager
+import com.stagirite.ledger.widget.LedgerWidget
 import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.launch
 
 class LedgerApplication : Application() {
     lateinit var store: GoalStore
@@ -27,6 +29,10 @@ class LedgerApplication : Application() {
         sync = SyncManager(this, store, MainScope())
         lock = AppLock(settings)
         privateTitles = PrivateTitles(this)
-        store.onChange = { sync.requestSync(delayMs = 2_000) }
+        val scope = MainScope()
+        store.onChange = {
+            sync.requestSync(delayMs = 2_000)
+            scope.launch { runCatching { LedgerWidget.refresh(this@LedgerApplication) } }
+        }
     }
 }

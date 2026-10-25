@@ -67,3 +67,11 @@ fun upcomingMilestones(goals: List<Goal>, today: LocalDate): List<UpcomingMilest
         val next = Milestones.next(days)
         UpcomingMilestone(it, next, next - days)
     }.sortedBy { it.inDays }
+
+/** Orders goals for the list. Names compare as shown, so cover names sort as covers. */
+fun sortGoals(goals: List<Goal>, order: SortOrder, today: LocalDate): List<Goal> = when (order) {
+    SortOrder.Added -> goals
+    SortOrder.LongestRun -> goals.sortedByDescending { it.daysKept(today) }
+    SortOrder.NextMilestone -> goals.sortedBy { Milestones.next(it.daysKept(today)) - it.daysKept(today) }
+    SortOrder.Name -> goals.sortedBy { it.title.lowercase() }
+}
