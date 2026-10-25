@@ -42,8 +42,17 @@ class GoalStore(context: Context) {
         changed()
     }
 
-    fun edit(id: String, title: String, since: LocalDate, reason: String, icon: String, kind: GoalKind?, sealed: String?, target: Long?) =
-        replace(id) { it.edit(title, since, reason, System.currentTimeMillis(), icon, kind, sealed, target) }
+    fun edit(
+        id: String,
+        title: String,
+        since: LocalDate,
+        reason: String,
+        icon: String,
+        kind: GoalKind?,
+        sealed: String?,
+        target: Long?,
+        notes: Map<LocalDate, String>? = null,
+    ) = replace(id) { it.edit(title, since, reason, System.currentTimeMillis(), icon, kind, sealed, target, notes ?: it.notes) }
 
     /** Applies [change] to every goal it alters (returns non-null for). */
     fun updateAll(change: (Goal) -> Goal?) {
@@ -53,6 +62,13 @@ class GoalStore(context: Context) {
         }
         if (any) changed()
     }
+
+    fun setNote(id: String, day: LocalDate, text: String) =
+        replace(id) { it.withNote(day, text, System.currentTimeMillis()) }
+
+    /** Replaces a private goal's sealed contents (real title, note, slip notes). */
+    fun setSealed(id: String, sealed: String) =
+        replace(id) { it.copy(sealed = sealed, updatedAt = System.currentTimeMillis()) }
 
     fun setArchived(id: String, archived: Boolean) =
         replace(id) { it.copy(archived = archived, updatedAt = System.currentTimeMillis()) }

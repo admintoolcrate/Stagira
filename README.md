@@ -10,8 +10,8 @@ A minimal Android app (**Stagirite** on your home screen) that does one thing: n
 
 - **Goals** — any number, counted from today or a past date, with an optional note on why each
   one matters. The count ticks over at midnight.
-- **Vices and virtues** — optionally mark a goal a vice (something to do less of) or a virtue
-  (something to do more of). Virtues log "missed days" instead of slips.
+- **Vices and Virtues** — optionally mark a goal a Vice (something you want to do less of) or a
+  Virtue (something you want to do more of). Virtues log "missed days" instead of slips.
 - **Icons** — a black-and-white emoji beside each goal, drawn with the open-source Noto Emoji
   font (see *Third-party material*).
 - **Private titles** — show a cover name ("No more corn") while the real name and note stay
@@ -39,8 +39,11 @@ A minimal Android app (**Stagirite** on your home screen) that does one thing: n
 - **Stats** — current, longest and average run; share of days kept; fresh starts; slips in the
   last 30 days; a chart of every run's length with a trend line and the median run (tap a bar
   for its dates).
-- **Overview** — all goals at a glance: totals, clean days this month, milestones coming up, a
-  combined calendar, and a line per goal.
+- **One home page** — a summary (days kept, share of days, clean days this month), your goals
+  with their progress verdicts, milestones coming up, and a combined calendar. Settings sits
+  behind the gear icon.
+- **Slip notes** — jot down what happened when you log a slip, or later from History. Notes on
+  private goals are sealed with the real title.
 - **Milestones** at 1, 3, 7, 14, 21, 30, 60, 90, 100, 180, 270 and 365 days, then 500, every
   1,000 and every year. Each goal has a Milestones tab (reached ones with their dates, the next few
   with the dates they'll fall on), and reaching one shows a short celebration with an Aristotle

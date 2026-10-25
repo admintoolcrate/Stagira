@@ -5,6 +5,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.stagirite.ledger.data.Goal
+import com.stagirite.ledger.data.LedgerCodec
+import java.time.LocalDate
 import com.stagirite.ledger.sync.Envelope
 import com.stagirite.ledger.sync.SyncKey
 import kotlinx.coroutines.Dispatchers
@@ -22,12 +24,15 @@ import java.util.Base64
  * synced file. A short PIN can't stand up to a determined attacker who has the
  * file and time to guess; for that, also turn on sync encryption.
  */
+/** What a private goal hides: its real title, its note, and notes on its slips. */
+data class Opened(val title: String, val reason: String, val notes: Map<LocalDate, String> = emptyMap())
+
 class PrivateTitles(context: Context) {
     private val prefs = context.getSharedPreferences("private", Context.MODE_PRIVATE)
     private val b64 = Base64.getEncoder()
     private val unb64 = Base64.getDecoder()
     private var key: SyncKey? = null
-    private val opened = HashMap<String, Pair<String, String>>()
+    private val opened = HashMap<String, Opened>()
 
     var unlocked by mutableStateOf(false)
         private set
@@ -81,24 +86,32 @@ class PrivateTitles(context: Context) {
         lock()
     }
 
-    fun seal(title: String, note: String, with: SyncKey? = key): String =
-        Envelope.write(JSONObject().put("t", title.trim()).put("r", note.trim()).toString(), requireNotNull(with))
+    fun seal(title: String, note: String, notes: Map<LocalDate, String> = emptyMap(), with: SyncKey? = key): String =
+        Envelope.write(
+            JSONObject()
+                .put("t", title.trim())
+                .put("r", note.trim())
+                .put("n", LedgerCodec.encodeNotes(notes))
+                .toString(),
+            requireNotNull(with),
+        )
 
-    /** The real title and note, if unlocked and they open with the current key. */
-    fun open(goal: Goal, with: SyncKey? = key): Pair<String, String>? {
+    /** The real title, note and slip notes, if unlocked and they open with the current key. */
+    fun open(goal: Goal, with: SyncKey? = key): Opened? {
         val sealed = goal.sealed ?: return null
         val k = with ?: return null
         if (k === key) opened[sealed]?.let { return it }
         val text = runCatching { (Envelope.read(sealed) as Envelope.Sealed).open(k) }.getOrNull() ?: return null
         val o = JSONObject(text)
-        return (o.optString("t") to o.optString("r")).also { if (k === key) opened[sealed] = it }
+        return Opened(o.optString("t"), o.optString("r"), LedgerCodec.decodeNotes(o.optJSONObject("n")))
+            .also { if (k === key) opened[sealed] = it }
     }
 
     /** The goal as it should be shown: real title and note when unlocked, cover otherwise. */
     fun reveal(goal: Goal): Goal {
         if (!unlocked) return goal
-        val (title, note) = open(goal) ?: return goal
-        return goal.copy(title = title, reason = note)
+        val o = open(goal) ?: return goal
+        return goal.copy(title = o.title, reason = o.reason, notes = o.notes)
     }
 
     private fun remember(k: SyncKey) {

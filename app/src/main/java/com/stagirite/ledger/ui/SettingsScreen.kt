@@ -24,7 +24,11 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
@@ -79,11 +83,20 @@ fun SettingsScreen(
     lock: AppLock,
     privateTitles: PrivateTitlesUi,
     onShowGuide: () -> Unit,
-    bottomBar: @Composable () -> Unit,
+    onBack: () -> Unit,
 ) {
     Scaffold(
-        topBar = { TopAppBar(title = { Text("Settings") }, colors = plainTopBarColors()) },
-        bottomBar = bottomBar,
+        topBar = {
+            TopAppBar(
+                title = { Text("Settings") },
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                    }
+                },
+                colors = plainTopBarColors(),
+            )
+        },
     ) { padding ->
         Column(
             Modifier
@@ -129,9 +142,16 @@ fun SettingsScreen(
                 )
                 Spacer(Modifier.height(12.dp))
                 Note(
-                    "Your ledger lives on this phone. There are no ads, no analytics and no accounts " +
-                        "of ours. The only time anything leaves the device is if you turn on sync, " +
-                        "and then only to your own Google Drive.",
+                    "No ads, no analytics, and no accounts or servers of ours. " + when {
+                        sync.state == SyncState.Off ->
+                            "Your ledger is kept only on this phone. Nothing leaves it unless you turn on sync."
+                        sync.encrypted ->
+                            "Your ledger is kept on this phone and synced to your Google Drive" +
+                                (sync.email?.let { " ($it)" } ?: "") + ", encrypted with your passphrase."
+                        else ->
+                            "Your ledger is kept on this phone and synced to your Google Drive" +
+                                (sync.email?.let { " ($it)" } ?: "") + ". Add a passphrase under Sync to encrypt it."
+                    },
                 )
             }
 
@@ -567,10 +587,10 @@ private fun AboutSection(onShowGuide: () -> Unit) {
     Text("Goals", style = MaterialTheme.typography.titleSmall)
     Spacer(Modifier.height(4.dp))
     Note(
-        "A goal can be a vice, something to do less of, or a virtue, something to do more of; or " +
-            "neither. Each day kept adds to its count. A slip (for a virtue, a missed day) starts the " +
-            "count again, and the run you had is kept in its history. Milestones mark the way, and " +
-            "every slip or milestone comes with a passage from Aristotle.",
+        "A goal can be a Vice, something you want to do less of, or a Virtue, something you want to " +
+            "do more of, or neither. Each day kept adds to its count. A slip (for a Virtue, a missed day) " +
+            "starts the count again; the run you had stays in its history, with a note if you add one. " +
+            "Milestones mark the way, and each slip or milestone comes with a passage from Aristotle.",
     )
     Spacer(Modifier.height(12.dp))
     OutlinedButton(onClick = onShowGuide) { Text("Show the guide") }

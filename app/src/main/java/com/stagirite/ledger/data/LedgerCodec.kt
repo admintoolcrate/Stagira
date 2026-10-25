@@ -25,6 +25,7 @@ object LedgerCodec {
                     .put("sealed", g.sealed ?: "")
                     .put("target", g.target ?: 0)
                     .put("archived", g.archived)
+                    .put("notes", encodeNotes(g.notes))
                     .put("created", g.createdAt)
                     .put("updated", g.updatedAt)
                     .put("deleted", g.deleted)
@@ -59,10 +60,22 @@ object LedgerCodec {
                 sealed = o.optString("sealed").ifEmpty { null },
                 target = o.optLong("target").takeIf { it > 0 },
                 archived = o.optBoolean("archived"),
+                notes = decodeNotes(o.optJSONObject("notes")),
                 createdAt = o.optLong("created"),
                 updatedAt = o.optLong("updated"),
                 deleted = o.optBoolean("deleted"),
             )
         }
+    }
+
+    /** Notes as {"<epoch day>": "text"}; also used inside sealed private goals. */
+    fun encodeNotes(notes: Map<LocalDate, String>): JSONObject =
+        JSONObject().also { o -> notes.forEach { (day, text) -> o.put(day.toEpochDay().toString(), text) } }
+
+    fun decodeNotes(o: JSONObject?): Map<LocalDate, String> {
+        if (o == null) return emptyMap()
+        return o.keys().asSequence().mapNotNull { k ->
+            k.toLongOrNull()?.let { LocalDate.ofEpochDay(it) to o.getString(k) }
+        }.toMap()
     }
 }

@@ -33,6 +33,7 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -77,6 +78,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -87,11 +89,13 @@ import com.stagirite.ledger.data.GoalIcons
 import com.stagirite.ledger.data.GoalKind
 import com.stagirite.ledger.data.Milestones
 import com.stagirite.ledger.data.SortOrder
+import com.stagirite.ledger.data.Verdict
 import com.stagirite.ledger.data.goalTemplates
 import com.stagirite.ledger.data.Quotes
 import com.stagirite.ledger.data.dayState
 import com.stagirite.ledger.data.describeSpan
 import com.stagirite.ledger.data.plural
+import com.stagirite.ledger.security.Opened
 import com.stagirite.ledger.data.progress
 import com.stagirite.ledger.data.stats
 import kotlinx.coroutines.launch
@@ -120,8 +124,8 @@ class PrivacyUi(
     val unlocked: Boolean,
     /** Ask for the PIN (or to set one up). */
     val requestPin: () -> Unit,
-    /** The real title and note of a private goal, when unlocked. */
-    val open: (Goal) -> Pair<String, String>?,
+    /** The real title, note and slip notes of a private goal, when unlocked. */
+    val open: (Goal) -> Opened?,
 )
 
 private fun String.capitalised() = replaceFirstChar { it.uppercase() }
@@ -143,9 +147,10 @@ fun GoalListScreen(
     onQuickSlip: (Goal) -> Unit,
     onArchive: (Goal, Boolean) -> Unit,
     onTitleLongPress: () -> Unit,
-    bottomBar: @Composable () -> Unit,
+    onSettings: () -> Unit,
 ) {
     var adding by rememberSaveable { mutableStateOf(false) }
+    var month by rememberSaveable { mutableStateOf(YearMonth.from(today).toString()) }
     var menu by remember { mutableStateOf(false) }
     var showArchived by rememberSaveable { mutableStateOf(false) }
     var actionsFor by rememberSaveable { mutableStateOf<String?>(null) }
@@ -165,6 +170,9 @@ fun GoalListScreen(
                     }
                 },
                 actions = {
+                    IconButton(onClick = onSettings) {
+                        Icon(Icons.Filled.Settings, contentDescription = "Settings")
+                    }
                     Box {
                         IconButton(onClick = { menu = true }) {
                             Icon(Icons.Filled.MoreVert, contentDescription = "Sort")
@@ -194,7 +202,6 @@ fun GoalListScreen(
                 colors = plainTopBarColors(),
             )
         },
-        bottomBar = bottomBar,
         snackbarHost = { SnackbarHost(snackbar) },
         floatingActionButton = {
             FloatingActionButton(
@@ -214,6 +221,10 @@ fun GoalListScreen(
                 verticalArrangement = Arrangement.spacedBy(12.dp),
                 modifier = Modifier.padding(padding),
             ) {
+                if (goals.isNotEmpty()) {
+                    item(key = "summary") { SummaryCard(goals, today) }
+                    item(key = "goals-heading") { SectionHeading("Goals", Modifier.padding(top = 12.dp)) }
+                }
                 items(goals, key = { it.id }) { goal ->
                     GoalCard(goal, today, onClick = { onOpen(goal) }, onLongClick = { actionsFor = goal.id })
                 }
@@ -225,6 +236,14 @@ fun GoalListScreen(
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.padding(8.dp),
                         )
+                    }
+                }
+                if (goals.isNotEmpty()) {
+                    item(key = "coming-heading") { SectionHeading("Coming up", Modifier.padding(top = 12.dp)) }
+                    item(key = "coming") { ComingUpCard(goals, today, onOpen) }
+                    item(key = "calendar-heading") { SectionHeading("All goals", Modifier.padding(top = 12.dp)) }
+                    item(key = "calendar") {
+                        CombinedCalendarCard(goals, today, YearMonth.parse(month)) { month = it.toString() }
                     }
                 }
                 if (archived.isNotEmpty()) {
@@ -331,7 +350,16 @@ private fun GoalCard(goal: Goal, today: LocalDate, onClick: () -> Unit, onLongCl
                 Spacer(Modifier.width(14.dp))
             }
             Column(Modifier.weight(1f)) {
-                KindLabel(goal.kind, Modifier.padding(bottom = 2.dp))
+                val verdict = goal.progress(today).verdict.takeIf { it != Verdict.TooSoon }
+                val tags = listOfNotNull(goal.kind?.label, verdict?.label)
+                if (tags.isNotEmpty()) {
+                    Text(
+                        tags.joinToString(" \u00B7 ").uppercase(),
+                        style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 1.4.sp),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(bottom = 2.dp),
+                    )
+                }
                 Text(goal.title, style = MaterialTheme.typography.titleMedium, maxLines = 2, overflow = TextOverflow.Ellipsis)
                 Spacer(Modifier.height(4.dp))
                 Text(
@@ -417,8 +445,12 @@ fun GoalDetailScreen(
     onMoveStart: (LocalDate) -> Unit,
     onArchive: (Boolean) -> Unit,
     onDelete: () -> Unit,
+    /** False for a private goal while its PIN hasn't been entered. */
+    canNote: Boolean = true,
+    onNote: (LocalDate, String) -> Unit = { _, _ -> },
 ) {
     val haptics = LocalHapticFeedback.current
+    var notingDay by rememberSaveable { mutableStateOf<Long?>(null) }
     var editing by rememberSaveable { mutableStateOf(false) }
     var slipSheet by rememberSaveable { mutableStateOf(false) }
     var pickingSlipDay by rememberSaveable { mutableStateOf(false) }
@@ -615,7 +647,7 @@ fun GoalDetailScreen(
                     }
                     GoalTab.Stats -> StatsPanel(goal, today)
                     GoalTab.Milestones -> MilestonesPanel(goal, today)
-                    GoalTab.History -> HistoryPanel(goal, today)
+                    GoalTab.History -> HistoryPanel(goal, today, canNote) { notingDay = it.toEpochDay() }
                 }
             }
             Spacer(Modifier.height(32.dp))
@@ -689,6 +721,34 @@ fun GoalDetailScreen(
         )
     }
 
+    notingDay?.let { epochDay ->
+        val day = LocalDate.ofEpochDay(epochDay)
+        var text by rememberSaveable(epochDay) { mutableStateOf(goal.notes[day] ?: "") }
+        AlertDialog(
+            onDismissRequest = { notingDay = null },
+            title = { Text("Note on ${day.format(mediumDate)}") },
+            text = {
+                OutlinedTextField(
+                    value = text,
+                    onValueChange = { text = it },
+                    label = { Text("What happened?") },
+                    placeholder = { Text("What led to it, how you felt, what might help next time") },
+                    minLines = 3,
+                    maxLines = 6,
+                    keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    onNote(day, text)
+                    notingDay = null
+                }) { Text("Save") }
+            },
+            dismissButton = { TextButton(onClick = { notingDay = null }) { Text("Cancel") } },
+        )
+    }
+
     tappedDay?.let { epochDay ->
         val day = LocalDate.ofEpochDay(epochDay)
         val isSlip = goal.isSlip(day)
@@ -712,21 +772,39 @@ fun GoalDetailScreen(
     }
 
     endedRun?.let { ended ->
+        var note by rememberSaveable { mutableStateOf("") }
+        val finish = {
+            if (note.isNotBlank()) onNote(today, note)
+            endedRun = null
+        }
         AlertDialog(
-            onDismissRequest = { endedRun = null },
+            onDismissRequest = finish,
             title = { Text("Day 0") },
             text = {
-                Column {
+                Column(Modifier.verticalScroll(rememberScrollState())) {
                     Text(
                         if (ended > 0) "Your run of ${plural(ended, "day")} is kept in the history. The count starts again today."
                         else "The count starts again today.",
                         style = MaterialTheme.typography.bodyMedium,
                     )
+                    if (canNote) {
+                        Spacer(Modifier.height(12.dp))
+                        OutlinedTextField(
+                            value = note,
+                            onValueChange = { note = it },
+                            label = { Text("What happened? (optional)") },
+                            placeholder = { Text("Only you will see this") },
+                            minLines = 2,
+                            maxLines = 4,
+                            keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                    }
                     Spacer(Modifier.height(20.dp))
                     QuoteBlock(Quotes.forSlip(goal))
                 }
             },
-            confirmButton = { TextButton(onClick = { endedRun = null }) { Text("Carry on") } },
+            confirmButton = { TextButton(onClick = finish) { Text("Carry on") } },
             dismissButton = {
                 TextButton(onClick = {
                     endedRun = null
@@ -890,20 +968,52 @@ private fun MilestonesPanel(goal: Goal, today: LocalDate) {
 }
 
 @Composable
-private fun HistoryPanel(goal: Goal, today: LocalDate) {
+private fun HistoryPanel(goal: Goal, today: LocalDate, canNote: Boolean, onNote: (LocalDate) -> Unit) {
     val runs = goal.runs(today).asReversed()
+    if (goal.history.isNotEmpty() && canNote) {
+        Text(
+            "Tap a ${goal.slipWord} to add a note about it.",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(bottom = 4.dp),
+        )
+    }
     runs.forEachIndexed { i, run ->
         val current = i == 0
-        Row(Modifier.fillMaxWidth().padding(vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
+        // Every finished run ended in a slip on its end day.
+        val slipDay = if (current) null else run.end
+        val note = slipDay?.let { goal.notes[it] }
+        Row(
+            Modifier
+                .fillMaxWidth()
+                .then(if (slipDay != null && canNote) Modifier.clickable { onNote(slipDay) } else Modifier)
+                .padding(vertical = 12.dp),
+            verticalAlignment = Alignment.Top,
+        ) {
             Column(Modifier.weight(1f)) {
                 Text(plural(run.days, "day"), style = MaterialTheme.typography.bodyLarge)
                 Text(
-                    "${run.start.format(mediumDate)} – " + if (current) "now" else run.end.format(mediumDate),
+                    "${run.start.format(mediumDate)} \u2013 " + if (current) "now" else run.end.format(mediumDate),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
+                if (note != null) {
+                    Spacer(Modifier.height(6.dp))
+                    Text(
+                        note,
+                        style = MaterialTheme.typography.bodyMedium.copy(fontStyle = FontStyle.Italic),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
             }
-            if (current) Text("Current", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            when {
+                current -> Text("Current", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                canNote -> Text(
+                    if (note == null) "Add note" else "Edit",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
         }
         if (i < runs.lastIndex) HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
     }
@@ -942,8 +1052,8 @@ private fun GoalDialog(
     // A private goal edited while locked: its real name stays sealed and untouched.
     val sealedAway = editing?.isPrivate == true && opened == null
     var title by rememberSaveable { mutableStateOf(cover ?: editing?.title ?: "") }
-    var realTitle by rememberSaveable { mutableStateOf(opened?.first ?: "") }
-    var reason by rememberSaveable { mutableStateOf(opened?.second ?: editing?.reason ?: "") }
+    var realTitle by rememberSaveable { mutableStateOf(opened?.title ?: "") }
+    var reason by rememberSaveable { mutableStateOf(opened?.reason ?: editing?.reason ?: "") }
     var icon by rememberSaveable { mutableStateOf(editing?.icon ?: "") }
     var kind by rememberSaveable { mutableStateOf(editing?.kind) }
     var private by rememberSaveable { mutableStateOf(editing?.isPrivate == true) }
@@ -1023,7 +1133,7 @@ private fun GoalDialog(
                     }
                 }
                 Text(
-                    kind?.blurb?.let { "$it." } ?: "Optional: mark it a vice to do less of, or a virtue to do more of.",
+                    kind?.blurb ?: "Optional. Mark it a Vice if you want to do it less, or a Virtue if you want to do it more.",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(top = 6.dp),

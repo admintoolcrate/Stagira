@@ -42,21 +42,24 @@ private val pages = listOf(
     ),
     GuidePage(
         "⚖",
-        "Vices and virtues",
-        "Name a goal and, if you like, mark it a vice to do less of or a virtue to do more of. " +
-            "Give it a black-and-white icon. Started earlier? Pick the day you began.",
+        "Vices and Virtues",
+        "A Vice is something you want to do less of, like drinking or late-night scrolling. A Virtue " +
+            "is something you want to do more of, like reading or running. Mark each goal as one or the " +
+            "other, or leave it unmarked. If you started a while ago, set the day you began.",
     ),
     GuidePage(
         "🌱",
-        "Slips are part of it",
-        "If you slip, log it in two taps: today, yesterday or any earlier day. The count starts " +
-            "again and the run you had stays in the history. Milestones mark the way.",
+        "When you slip",
+        "It happens to everyone, and it doesn\u2019t undo the days you kept. Log it in a couple of taps " +
+            "and the count starts again. Your earlier runs stay in your history, and you can jot down " +
+            "what happened, for yourself.",
     ),
     GuidePage(
         "🔑",
-        "Yours alone",
-        "Everything stays on this phone. Lock the app with your fingerprint, give sensitive goals a " +
-            "cover name behind a PIN, and sync to your own Google account only if you choose.",
+        "Private by default",
+        "Your ledger is kept on this phone. Nothing leaves it unless you turn on sync, which saves a copy " +
+            "to your own Google Drive, encrypted if you add a passphrase. You can also lock the app with " +
+            "your fingerprint and give sensitive goals a cover name behind a PIN.",
     ),
 )
 

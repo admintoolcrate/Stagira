@@ -11,8 +11,8 @@ data class Streak(val start: LocalDate, val end: LocalDate) {
 
 /** Optionally, whether a goal is a vice to do less of or a virtue to do more of. */
 enum class GoalKind(val label: String, val blurb: String, val slip: String, val slips: String) {
-    Vice("Vice", "Something to do less of", "slip", "slips"),
-    Virtue("Virtue", "Something to do more of", "missed day", "missed days"),
+    Vice("Vice", "A Vice is something you want to do less of, like drinking or late-night scrolling.", "slip", "slips"),
+    Virtue("Virtue", "A Virtue is something you want to do more of, like reading or running.", "missed day", "missed days"),
 }
 
 /**
@@ -45,6 +45,11 @@ data class Goal(
     val target: Long? = null,
     /** Hidden from the list, overview and widget, but kept. */
     val archived: Boolean = false,
+    /**
+     * Notes on slips, by the day of the slip. Empty for a private goal, whose
+     * notes are sealed along with its real title.
+     */
+    val notes: Map<LocalDate, String> = emptyMap(),
     val createdAt: Long = 0,
     val updatedAt: Long = 0,
     val deleted: Boolean = false,
@@ -79,7 +84,16 @@ data class Goal(
     }
 
     fun removeSlip(day: LocalDate, now: Long): Goal =
-        if (!isSlip(day)) this else copy(slips = slips - day, updatedAt = now)
+        if (!isSlip(day)) this else copy(slips = slips - day, notes = notes - day, updatedAt = now)
+
+    /** Sets or (with blank [text]) clears the note on the slip on [day]. */
+    fun withNote(day: LocalDate, text: String, now: Long): Goal {
+        // A private goal's notes live in its sealed contents, never here in the clear.
+        if (!isSlip(day) || isPrivate) return this
+        val trimmed = text.trim()
+        val updated = if (trimmed.isEmpty()) notes - day else notes + (day to trimmed)
+        return if (updated == notes) this else copy(notes = updated, updatedAt = now)
+    }
 
     /**
      * The earliest day the current run could be moved back to: unlimited with no
@@ -97,7 +111,9 @@ data class Goal(
         val earliest = currentStartEarliest!!
         val moved = maxOf(day, earliest)
         if (moved == slips.last()) return this
-        return copy(slips = slips.dropLast(1) + moved, updatedAt = now)
+        val note = notes[slips.last()]
+        val movedNotes = (notes - slips.last()).let { if (note != null) it + (moved to note) else it }
+        return copy(slips = slips.dropLast(1) + moved, notes = movedNotes, updatedAt = now)
     }
 
     /** [since] can't move past the first slip. */
@@ -110,6 +126,7 @@ data class Goal(
         kind: GoalKind? = this.kind,
         sealed: String? = this.sealed,
         target: Long? = this.target,
+        notes: Map<LocalDate, String> = this.notes,
     ): Goal = copy(
         title = title.trim(),
         since = slips.firstOrNull()?.let { minOf(it, since) } ?: since,
@@ -118,12 +135,14 @@ data class Goal(
         kind = kind,
         sealed = sealed,
         target = target?.takeIf { it > 0 },
+        // Sealed goals keep their notes inside the seal.
+        notes = if (sealed != null) emptyMap() else notes.filterKeys { it in slips },
         updatedAt = now,
     )
 
     fun tombstone(now: Long): Goal = copy(
         title = "", slips = emptyList(), reason = "", icon = "", kind = null, sealed = null,
-        target = null, archived = false, deleted = true, updatedAt = now,
+        target = null, archived = false, notes = emptyMap(), deleted = true, updatedAt = now,
     )
 
     /** Progress towards [target], 0..1, or null with no target. */
