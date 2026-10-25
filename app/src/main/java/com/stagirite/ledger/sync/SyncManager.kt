@@ -35,6 +35,12 @@ sealed interface SyncState {
     data object ChoosePassphrase : SyncState
     /** The copy in Drive is encrypted and this device doesn't have the key. */
     data class EnterPassphrase(val wrongAttempt: Boolean) : SyncState
+    /**
+     * The copy in Drive is no longer encrypted but this device has a key. Either
+     * encryption was turned off on another device, or something replaced the file.
+     * Nothing is uploaded until the user decides.
+     */
+    data object EncryptionRemoved : SyncState
     data class Failed(val message: String) : SyncState
 }
 
@@ -55,6 +61,7 @@ class SyncManager(
     private val mutex = Mutex()
     private var debounce: Job? = null
     private var sealedRemote: Envelope.Sealed? = null
+    private var plainRemote: Envelope.Plain? = null
 
     private val request = AuthorizationRequest.builder()
         .setRequestedScopes(listOf(Scope(DriveClient.SCOPE)))
@@ -108,7 +115,7 @@ class SyncManager(
     /** Syncs after [delayMs], replacing any sync already waiting. */
     fun requestSync(delayMs: Long = 0) {
         if (!connected) return
-        if (state is SyncState.ChoosePassphrase || state is SyncState.EnterPassphrase) return
+        if (state is SyncState.ChoosePassphrase || state is SyncState.EnterPassphrase || state is SyncState.EncryptionRemoved) return
         debounce?.cancel()
         debounce = scope.launch {
             delay(delayMs)
@@ -164,6 +171,29 @@ class SyncManager(
                 vault.clear()
             }
             mutex.withLock { guarded { token -> upload(DriveClient(token), overwrite = true) } }
+        }
+    }
+
+    /** Answer to [SyncState.EncryptionRemoved]: follow the other device and stop encrypting. */
+    fun acceptEncryptionRemoved() {
+        vault.clear()
+        encrypted = false
+        plainRemote = null
+        state = SyncState.Idle
+        scope.launch { sync() }
+    }
+
+    /** Answer to [SyncState.EncryptionRemoved]: fold in the plain copy, then replace it with an encrypted one. */
+    fun restoreEncryption() {
+        val remote = plainRemote ?: return
+        scope.launch {
+            mutex.withLock {
+                guarded { token ->
+                    store.mergeIn(LedgerCodec.decode(remote.ledger))
+                    upload(DriveClient(token), overwrite = true)
+                    plainRemote = null
+                }
+            }
         }
     }
 
@@ -237,8 +267,15 @@ class SyncManager(
             val remote = Envelope.read(withContext(Dispatchers.IO) { drive.download(fileId) })
             var key = vault.load()
             val remoteText = when (remote) {
-                // Another device turned encryption off: follow it.
-                is Envelope.Plain -> remote.ledger.also { vault.clear(); key = null }
+                is Envelope.Plain -> {
+                    if (key != null) {
+                        // Never drop encryption silently: ask first.
+                        plainRemote = remote
+                        state = SyncState.EncryptionRemoved
+                        return@guarded
+                    }
+                    remote.ledger
+                }
                 is Envelope.Sealed -> {
                     val opened = key?.takeIf { remote.matches(it) }?.let { k ->
                         try {

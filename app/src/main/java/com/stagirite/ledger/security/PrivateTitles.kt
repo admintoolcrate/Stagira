@@ -24,6 +24,12 @@ import java.util.Base64
  * synced file. A short PIN can't stand up to a determined attacker who has the
  * file and time to guess; for that, also turn on sync encryption.
  */
+sealed interface UnlockResult {
+    data object Unlocked : UnlockResult
+    data object Wrong : UnlockResult
+    data class Wait(val millis: Long) : UnlockResult
+}
+
 /** What a private goal hides: its real title, its note, and notes on its slips. */
 data class Opened(val title: String, val reason: String, val notes: Map<LocalDate, String> = emptyMap())
 
@@ -41,25 +47,46 @@ class PrivateTitles(context: Context) {
     var hasPin by mutableStateOf(prefs.contains("check"))
         private set
 
-    /** Unlocks with [pin]. On a new device, the PIN is checked against [goals] synced from elsewhere. */
-    suspend fun unlock(pin: String, goals: List<Goal>): Boolean = withContext(Dispatchers.Default) {
-        val candidate = if (hasPin) {
-            val k = Envelope.deriveKey(pin.toCharArray(), unb64.decode(prefs.getString("salt", "")), prefs.getInt("iterations", Envelope.ITERATIONS))
-            k.takeIf { runCatching { (Envelope.read(prefs.getString("check", "")!!) as Envelope.Sealed).open(it) }.isSuccess }
-        } else {
-            val sample = goals.firstNotNullOfOrNull { it.sealed }?.let { Envelope.read(it) as? Envelope.Sealed }
-                ?: return@withContext false
-            Envelope.deriveKey(pin.toCharArray(), sample.salt, sample.iterations)
-                .takeIf { k -> runCatching { sample.open(k) }.isSuccess }
-                ?.also(::remember)
+    /** Milliseconds until another PIN attempt is allowed; 0 when one is allowed now. */
+    fun waitMillis(): Long = maxOf(0, prefs.getLong("lockedUntil", 0) - System.currentTimeMillis())
+
+    /**
+     * Unlocks with [pin]. On a new device, the PIN is checked against [goals] synced
+     * from elsewhere. After [FREE_ATTEMPTS] wrong PINs, each further one adds a wait
+     * that doubles (30 s, 1 min, 2 min … up to an hour), so a PIN can't be guessed by
+     * trying them all.
+     */
+    suspend fun unlock(pin: String, goals: List<Goal>): UnlockResult {
+        if (waitMillis() > 0) return UnlockResult.Wait(waitMillis())
+        val candidate = withContext(Dispatchers.Default) {
+            // A damaged stored or synced value counts as a wrong PIN, never a crash.
+            runCatching {
+                if (hasPin) {
+                    val k = Envelope.deriveKey(
+                        pin.toCharArray(),
+                        unb64.decode(prefs.getString("salt", "")),
+                        prefs.getInt("iterations", Envelope.ITERATIONS),
+                    )
+                    k.takeIf { (Envelope.read(prefs.getString("check", "")!!) as Envelope.Sealed).open(it) == "ledger" }
+                } else {
+                    val sample = goals.firstNotNullOfOrNull { g -> g.sealed?.let { runCatching { Envelope.read(it) as? Envelope.Sealed }.getOrNull() } }
+                        ?: return@runCatching null
+                    Envelope.deriveKey(pin.toCharArray(), sample.salt, sample.iterations)
+                        .takeIf { k -> runCatching { sample.open(k) }.isSuccess }
+                }
+            }.getOrNull()
         }
-        withContext(Dispatchers.Main) {
-            if (candidate != null) {
-                key = candidate
-                unlocked = true
-            }
+        if (candidate == null) {
+            val failures = prefs.getInt("failures", 0) + 1
+            val wait = pinBackoffMillis(failures, FREE_ATTEMPTS)
+            prefs.edit().putInt("failures", failures).putLong("lockedUntil", System.currentTimeMillis() + wait).apply()
+            return if (wait > 0) UnlockResult.Wait(wait) else UnlockResult.Wrong
         }
-        candidate != null
+        if (!hasPin) remember(candidate)
+        prefs.edit().putInt("failures", 0).putLong("lockedUntil", 0).apply()
+        key = candidate
+        unlocked = true
+        return UnlockResult.Unlocked
     }
 
     /** Sets a new PIN and unlocks with it. Returns the previous key, for re-sealing. */
@@ -81,7 +108,9 @@ class PrivateTitles(context: Context) {
 
     /** Removes the PIN from this device. Sealed titles stay sealed until it's set again. */
     fun forget() {
-        prefs.edit().clear().apply()
+        val failures = prefs.getInt("failures", 0)
+        val until = prefs.getLong("lockedUntil", 0)
+        prefs.edit().clear().putInt("failures", failures).putLong("lockedUntil", until).apply()
         hasPin = false
         lock()
     }
@@ -112,6 +141,12 @@ class PrivateTitles(context: Context) {
         if (!unlocked) return goal
         val o = open(goal) ?: return goal
         return goal.copy(title = o.title, reason = o.reason, notes = o.notes)
+    }
+
+    companion object {
+        const val FREE_ATTEMPTS = 5
+        /** For new PINs; older 4-digit ones still unlock. */
+        const val MIN_NEW_PIN = 6
     }
 
     private fun remember(k: SyncKey) {

@@ -66,12 +66,18 @@ sealed interface Envelope {
                 .toString()
         }
 
+        /** Work factors outside this range are refused, so a damaged file can't hang or crash the app. */
+        val ACCEPTED_ITERATIONS = 10_000..5_000_000
+
+        /** Throws [IllegalArgumentException] or [org.json.JSONException] if [text] is malformed. */
         fun read(text: String): Envelope {
             val o = JSONObject(text)
             if (!o.has("sealed")) return Plain(text)
+            val iterations = o.getInt("iterations")
+            require(iterations in ACCEPTED_ITERATIONS) { "Unexpected key-derivation work factor: $iterations" }
             return Sealed(
                 salt = unb64.decode(o.getString("salt")),
-                iterations = o.getInt("iterations"),
+                iterations = iterations,
                 iv = unb64.decode(o.getString("iv")),
                 data = unb64.decode(o.getString("data")),
             )

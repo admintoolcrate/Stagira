@@ -335,7 +335,12 @@ private fun DataSection(store: GoalStore, sync: SyncManager, lock: AppLock) {
     val importer = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         if (uri == null) return@rememberLauncherForActivityResult
         val goals = runCatching {
-            context.contentResolver.openInputStream(uri)!!.use { LedgerCodec.decode(it.reader().readText()) }
+            context.contentResolver.openInputStream(uri)!!.use { input ->
+                // A ledger is a few kilobytes; refuse anything absurd rather than run out of memory.
+                val bytes = input.readNBytesCompat(MAX_IMPORT_BYTES + 1)
+                require(bytes.size <= MAX_IMPORT_BYTES) { "Too large" }
+                LedgerCodec.decode(bytes.toString(Charsets.UTF_8))
+            }
         }.getOrNull()
         if (goals == null) {
             Toast.makeText(context, "That isn't a ledger export", Toast.LENGTH_SHORT).show()
@@ -646,4 +651,18 @@ private fun PersonaliseSection(settings: Settings) {
         SwitchRow(title = title, detail = detail, checked = state.first, onChange = state.second)
         if (i < rows.lastIndex) Spacer(Modifier.height(12.dp))
     }
+}
+
+private const val MAX_IMPORT_BYTES = 5 * 1024 * 1024
+
+/** Reads at most [limit] bytes (InputStream.readNBytes needs API 33). */
+private fun java.io.InputStream.readNBytesCompat(limit: Int): ByteArray {
+    val out = java.io.ByteArrayOutputStream()
+    val buffer = ByteArray(16 * 1024)
+    while (out.size() < limit) {
+        val n = read(buffer, 0, minOf(buffer.size, limit - out.size()))
+        if (n < 0) break
+        out.write(buffer, 0, n)
+    }
+    return out.toByteArray()
 }

@@ -45,6 +45,7 @@ import androidx.compose.ui.platform.LocalContext
 import com.stagirite.ledger.data.Settings
 import com.stagirite.ledger.security.AppLock
 import com.stagirite.ledger.security.PrivateTitles
+import com.stagirite.ledger.security.UnlockResult
 import com.stagirite.ledger.sync.SyncManager
 import com.stagirite.ledger.sync.SyncState
 import kotlinx.coroutines.delay
@@ -79,6 +80,15 @@ fun LedgerApp(store: GoalStore, settings: Settings, sync: SyncManager, lock: App
     val shown = sortGoals(store.goals.map(vault::reveal), settings.sortOrder, today)
     val context = LocalContext.current
     val buzz = rememberBuzz()
+
+    LaunchedEffect(Unit) {
+        if (store.recoveredFromDamage) {
+            snackbar.showSnackbar(
+                "Your saved ledger couldn\u2019t be read, so the last good copy was restored. The damaged copy was kept.",
+                duration = SnackbarDuration.Long,
+            )
+        }
+    }
 
     // Keep the home-screen widget in step with the lock and sort order.
     LaunchedEffect(settings.appLock, settings.sortOrder) { runCatching { LedgerWidget.refresh(context) } }
@@ -258,6 +268,7 @@ fun LedgerApp(store: GoalStore, settings: Settings, sync: SyncManager, lock: App
             },
             confirm = if (flow == PinFlow.Unlock) "Show" else "Save",
             repeat = flow != PinFlow.Unlock,
+            minLength = if (flow == PinFlow.Unlock) 4 else PrivateTitles.MIN_NEW_PIN,
             busy = busy,
             error = error,
             onDismiss = { pinFlow = null },
@@ -265,8 +276,11 @@ fun LedgerApp(store: GoalStore, settings: Settings, sync: SyncManager, lock: App
                 scope.launch {
                     busy = true
                     when (flow) {
-                        PinFlow.Unlock -> {
-                            if (vault.unlock(pin, store.snapshot)) pinFlow = null else error = "That PIN didn\u2019t work."
+                        PinFlow.Unlock -> when (val r = vault.unlock(pin, store.snapshot)) {
+                            UnlockResult.Unlocked -> pinFlow = null
+                            UnlockResult.Wrong -> error = "That PIN didn\u2019t work."
+                            is UnlockResult.Wait -> error = "Too many wrong PINs. Try again in " +
+                                (if (r.millis < 60_000) "${(r.millis + 999) / 1000} seconds" else "${(r.millis + 59_999) / 60_000} minutes") + "."
                         }
                         PinFlow.Set -> {
                             vault.setPin(pin)
@@ -321,6 +335,19 @@ fun LedgerApp(store: GoalStore, settings: Settings, sync: SyncManager, lock: App
             busy = sync.busy,
             onConfirm = { sync.submitPassphrase(it) },
             onDismiss = { sync.disconnect(deleteCloudCopy = false) },
+        )
+        SyncState.EncryptionRemoved -> AlertDialog(
+            onDismissRequest = {},
+            title = { Text("Synced copy isn\u2019t encrypted") },
+            text = {
+                Text(
+                    "The copy of your ledger in Google Drive is no longer encrypted. If you turned encryption off " +
+                        "on another device, keep it off. If you didn\u2019t, encrypt it again: this phone still has " +
+                        "your key and will replace the copy with an encrypted one.",
+                )
+            },
+            confirmButton = { TextButton(onClick = sync::restoreEncryption, enabled = !sync.busy) { Text("Encrypt again") } },
+            dismissButton = { TextButton(onClick = sync::acceptEncryptionRemoved, enabled = !sync.busy) { Text("Keep it off") } },
         )
         else -> Unit
     }

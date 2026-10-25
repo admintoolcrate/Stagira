@@ -323,10 +323,11 @@ fun PinDialog(
     error: String?,
     onConfirm: (String) -> Unit,
     onDismiss: () -> Unit,
+    minLength: Int = 4,
 ) {
     var pin by remember { mutableStateOf("") }
     var again by remember { mutableStateOf("") }
-    val valid = pin.length in 4..8 && (!repeat || pin == again)
+    val valid = pin.length in minLength..8 && (!repeat || pin == again)
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(title) },
@@ -338,7 +339,7 @@ fun PinDialog(
                     value = pin,
                     onValueChange = { v -> if (v.length <= 8 && v.all(Char::isDigit)) pin = v },
                     label = { Text("PIN") },
-                    supportingText = { if (repeat) Text("4 to 8 digits") },
+                    supportingText = { if (repeat) Text("$minLength to 8 digits") },
                     isError = error != null,
                     singleLine = true,
                     visualTransformation = PasswordVisualTransformation(),

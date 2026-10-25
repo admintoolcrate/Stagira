@@ -127,16 +127,31 @@ class GoalStore(context: Context) {
         onChange()
     }
 
+    /** True if the saved ledger couldn't be read and was set aside rather than overwritten. */
+    var recoveredFromDamage = false
+        private set
+
     private fun load(): List<Goal> {
         val raw = prefs.getString(KEY, null) ?: return emptyList()
-        return runCatching { LedgerCodec.decode(raw) }.getOrDefault(emptyList())
+        runCatching { return LedgerCodec.decode(raw) }
+        // Unreadable: keep it untouched under another name, and fall back to the last good copy.
+        prefs.edit().putString("$KEY.damaged.${System.currentTimeMillis()}", raw).apply()
+        recoveredFromDamage = true
+        return prefs.getString(BACKUP, null)?.let { runCatching { LedgerCodec.decode(it) }.getOrNull() } ?: emptyList()
     }
 
     private fun save() {
-        prefs.edit().putString(KEY, LedgerCodec.encode(all)).apply()
+        val text = LedgerCodec.encode(all)
+        val previous = prefs.getString(KEY, null)
+        prefs.edit()
+            .putString(KEY, text)
+            // The copy before this one, readable by construction, in case the newest is ever damaged.
+            .apply { if (previous != null && runCatching { LedgerCodec.decode(previous) }.isSuccess) putString(BACKUP, previous) }
+            .apply()
     }
 
     private companion object {
         const val KEY = "ledger"
+        const val BACKUP = "ledger.previous"
     }
 }

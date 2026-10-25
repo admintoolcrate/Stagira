@@ -17,7 +17,7 @@ class EnvelopeTest {
 
     @Test
     fun sealedRoundTripsWithTheRightPassphrase() {
-        val key = Envelope.deriveKey("correct horse".toCharArray(), iterations = 1_000)
+        val key = Envelope.deriveKey("correct horse".toCharArray(), iterations = 10_000)
         val written = Envelope.write(ledger, key)
         assertFalse("ciphertext must not contain the ledger", written.contains("goals"))
 
@@ -30,8 +30,18 @@ class EnvelopeTest {
 
     @Test(expected = AEADBadTagException::class)
     fun wrongPassphraseFails() {
-        val key = Envelope.deriveKey("correct horse".toCharArray(), iterations = 1_000)
+        val key = Envelope.deriveKey("correct horse".toCharArray(), iterations = 10_000)
         val sealed = Envelope.read(Envelope.write(ledger, key)) as Envelope.Sealed
         sealed.open(Envelope.deriveKey("wrong".toCharArray(), sealed.salt, sealed.iterations))
+    }
+
+    @Test(expected = IllegalArgumentException::class)
+    fun absurdWorkFactorIsRefused() {
+        Envelope.read("""{"sealed":1,"iterations":2000000000,"salt":"AA==","iv":"AA==","data":"AA=="}""")
+    }
+
+    @Test(expected = IllegalArgumentException::class)
+    fun zeroWorkFactorIsRefused() {
+        Envelope.read("""{"sealed":1,"iterations":0,"salt":"AA==","iv":"AA==","data":"AA=="}""")
     }
 }

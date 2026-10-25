@@ -81,6 +81,28 @@ A minimal Android app (**Stagirite** on your home screen) that does one thing: n
   your goals appears on the lock screen.
 - Android auto-backup is turned off, so nothing is copied off the device unless you turn sync on.
 
+### What protects what (and what doesn't)
+
+| Threat | Protection |
+|---|---|
+| Someone picks up your unlocked phone | App lock (fingerprint / face / screen lock); private titles behind a PIN; recents preview hidden |
+| Someone sees the lock screen or widget | Reminder text never names a goal; widget shows cover names, or only "Locked" with the app lock on |
+| Google, or anyone who reads your Drive data | Sync passphrase: AES-256-GCM, PBKDF2-SHA256 (210,000 rounds); only ciphertext is uploaded |
+| A synced file is replaced with an unencrypted one | Sync stops and asks before ever uploading unencrypted |
+| Guessing the private-titles PIN in the app | 5 free tries, then waits that double from 30 s up to an hour; new PINs need 6+ digits |
+| A damaged save | The unreadable copy is kept aside and the last good copy is restored, never silently overwritten |
+| A damaged or hostile synced/imported file | Work factors outside 10,000–5,000,000 are refused; imports over 5 MB are refused |
+
+Limits worth knowing:
+
+- **Debug builds are debuggable.** Anyone with your unlocked phone, a USB cable and developer
+  tools can read a debug build's stored data. Use a signed release build for real use.
+- **A PIN is short.** Someone who has your synced file (or a copy of the app's storage) and time
+  can try every PIN offline; the in-app throttle doesn't apply there. With a sync passphrase on,
+  the synced file is protected by the passphrase as well.
+- **On the phone, the ledger is stored unencrypted** in app-private storage, protected by Android's
+  app sandbox and the phone's own encryption, like most apps' data.
+
 ### How sync works
 
 All your devices need this version or later: the ledger format changed to store slip dates

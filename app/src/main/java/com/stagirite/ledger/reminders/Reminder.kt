@@ -77,9 +77,18 @@ class ReminderReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) = Reminder.show(context)
 }
 
-/** Alarms are cleared on reboot; set the reminder again. */
+/** Alarms don't survive a reboot or an app update, and drift with clock changes; set the reminder again. */
 class BootReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
-        if (intent.action == Intent.ACTION_BOOT_COMPLETED) Reminder.apply(context, Settings(context))
+        if (intent.action in RESCHEDULE_ON) Reminder.apply(context, Settings(context))
+    }
+
+    private companion object {
+        val RESCHEDULE_ON = setOf(
+            Intent.ACTION_BOOT_COMPLETED,
+            Intent.ACTION_MY_PACKAGE_REPLACED,
+            Intent.ACTION_TIME_CHANGED,
+            Intent.ACTION_TIMEZONE_CHANGED,
+        )
     }
 }

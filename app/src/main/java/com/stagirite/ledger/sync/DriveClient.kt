@@ -28,7 +28,8 @@ class DriveClient(private val accessToken: String) {
     fun download(id: String): String = request("GET", "$API/files/$id?alt=media")
 
     fun create(content: String) {
-        val boundary = "ledger-boundary"
+        // Random, so no goal title or note can ever contain it.
+        val boundary = "ledger-" + java.util.UUID.randomUUID().toString().replace("-", "")
         val metadata = JSONObject().put("name", FILE_NAME).put("parents", JSONArray().put("appDataFolder"))
         val body = "--$boundary\r\n" +
             "Content-Type: application/json; charset=UTF-8\r\n\r\n$metadata\r\n" +
