@@ -174,6 +174,11 @@ added as a test user (step 3). Changes in Google Cloud can take a few minutes to
 For a Play Store release, sign with your own release key, add its SHA-1 as a second Android
 client, and publish the consent screen.
 
+## Publishing
+
+Everything for Google Play (step-by-step guide, store listing, privacy policy, Data safety
+answers, icon and feature graphic) is in [`docs/play-store/`](docs/play-store/RELEASE.md).
+
 ## Getting the app
 
 **Download a build:** every push runs the *Build APK* GitHub Action. Open the latest run under

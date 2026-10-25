@@ -1,8 +1,28 @@
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
     id("org.jetbrains.kotlin.plugin.compose")
 }
+
+/** Upload-key settings from keystore.properties, else from RELEASE_* environment variables. */
+val releaseSigning: Map<String, String>?
+    get() {
+        val file = rootProject.file("keystore.properties")
+        if (file.exists()) {
+            val p = Properties().apply { file.inputStream().use { load(it) } }
+            return listOf("storeFile", "storePassword", "keyAlias", "keyPassword")
+                .associateWith { p.getProperty(it) ?: error("keystore.properties is missing $it") }
+        }
+        val env = mapOf(
+            "storeFile" to System.getenv("RELEASE_STORE_FILE"),
+            "storePassword" to System.getenv("RELEASE_STORE_PASSWORD"),
+            "keyAlias" to System.getenv("RELEASE_KEY_ALIAS"),
+            "keyPassword" to System.getenv("RELEASE_KEY_PASSWORD"),
+        )
+        return if (env.values.all { !it.isNullOrEmpty() }) env.mapValues { it.value!! } else null
+    }
 
 android {
     namespace = "com.stagirite.ledger"
@@ -25,11 +45,23 @@ android {
             keyAlias = "androiddebugkey"
             keyPassword = "android"
         }
+        // Your upload key, from keystore.properties (never committed) or, in CI,
+        // from environment variables. Without either, release builds are unsigned.
+        releaseSigning?.let { s ->
+            create("release") {
+                storeFile = file(s.getValue("storeFile"))
+                storePassword = s.getValue("storePassword")
+                keyAlias = s.getValue("keyAlias")
+                keyPassword = s.getValue("keyPassword")
+            }
+        }
     }
 
     buildTypes {
         release {
+            signingConfigs.findByName("release")?.let { signingConfig = it }
             isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
     }

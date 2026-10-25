@@ -6,3 +6,7 @@ local.properties
 .DS_Store
 captures/
 .kotlin/
+# Release signing: never commit these.
+keystore.properties
+*.jks
+upload-keystore*
