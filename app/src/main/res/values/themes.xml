@@ -1,7 +1,5 @@
 <resources>
     <style name="Theme.Ledger" parent="android:Theme.Material.Light.NoActionBar">
-        <item name="android:windowBackground">@color/parchment</item>
-        <item name="android:statusBarColor">@color/parchment</item>
-        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:windowBackground">@color/paper</item>
     </style>
 </resources>

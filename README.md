@@ -1,44 +1,93 @@
 # The Stagirite's Ledger
 
-A simple Android app that does one thing: you name a habit you're keeping —
+A minimal Android app that does one thing: name a habit you're keeping —
 *no more alcohol*, *no smoking*, *daily run* — and it counts the days.
 
-> "We become just by doing just acts, temperate by doing temperate acts."
-> — Aristotle (the Stagirite), *Nicomachean Ethics*
+> "One swallow does not make a spring, nor does one day." — Aristotle
 
 ## Features
 
-- Add any number of goals, starting today or on a past date
-- Day count for each goal, rolling over automatically at midnight
-- Span shown in years, months and days, plus progress to the next milestone
-  (1, 3, 7, 14, 21, 30, 60, 90, 180, 270, 365 days, then every year)
-- "Begin again" if you slip — the count restarts, your longest streak is kept
-- Everything stays on the device; no account, no network
-- Light and dark themes
+- Any number of goals, counted from today or a past date
+- The count ticks over at midnight; shown as days, and as years/months/days
+- Progress to the next milestone (1, 3, 7, 14, 21, 30, 60, 90, 180, 270, 365 days, then yearly)
+- **Begin again** when you slip: the count restarts and the run is kept in the goal's history,
+  along with your longest streak and number of fresh starts
+- Edit a goal's name or start date; delete a goal
+- Light, dark, or follow the system
+- Optional sync through your Google account (below)
+- Export to / import from a JSON file
+
+## Privacy
+
+- Works fully offline. Sync is **off** until you connect an account.
+- No ads, no analytics, no server of ours. The only network traffic is to Google Drive, and only
+  when sync is on.
+- Sync uses Drive's hidden **app data folder** with the `drive.appdata` scope: the app can't see
+  any of your other Drive files, and the folder doesn't show up in Drive. (This is the same kind of
+  storage Play Games uses for saved games; Play Games itself is reserved for games.)
+- **End-to-end encryption** (optional, recommended): with a passphrase, the ledger is encrypted on
+  the phone with AES-256-GCM, using a key derived by PBKDF2-SHA256 (210,000 rounds). Google only ever
+  stores ciphertext. The derived key is kept on each device under a hardware-backed Android
+  Keystore key; the passphrase itself is never stored. Lose the passphrase and the synced copy can't
+  be recovered (your phone's copy is unaffected).
+- **Disconnect** revokes the app's access to your Google account and can delete the synced copy.
+- **Hide in recent apps** blanks the app in the app switcher and blocks screenshots.
+- Android auto-backup is turned off, so nothing is copied off the device unless you turn sync on.
+
+### How sync works
+
+Every goal carries a last-changed time. On sync the app downloads the copy in Drive, keeps the newer
+version of each goal, and uploads the result. Deletions are synced as tombstones so they don't come
+back. Sync runs when you open or leave the app, a couple of seconds after any change, and on
+**Settings → Sync now**.
+
+## Setting up Google sign-in (one time)
+
+Google only lets an app use Drive once it's registered. This is free and takes about ten minutes:
+
+1. Go to [Google Cloud Console](https://console.cloud.google.com/) and create a project.
+2. **APIs & Services → Library**: enable the **Google Drive API**.
+3. **APIs & Services → OAuth consent screen** (Google Auth Platform):
+   - App name "The Stagirite's Ledger", user type **External**.
+   - Under **Data access**, add the scope `.../auth/drive.appdata`.
+   - Under **Audience**, leave it in **Testing** and add your Google account as a test user.
+4. **Credentials → Create credentials → OAuth client ID → Android**:
+   - Package name: `com.stagirite.ledger`
+   - SHA-1: `CF:C6:60:65:8C:C7:E4:35:59:14:89:72:32:38:0D:D0:44:C0:9D:04`
+     (the fixed debug key in `app/debug.keystore`, used by every debug build including the CI APK)
+
+No keys or IDs go into the code: Google recognises the app by its package name and signature.
+If you see "Google sign-in isn't configured for this build", one of these steps is missing.
+
+For a Play Store release, sign with your own release key, add its SHA-1 as a second Android
+client, and publish the consent screen.
 
 ## Getting the app
 
-**Download a build:** every push runs the *Build APK* GitHub Action. Open the
-latest run under the repo's **Actions** tab and download the
-`stagirites-ledger-debug` artifact, unzip it, and install `app-debug.apk` on
-your phone (you'll need to allow installs from unknown sources).
+**Download a build:** every push runs the *Build APK* GitHub Action. Open the latest run under
+the repo's **Actions** tab, download the `stagirites-ledger-debug` artifact, unzip it and install
+`app-debug.apk` (allow installs from unknown sources when asked).
 
 **Build it yourself:** open the project in Android Studio, or run
 
 ```sh
 ./gradlew assembleDebug        # APK in app/build/outputs/apk/debug/
-./gradlew testDebugUnitTest    # unit tests for the day-counting logic
+./gradlew testDebugUnitTest    # unit tests: counting, merging, encryption
 ```
 
 ## Project layout
 
 ```
 app/src/main/java/com/stagirite/ledger/
-  Goal.kt          day counting, resets, milestones (pure Kotlin, unit tested)
-  GoalStore.kt     saves goals to SharedPreferences as JSON
-  MainActivity.kt  entry point
-  ui/LedgerApp.kt  list, detail and "new goal" screens (Jetpack Compose)
-  ui/Theme.kt      parchment-and-ink colours, serif type
+  data/Goal.kt            day counting, resets, history, merge, milestones
+  data/LedgerCodec.kt     the JSON format (storage, sync, export)
+  data/GoalStore.kt       the ledger on this device
+  data/Settings.kt        theme and privacy preferences
+  sync/Envelope.kt        optional passphrase encryption of the synced file
+  sync/KeyVault.kt        keeps the sync key under the Android Keystore
+  sync/DriveClient.kt     tiny Google Drive app-data-folder client
+  sync/SyncManager.kt     sign-in, sync and encryption state
+  ui/                     Jetpack Compose screens and theme
 ```
 
-Kotlin, Jetpack Compose, Material 3. Min Android 8.0 (API 26).
+Kotlin, Jetpack Compose, Material 3. Android 8.0 (API 26) and up.

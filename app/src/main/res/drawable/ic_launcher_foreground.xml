@@ -4,18 +4,9 @@
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <!-- left page -->
     <path
-        android:fillColor="#FF8C5A2B"
-        android:pathData="M54,40 C46,35 38,34 30,36 L30,72 C38,70 46,71 54,76 Z" />
-    <!-- right page -->
-    <path
-        android:fillColor="#FF6E4420"
-        android:pathData="M54,40 C62,35 70,34 78,36 L78,72 C70,70 62,71 54,76 Z" />
-    <!-- tally marks -->
-    <path
-        android:strokeColor="#FFF4ECD8"
-        android:strokeWidth="2.5"
+        android:strokeColor="#FFFAFAF8"
+        android:strokeWidth="3"
         android:strokeLineCap="round"
-        android:pathData="M60,46 L60,62 M65,45.5 L65,61.5 M70,45 L70,61 M57,58 L73,48" />
+        android:pathData="M42,40 L42,68 M50,40 L50,68 M58,40 L58,68 M66,40 L66,68 M36,62 L72,46" />
 </vector>

@@ -1,8 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
+    <!-- Used only to talk to Google Drive when sync is turned on. -->
+    <uses-permission android:name="android.permission.INTERNET" />
+
+    <!-- Backups are off: sync is opt-in, so nothing is copied to the cloud without asking. -->
     <application
-        android:allowBackup="true"
+        android:name=".LedgerApplication"
+        android:allowBackup="false"
+        android:fullBackupContent="false"
         android:icon="@mipmap/ic_launcher"
         android:roundIcon="@mipmap/ic_launcher"
         android:label="@string/app_name"

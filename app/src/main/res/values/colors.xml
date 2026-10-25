@@ -1,5 +1,4 @@
 <resources>
-    <color name="parchment">#FFF4ECD8</color>
-    <color name="ink">#FF1C1A17</color>
-    <color name="bronze">#FF8C5A2B</color>
+    <color name="paper">#FFFAFAF8</color>
+    <color name="ink">#FF0F0F0F</color>
 </resources>
