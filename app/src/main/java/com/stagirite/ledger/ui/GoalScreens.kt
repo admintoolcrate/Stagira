@@ -806,7 +806,8 @@ fun GoalDetailScreen(
                 }
                 Spacer(Modifier.height(Space.m))
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(Space.s)) {
-                    Button(
+                    // A Virtue is assumed done, so there's nothing to log on a good day: only a missed one.
+                    if (goal.kind != GoalKind.Virtue) Button(
                         onClick = {
                             buzz()
                             onUrge()

@@ -48,8 +48,8 @@ A minimal Android app (**Stagira** on your home screen) that does one thing: nam
 - **Weekly review** — the last seven days against the seven before (clean days, slips, urges
   resisted, milestones, a line per goal), with an optional weekly notification that never names
   a goal.
-- **Urges resisted** — one tap logs a moment you felt the urge and didn't (for a Virtue: "did it
-  anyway"), with Undo. Counted per day only; shown in stats and on the progress card, and never
+- **Urges resisted** — for Vices, one tap logs a moment you felt the urge and didn't, with Undo.
+  Virtues have nothing to log on a good day: they count as kept unless you log a missed day. Counted per day only; shown in stats and on the progress card, and never
   counted against you.
 - **Progress** — measured by the gaps between slips: a verdict (Improving, Steady, Harder
   lately, or Unbroken), your typical run now against before (median of the last 3 runs vs the 3
