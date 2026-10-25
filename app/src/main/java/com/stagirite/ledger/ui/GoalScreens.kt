@@ -476,15 +476,10 @@ private fun LedgerRow(goal: Goal, today: LocalDate, onClick: () -> Unit, onLongC
                     Spacer(Modifier.width(Space.m))
                 }
                 Column(Modifier.weight(1f)) {
-                    val verdict = goal.progress(today).verdict.takeIf { it != Verdict.TooSoon }
-                    val tags = listOfNotNull(
-                        goal.kind?.label,
-                        if (goal.hasSchedule) "${goal.schedule.size} days a week" else null,
-                        verdict?.label,
-                    )
-                    if (tags.isNotEmpty()) {
+                    // Kept to what changes how to read the row; the progress verdict lives on the goal's page.
+                    if (goal.hasSchedule) {
                         Text(
-                            tags.joinToString(" \u00B7 ").uppercase(),
+                            scheduleText(goal.schedule).uppercase(),
                             style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 1.4.sp),
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.padding(bottom = 2.dp),

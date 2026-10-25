@@ -29,6 +29,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.stagirite.ledger.data.Quotes
 import com.stagirite.ledger.data.GoalTemplate
+import com.stagirite.ledger.data.GoalKind
 import com.stagirite.ledger.data.goalTemplates
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
@@ -90,11 +91,12 @@ fun GuideScreen(onDone: () -> Unit, onCreate: ((GoalDraft) -> Unit)? = null) {
     val last = pager.currentPage == count - 1
     var title by rememberSaveable { mutableStateOf("") }
     var template by remember { mutableStateOf<GoalTemplate?>(null) }
+    var kind by rememberSaveable { mutableStateOf(GoalKind.Vice) }
     val finish = {
         val name = title.trim()
         if (onCreate != null && name.isNotEmpty()) {
             val t = template?.takeIf { it.title == name }
-            onCreate(GoalDraft(name, LocalDate.now(), "", t?.icon ?: "", t?.kind, false, null))
+            onCreate(GoalDraft(name, LocalDate.now(), "", t?.icon ?: "", kind, false, null))
         }
         onDone()
     }
@@ -111,7 +113,12 @@ fun GuideScreen(onDone: () -> Unit, onCreate: ((GoalDraft) -> Unit)? = null) {
             }
             HorizontalPager(pager, Modifier.weight(1f)) { i ->
                 if (i == pages.size) {
-                    FirstGoalPage(title, onTitle = { title = it; template = null }, onTemplate = { template = it; title = it.title })
+                    FirstGoalPage(
+                        title, kind,
+                        onTitle = { title = it; template = null },
+                        onKind = { kind = it; template = null; title = "" },
+                        onTemplate = { template = it; title = it.title },
+                    )
                     return@HorizontalPager
                 }
                 val page = pages[i]
@@ -175,28 +182,41 @@ fun GuideScreen(onDone: () -> Unit, onCreate: ((GoalDraft) -> Unit)? = null) {
 /** The last page of a first visit: name something, or pick a common one. */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun FirstGoalPage(title: String, onTitle: (String) -> Unit, onTemplate: (GoalTemplate) -> Unit) {
+private fun FirstGoalPage(
+    title: String,
+    kind: GoalKind,
+    onTitle: (String) -> Unit,
+    onKind: (GoalKind) -> Unit,
+    onTemplate: (GoalTemplate) -> Unit,
+) {
     Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.Center) {
         Text("What are you starting?", style = MaterialTheme.typography.headlineMedium)
         Spacer(Modifier.height(Space.s))
         Text(
-            "Something to stop, or something to keep doing. The count starts today; you can change the date later.",
+            "The count starts today; you can change the date later.",
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
-        Spacer(Modifier.height(Space.xl))
+        Spacer(Modifier.height(Space.l))
+        Row(horizontalArrangement = Arrangement.spacedBy(Space.s)) {
+            GoalKind.entries.forEach { k ->
+                FilterChip(selected = kind == k, onClick = { onKind(k) }, label = { Text(k.choice) })
+            }
+        }
+        Text(kind.blurb, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Spacer(Modifier.height(Space.l))
         OutlinedTextField(
             value = title,
             onValueChange = onTitle,
             label = { Text("Goal") },
-            placeholder = { Text("e.g. No alcohol") },
+            placeholder = { Text(if (kind == GoalKind.Virtue) "e.g. One good deed a day" else "e.g. Drink less") },
             singleLine = true,
             keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences, imeAction = ImeAction.Done),
             modifier = Modifier.fillMaxWidth(),
         )
         Spacer(Modifier.height(Space.l))
         FlowRow(horizontalArrangement = Arrangement.spacedBy(Space.s), verticalArrangement = Arrangement.spacedBy(Space.s)) {
-            goalTemplates.forEach { t ->
+            goalTemplates.filter { it.kind == kind }.forEach { t ->
                 FilterChip(
                     selected = title == t.title,
                     onClick = { onTemplate(t) },
