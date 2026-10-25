@@ -3,6 +3,13 @@ package com.stagirite.ledger.ui
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.StrokeCap
+import com.stagirite.ledger.data.Trend
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -35,7 +42,14 @@ private const val MAX_BARS = 30
  * tap a bar for its dates.
  */
 @Composable
-fun RunsChart(runs: List<Streak>, modifier: Modifier = Modifier) {
+fun RunsChart(
+    runs: List<Streak>,
+    modifier: Modifier = Modifier,
+    /** Fitted over the finished runs (all but the last of [runs]). */
+    trend: Trend? = null,
+    /** Median of the finished runs. */
+    median: Double? = null,
+) {
     val shown = runs.takeLast(MAX_BARS)
     val longestIndex = shown.indices.maxByOrNull { shown[it].days } ?: 0
     val currentIndex = shown.lastIndex
@@ -73,7 +87,7 @@ fun RunsChart(runs: List<Streak>, modifier: Modifier = Modifier) {
             if (shown.isEmpty()) return@Canvas
             val labelSpace = 16.dp.toPx()
             val plotHeight = size.height - labelSpace
-            val max = shown.maxOf { it.days }.coerceAtLeast(1)
+            val max = maxOf(shown.maxOf { it.days }.toDouble(), median ?: 0.0).coerceAtLeast(1.0)
             val slot = size.width / shown.size
             val gap = 2.dp.toPx()
             val barWidth = (slot - gap).coerceAtMost(28.dp.toPx())
@@ -81,7 +95,7 @@ fun RunsChart(runs: List<Streak>, modifier: Modifier = Modifier) {
 
             drawLine(rule, Offset(0f, size.height), Offset(size.width, size.height), strokeWidth = 1.dp.toPx())
             shown.forEachIndexed { i, run ->
-                val h = (run.days.toFloat() / max) * plotHeight
+                val h = (run.days / max).toFloat() * plotHeight
                 val left = i * slot + (slot - barWidth) / 2
                 val top = size.height - h
                 val alpha = if (selected == null || selected == i) 1f else 0.35f
@@ -106,6 +120,46 @@ fun RunsChart(runs: List<Streak>, modifier: Modifier = Modifier) {
                     drawText(layout, topLeft = Offset(x, top - layout.size.height - 2.dp.toPx()))
                 }
             }
+
+            fun yOf(days: Double) = (size.height - (days / max).toFloat() * plotHeight).coerceIn(labelSpace, size.height)
+            median?.let { m ->
+                drawLine(
+                    ink.copy(alpha = 0.6f),
+                    Offset(0f, yOf(m)), Offset(size.width, yOf(m)),
+                    strokeWidth = 1.dp.toPx(),
+                    pathEffect = PathEffect.dashPathEffect(floatArrayOf(6.dp.toPx(), 4.dp.toPx())),
+                )
+            }
+            trend?.let { t ->
+                // The trend is fitted over finished runs; map bar positions back to run numbers.
+                val offset = runs.size - shown.size
+                val finishedShown = (0 until shown.size - 1)
+                if (finishedShown.count() >= 2) {
+                    val first = finishedShown.first
+                    val last = finishedShown.last
+                    fun x(i: Int) = i * slot + slot / 2
+                    drawLine(
+                        ink,
+                        Offset(x(first), yOf(t.at(first + offset))),
+                        Offset(x(last), yOf(t.at(last + offset))),
+                        strokeWidth = 2.dp.toPx(),
+                        cap = StrokeCap.Round,
+                    )
+                }
+            }
+        }
+        if (trend != null || median != null) {
+            Spacer(Modifier.height(8.dp))
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                if (trend != null) {
+                    LineSample(dashed = false)
+                    Text("Trend", style = MaterialTheme.typography.labelSmall, color = muted, modifier = Modifier.padding(start = 6.dp, end = 16.dp))
+                }
+                if (median != null) {
+                    LineSample(dashed = true)
+                    Text("Typical run (median)", style = MaterialTheme.typography.labelSmall, color = muted, modifier = Modifier.padding(start = 6.dp))
+                }
+            }
         }
         if (runs.size > MAX_BARS) {
             Spacer(Modifier.height(4.dp))
@@ -118,3 +172,16 @@ fun RunsChart(runs: List<Streak>, modifier: Modifier = Modifier) {
     }
 }
 
+
+@Composable
+private fun LineSample(dashed: Boolean) {
+    val ink = MaterialTheme.colorScheme.onBackground
+    Canvas(Modifier.width(18.dp).height(8.dp)) {
+        drawLine(
+            if (dashed) ink.copy(alpha = 0.6f) else ink,
+            Offset(0f, size.height / 2), Offset(size.width, size.height / 2),
+            strokeWidth = if (dashed) 1.dp.toPx() else 2.dp.toPx(),
+            pathEffect = if (dashed) PathEffect.dashPathEffect(floatArrayOf(4.dp.toPx(), 3.dp.toPx())) else null,
+        )
+    }
+}

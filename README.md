@@ -25,8 +25,13 @@ A minimal Android app (**Stagirite** on your home screen) that does one thing: n
   date, and record a slip on any past day (or remove one), from the goal page or by
   tapping the day in its calendar. Runs, stats and the count all follow.
 - **Calendar** — a month view for each goal: filled discs for kept days, rings for slips.
+- **Progress** — measured by the gaps between slips: a verdict (Improving, Steady, Harder
+  lately, or Unbroken), your typical run now against before (median of the last 3 runs vs the 3
+  before), slips in the last 90 days against the 90 before, back-to-back slips (within 3 days),
+  new personal bests, and days kept by month. Too little history says so rather than guessing.
 - **Stats** — current, longest and average run; share of days kept; fresh starts; slips in the
-  last 30 days; a chart of every run's length (tap a bar for its dates).
+  last 30 days; a chart of every run's length with a trend line and the median run (tap a bar
+  for its dates).
 - **Overview** — all goals at a glance: totals, clean days this month, milestones coming up, a
   combined calendar, and a line per goal.
 - **Milestones** at 1, 3, 7, 14, 21, 30, 60, 90, 100, 180, 270 and 365 days, then 500, every
@@ -141,6 +146,7 @@ the repo's **Actions** tab, download the `stagirites-ledger-debug` artifact, unz
 app/src/main/java/com/stagirite/ledger/
   data/Goal.kt            start date + slip dates; runs, merge, milestones
   data/Stats.kt           per-goal stats, calendar day states, overview figures
+  data/Progress.kt        improvement measures from the gaps between slips
   data/Quotes.kt          the Aristotle passages (checked by tools/verify_quotes.py)
   data/LedgerCodec.kt     the JSON format (storage, sync, export)
   data/GoalStore.kt       the ledger on this device

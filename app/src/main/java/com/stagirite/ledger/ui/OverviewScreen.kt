@@ -30,6 +30,7 @@ import com.stagirite.ledger.data.Goal
 import com.stagirite.ledger.data.GoalKind
 import com.stagirite.ledger.data.overviewDayState
 import com.stagirite.ledger.data.plural
+import com.stagirite.ledger.data.progress
 import com.stagirite.ledger.data.stats
 import com.stagirite.ledger.data.upcomingMilestones
 import java.time.LocalDate
@@ -190,7 +191,8 @@ private fun OverviewContent(
                     Column(Modifier.weight(1f)) {
                         Text(goal.title, style = MaterialTheme.typography.bodyLarge, maxLines = 1, overflow = TextOverflow.Ellipsis)
                         Text(
-                            "Longest ${plural(s.longest, "day")} \u00B7 ${(s.keptRate * 100).roundToInt()}% kept",
+                            "${goal.progress(today).verdict.label} \u00B7 longest ${plural(s.longest, "day")} \u00B7 " +
+                                "${(s.keptRate * 100).roundToInt()}% kept",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )

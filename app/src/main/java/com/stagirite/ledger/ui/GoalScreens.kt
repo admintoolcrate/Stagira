@@ -83,6 +83,7 @@ import com.stagirite.ledger.data.Quotes
 import com.stagirite.ledger.data.dayState
 import com.stagirite.ledger.data.describeSpan
 import com.stagirite.ledger.data.plural
+import com.stagirite.ledger.data.progress
 import com.stagirite.ledger.data.stats
 import kotlinx.coroutines.launch
 import java.time.LocalDate
@@ -628,6 +629,10 @@ private fun SlipOption(title: String, detail: String, enabled: Boolean, onClick:
 @Composable
 private fun StatsPanel(goal: Goal, today: LocalDate) {
     val stats = goal.stats(today)
+    val progress = goal.progress(today)
+    ProgressPanel(goal, progress)
+    Spacer(Modifier.height(28.dp))
+    SectionHeading("Figures", Modifier.padding(start = 0.dp))
     Row(Modifier.fillMaxWidth()) {
         Figure("${stats.current}", "Current", Modifier.weight(1f))
         Figure("${stats.longest}", "Longest", Modifier.weight(1f))
@@ -648,7 +653,7 @@ private fun StatsPanel(goal: Goal, today: LocalDate) {
         Spacer(Modifier.height(24.dp))
         Text("Length of each run, in days", style = MaterialTheme.typography.titleSmall)
         Spacer(Modifier.height(4.dp))
-        RunsChart(stats.runs)
+        RunsChart(stats.runs, trend = progress.trend, median = progress.medianRun)
     }
 }
 
