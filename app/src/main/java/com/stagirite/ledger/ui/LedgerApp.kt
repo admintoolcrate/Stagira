@@ -284,12 +284,15 @@ private fun LedgerAppContent(
                 onSort = settings::updateSortOrder,
                 onOpen = { openId = it.id },
                 onAdd = { d -> store.add(d.title, d.since, d.reason, d.icon, d.kind, sealedFor(d, null), d.target, d.schedule) },
-                onQuickSlip = { g ->
+                onQuickSlip = { g, day ->
                     buzz()
-                    store.recordSlip(g.id, today)
+                    store.recordSlip(g.id, day)
                     scope.launch {
-                        val r = snackbar.showSnackbar("${g.slipWord.replaceFirstChar { it.uppercase() }} logged for today", actionLabel = "Undo")
-                        if (r == SnackbarResult.ActionPerformed) store.removeSlip(g.id, today)
+                        val r = snackbar.showSnackbar(
+                            "${g.slipWord.replaceFirstChar { it.uppercase() }} logged for ${if (day == today) "today" else "yesterday"}",
+                            actionLabel = "Undo",
+                        )
+                        if (r == SnackbarResult.ActionPerformed) store.removeSlip(g.id, day)
                     }
                 },
                 onQuickUrge = { g ->

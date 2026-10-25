@@ -1,5 +1,6 @@
 package com.stagirite.ledger.ui
 
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -158,7 +159,7 @@ fun GoalListScreen(
     onSort: (SortOrder) -> Unit,
     onOpen: (Goal) -> Unit,
     onAdd: (GoalDraft) -> Unit,
-    onQuickSlip: (Goal) -> Unit,
+    onQuickSlip: (Goal, LocalDate) -> Unit,
     onQuickUrge: (Goal) -> Unit,
     onArchive: (Goal, Boolean) -> Unit,
     onTitleLongPress: () -> Unit,
@@ -368,9 +369,9 @@ fun GoalListScreen(
                 goal = goal,
                 today = today,
                 onDismiss = { actionsFor = null },
-                onSlip = {
+                onSlip = { day ->
                     actionsFor = null
-                    onQuickSlip(goal)
+                    onQuickSlip(goal, day)
                 },
                 onOpen = {
                     actionsFor = null
@@ -401,9 +402,9 @@ fun GoalListScreen(
                 quickLog = false
                 if (plus.has) onWeekly() else plus.offer("The weekly review is part of Plus.")
             },
-            onSlip = {
+            onSlip = { goal, day ->
                 quickLog = false
-                onQuickSlip(it)
+                onQuickSlip(goal, day)
             },
             onUrge = {
                 quickLog = false
@@ -514,6 +515,20 @@ private fun LedgerRow(goal: Goal, today: LocalDate, onClick: () -> Unit, onLongC
     }
 }
 
+/** Whether a slip or missed day can be logged on [day]: in range, due, and not logged already. */
+private fun Goal.canSlipOn(day: LocalDate, today: LocalDate) =
+    !day.isBefore(since) && !day.isAfter(today) && !isSlip(day) && isScheduled(day)
+
+@Composable
+private fun RowScope.QuickButton(text: String, enabled: Boolean, onClick: () -> Unit) {
+    OutlinedButton(
+        onClick = onClick,
+        enabled = enabled,
+        modifier = Modifier.weight(1f),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = if (enabled) 1f else 0.4f)),
+    ) { Text(text, maxLines = 1, overflow = TextOverflow.Ellipsis) }
+}
+
 /** Holding +: log for any goal without opening it, or start something new. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -523,9 +538,10 @@ private fun QuickLogSheet(
     onDismiss: () -> Unit,
     onNew: () -> Unit,
     onWeekly: () -> Unit,
-    onSlip: (Goal) -> Unit,
+    onSlip: (Goal, LocalDate) -> Unit,
     onUrge: (Goal) -> Unit,
 ) {
+    val yesterday = today.minusDays(1)
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
@@ -540,7 +556,7 @@ private fun QuickLogSheet(
         ) {
             Text("Quick log", style = MaterialTheme.typography.titleLarge)
             Text(
-                "For today, ${today.format(mediumDate)}. Hold + to open this any time.",
+                "Every day counts as kept unless you log otherwise. Hold + to open this any time.",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -562,23 +578,15 @@ private fun QuickLogSheet(
                     }
                     Spacer(Modifier.height(Space.s))
                     Row(horizontalArrangement = Arrangement.spacedBy(Space.s)) {
-                        OutlinedButton(
-                            onClick = { onUrge(goal) },
-                            modifier = Modifier.weight(1f),
-                            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
-                        ) { Text(goal.urgeLabel, maxLines = 1, overflow = TextOverflow.Ellipsis) }
-                        val canSlip = !goal.isSlip(today) && goal.isScheduled(today)
-                        OutlinedButton(
-                            onClick = { onSlip(goal) },
-                            enabled = canSlip,
-                            modifier = Modifier.weight(1f),
-                            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = if (canSlip) 1f else 0.4f)),
-                        ) {
-                            Text(
-                                if (goal.isSlip(today)) "Logged today" else "Log a ${goal.slipWord}",
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                            )
+                        if (goal.kind == GoalKind.Virtue) {
+                            // A Virtue is assumed done; a missed day usually only shows once it's over.
+                            QuickButton("Missed yesterday", goal.canSlipOn(yesterday, today)) { onSlip(goal, yesterday) }
+                            QuickButton("Missed today", goal.canSlipOn(today, today)) { onSlip(goal, today) }
+                        } else {
+                            QuickButton(goal.urgeLabel, true) { onUrge(goal) }
+                            QuickButton(if (goal.isSlip(today)) "Slip logged" else "Log a ${goal.slipWord}", goal.canSlipOn(today, today)) {
+                                onSlip(goal, today)
+                            }
                         }
                     }
                 }
@@ -594,11 +602,12 @@ private fun QuickActionsSheet(
     goal: Goal,
     today: LocalDate,
     onDismiss: () -> Unit,
-    onSlip: () -> Unit,
+    onSlip: (LocalDate) -> Unit,
     onOpen: () -> Unit,
     onArchive: () -> Unit,
     onUrge: () -> Unit,
 ) {
+    val yesterday = today.minusDays(1)
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
@@ -616,9 +625,15 @@ private fun QuickActionsSheet(
                 Text(goal.title, style = MaterialTheme.typography.titleLarge, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
             Spacer(Modifier.height(12.dp))
-            SlipOption(goal.urgeLabel, "Log it for today", enabled = true, onClick = onUrge)
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-            SlipOption("Log a ${goal.slipWord} today", today.format(mediumDate), enabled = !goal.isSlip(today), onClick = onSlip)
+            if (goal.kind == GoalKind.Virtue) {
+                SlipOption("Missed yesterday", yesterday.format(mediumDate), enabled = goal.canSlipOn(yesterday, today)) { onSlip(yesterday) }
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                SlipOption("Missed today", today.format(mediumDate), enabled = goal.canSlipOn(today, today)) { onSlip(today) }
+            } else {
+                SlipOption(goal.urgeLabel, "Log it for today", enabled = true, onClick = onUrge)
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                SlipOption("Log a ${goal.slipWord} today", today.format(mediumDate), enabled = goal.canSlipOn(today, today)) { onSlip(today) }
+            }
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
             SlipOption("Open", "Calendar, stats and history", enabled = true, onClick = onOpen)
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
@@ -810,13 +825,14 @@ fun GoalDetailScreen(
                     HoldButton(
                         text = "Log a $slipWord",
                         onTap = { slipSheet = true },
-                        onHeld = if (canSlipToday) ({ logSlip(today) }) else null,
+                        // Only for slips, which happen at a moment; a missed day is picked from the sheet.
+                        onHeld = if (canSlipToday && goal.kind != GoalKind.Virtue) ({ logSlip(today) }) else null,
                         modifier = Modifier.weight(1f).height(52.dp),
                     )
                 }
                 Spacer(Modifier.height(Space.s))
                 val notes = listOfNotNull(
-                    if (canSlipToday) "Hold to log a $slipWord today" else null,
+                    if (canSlipToday && goal.kind != GoalKind.Virtue) "Hold to log a $slipWord today" else null,
                     if (!goal.isScheduled(today)) "Rest day today \u00B7 ${scheduleText(goal.schedule)}" else null,
                     goal.urgesOn(today).takeIf { it > 0 }?.let { "${goal.urgesLabel} today: $it" },
                 )
