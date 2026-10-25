@@ -109,7 +109,7 @@ class Billing(context: Context, private val scope: CoroutineScope) {
         )
         if (!result.billingResult.ok) return
         val owned = result.purchasesList.any { Products.PLUS in it.products && it.purchaseState == Purchase.PurchaseState.PURCHASED }
-        setPlus(owned)
+        rememberPlus(owned)
         result.purchasesList.forEach(::handle)
     }
 
@@ -126,7 +126,7 @@ class Billing(context: Context, private val scope: CoroutineScope) {
         if (purchase.purchaseState != Purchase.PurchaseState.PURCHASED) return
         scope.launch {
             if (Products.PLUS in purchase.products) {
-                setPlus(true)
+                rememberPlus(true)
                 if (!purchase.isAcknowledged) {
                     client.acknowledgePurchase(
                         AcknowledgePurchaseParams.newBuilder().setPurchaseToken(purchase.purchaseToken).build()
@@ -144,7 +144,7 @@ class Billing(context: Context, private val scope: CoroutineScope) {
     }
 
     /** Remembers what Google Play says; a refund turns Plus off again at the next check. */
-    private fun setPlus(owned: Boolean) {
+    private fun rememberPlus(owned: Boolean) {
         prefs.edit().putBoolean("plus", owned).apply()
         plus = owned || BuildConfig.PLUS_FOR_TESTING
     }
