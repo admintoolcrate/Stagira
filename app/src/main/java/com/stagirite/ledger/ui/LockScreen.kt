@@ -28,7 +28,7 @@ fun LockScreen(onUnlock: () -> Unit) {
         ) {
             Icon(Icons.Filled.Lock, contentDescription = null, modifier = Modifier.size(32.dp))
             Spacer(Modifier.height(16.dp))
-            Text("Stagira — A Ledger", style = MaterialTheme.typography.titleMedium)
+            Text("Stagira", style = MaterialTheme.typography.headlineSmall)
             Spacer(Modifier.height(4.dp))
             Text(
                 "Locked",

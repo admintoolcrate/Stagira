@@ -547,7 +547,7 @@ private fun PrivateTitlesSection(ui: PrivateTitlesUi) {
     var forgetting by rememberSaveable { mutableStateOf(false) }
     Note(
         "Give a goal a cover name, like \u201CNo more corn\u201D, and keep its real name and note " +
-            "behind a PIN. To show real names, long-press \u201CStagira — A Ledger\u201D at the top " +
+            "behind a PIN. To show real names, long-press the name \u201CStagira\u201D at the top " +
             "of the Goals screen and enter the PIN; they hide again when you leave the app. " +
             "Real names are stored encrypted, including in sync.",
     )

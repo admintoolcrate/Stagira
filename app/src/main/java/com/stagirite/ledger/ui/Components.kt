@@ -58,6 +58,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.PlatformTextStyle
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.text.EmojiSupportMatch
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
@@ -257,30 +260,28 @@ fun QuoteBlock(quote: Quote, modifier: Modifier = Modifier) {
     // Turned off under Settings → Personalise.
     if (!LocalUiPrefs.current.quotes) return
     Column(modifier.fillMaxWidth()) {
+        // Inter's quotation marks are thin slants that read as "//", so the marks are set in
+        // the system serif: a large opening mark above, the closing one after the last word.
+        val mark = MaterialTheme.colorScheme.outline
         Text(
             "\u201C",
-            style = MaterialTheme.typography.displayMedium.copy(fontWeight = FontWeight.Thin, lineHeight = 40.sp),
-            color = MaterialTheme.colorScheme.outline,
-            modifier = Modifier.height(36.dp),
+            style = TextStyle(fontFamily = FontFamily.Serif, fontSize = 56.sp, lineHeight = 56.sp),
+            color = mark,
+            modifier = Modifier.height(34.dp),
         )
         Text(
-            quote.text,
+            buildAnnotatedString {
+                append(quote.text)
+                withStyle(SpanStyle(fontFamily = FontFamily.Serif, color = mark, fontSize = 22.sp)) { append("\u2009\u201D") }
+            },
             style = MaterialTheme.typography.bodyLarge.copy(
-                fontSize = 18.sp,
-                lineHeight = 28.sp,
+                fontSize = 19.sp,
+                lineHeight = 29.sp,
                 fontWeight = FontWeight.Light,
-                letterSpacing = 0.1.sp,
+                letterSpacing = 0.sp,
             ),
         )
-        // The matching closing mark, set off to the right.
-        Text(
-            "\u201D",
-            style = MaterialTheme.typography.displayMedium.copy(fontWeight = FontWeight.Thin, lineHeight = 40.sp),
-            color = MaterialTheme.colorScheme.outline,
-            textAlign = TextAlign.End,
-            modifier = Modifier.fillMaxWidth().height(36.dp),
-        )
-        Spacer(Modifier.height(6.dp))
+        Spacer(Modifier.height(18.dp))
         Row(verticalAlignment = Alignment.CenterVertically) {
             Spacer(
                 Modifier
@@ -375,3 +376,33 @@ fun PinDialog(
 fun scheduleText(days: Set<java.time.DayOfWeek>): String =
     java.time.DayOfWeek.entries.filter { it in days }
         .joinToString(" \u00B7 ") { it.getDisplayName(java.time.format.TextStyle.SHORT, java.util.Locale.getDefault()) }
+
+/** The line under the name. */
+const val APP_SUBTITLE = "A Ledger of Days"
+
+/**
+ * The name set as a wordmark: "Stagira", with the subtitle in small spaced
+ * capitals beneath. [subtitleAlpha] lets a collapsing bar fade the subtitle out.
+ */
+@Composable
+fun Wordmark(modifier: Modifier = Modifier, large: Boolean = true, subtitleAlpha: Float = 1f) {
+    Column(modifier) {
+        Text(
+            "Stagira",
+            style = if (large) {
+                MaterialTheme.typography.headlineLarge.copy(fontWeight = FontWeight.Normal, letterSpacing = (-0.5).sp)
+            } else {
+                MaterialTheme.typography.titleLarge
+            },
+            maxLines = 1,
+        )
+        if (subtitleAlpha > 0.01f) {
+            Text(
+                APP_SUBTITLE.uppercase(),
+                style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 2.2.sp, fontWeight = FontWeight.Medium),
+                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = subtitleAlpha),
+                maxLines = 1,
+            )
+        }
+    }
+}

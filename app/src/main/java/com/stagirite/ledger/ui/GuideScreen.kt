@@ -35,9 +35,9 @@ private class GuidePage(val icon: String, val title: String, val body: String)
 private val pages = listOf(
     GuidePage(
         "🏛",
-        "Stagira — A Ledger",
+        "Stagira",
         // Not "we are what we repeatedly do": that line is Will Durant's summary, often misattributed.
-        "A quiet record of the days you keep. Aristotle, the Stagirite, held that character is " +
+        "A quiet ledger of the days you keep, named for Aristotle’s home town. He held that character is " +
             "built by habit, through doing. This ledger counts the doing.",
     ),
     GuidePage(

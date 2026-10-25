@@ -86,6 +86,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.text.font.FontWeight
 import com.stagirite.ledger.data.Goal
 import com.stagirite.ledger.data.GoalIcons
 import com.stagirite.ledger.data.GoalKind
@@ -173,10 +174,11 @@ fun GoalListScreen(
             LargeTopAppBar(
                 title = {
                     // Long-pressing the name shows or hides private titles.
-                    Text(
-                        "Stagira — A Ledger",
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
+                    // The subtitle shows only while the bar is open; collapsed, it's just the name.
+                    val open = 1f - scroll.state.collapsedFraction
+                    Wordmark(
+                        large = open > 0.5f,
+                        subtitleAlpha = ((open - 0.5f) * 2f).coerceIn(0f, 1f),
                         modifier = Modifier.pointerInput(Unit) { detectTapGestures(onLongPress = { onTitleLongPress() }) },
                     )
                 },
@@ -381,19 +383,19 @@ private fun EmptyState(modifier: Modifier = Modifier) {
         modifier = modifier
             .fillMaxSize()
             .padding(32.dp),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Text("Nothing in the ledger yet.", style = MaterialTheme.typography.titleMedium)
-        Spacer(Modifier.height(8.dp))
+        // Sits in the upper part of the page, under the title, rather than floating mid-screen.
+        Spacer(Modifier.weight(0.35f))
+        Text("Day one starts\nwhen you name it.", style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Normal))
+        Spacer(Modifier.height(12.dp))
         Text(
-            "Tap + and name something you’ll keep doing, or stop doing. The ledger counts the days.",
+            "Something to stop, or something to keep doing. Tap + to add it, and the ledger counts the days.",
             style = MaterialTheme.typography.bodyMedium,
-            textAlign = TextAlign.Center,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
-        Spacer(Modifier.height(40.dp))
+        Spacer(Modifier.height(32.dp))
         if (LocalUiPrefs.current.quotes) LedgerCard { QuoteBlock(Quotes.emptyLedger) }
+        Spacer(Modifier.weight(1f))
     }
 }
 
