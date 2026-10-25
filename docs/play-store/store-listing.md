@@ -27,7 +27,7 @@ WHAT IT DOES
 • Milestones from 1 day to years, with a quiet celebration when you reach one
 • Progress measured by the gaps between slips: are your runs getting longer?
 • Month and year calendars, stats, run-length charts and a weekly review
-• Targets, archive, sorting, a home-screen widget and daily or weekly reminders
+• Targets, archive, sorting, automatic backup, home-screen widgets and daily or weekly reminders
 • Optional passages from Aristotle's Nicomachean Ethics, quoted word for word and sourced
 
 PRIVATE BY DESIGN
@@ -36,12 +36,12 @@ PRIVATE BY DESIGN
 • Optional sync to your own Google Drive, end-to-end encrypted with a passphrase if you like
 • App lock with fingerprint, face or screen lock
 • Private titles: show a cover name, keep the real one behind a PIN
-• Reminders and the widget never reveal what your goals are
+• Private goals and a locked app never show their names in reminders or widgets
 
 FREE, WITH A ONE-TIME PLUS
 Everything you need to count, log and look back is free, along with the app lock, private titles
 and export. Stagira Plus, one payment and no subscription, adds unlimited goals (free holds
-3), Google Drive sync, the widget, and insights: the Progress card, year view and weekly
+3), Google Drive sync, the Goals widget (several goals at once), and insights: the Progress card, year view and weekly
 review. There's also a tip jar, and an optional ad you can watch to support the app.
 
 CALM BY DESIGN

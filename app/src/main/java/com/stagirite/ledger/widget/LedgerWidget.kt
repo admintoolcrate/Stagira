@@ -55,14 +55,14 @@ import com.stagirite.ledger.data.sortGoals
 import java.time.LocalDate
 
 /** Colours for one widget style; day and night follow the phone's theme. */
-private class Palette(
+internal class Palette(
     val background: ColorProvider?,
     val ink: ColorProvider,
     val muted: ColorProvider,
     val track: ColorProvider,
 )
 
-private fun palette(style: WidgetStyle): Palette = when (style) {
+internal fun palette(style: WidgetStyle): Palette = when (style) {
     WidgetStyle.Solid -> Palette(
         background = ColorProvider(day = Color(0xFFFFFFFF), night = Color(0xFF161616)),
         ink = ColorProvider(day = Color(0xFF141414), night = Color(0xFFF2F2F0)),
@@ -93,7 +93,7 @@ private val Wide = DpSize(250.dp, 110.dp)
 private val Tall = DpSize(250.dp, 250.dp)
 
 /**
- * Home-screen widget. One goal (or a small widget) gets the count large with
+ * The Goals widget (Plus). One goal (or a small widget) gets the count large with
  * its next milestone; more goals share the space as a list, each with a
  * progress line. Private goals show their cover names; with the app lock on,
  * it shows nothing but "Locked".
@@ -113,8 +113,12 @@ class LedgerWidget : GlanceAppWidget() {
     }
 
     companion object {
-        /** Redraws every placed widget. */
-        suspend fun refresh(context: Context) = LedgerWidget().updateAll(context)
+        /** Redraws every placed widget, of all three kinds. */
+        suspend fun refresh(context: Context) {
+            LedgerWidget().updateAll(context)
+            GoalWidget().updateAll(context)
+            OverviewWidget().updateAll(context)
+        }
     }
 }
 
@@ -122,7 +126,7 @@ class LedgerWidget : GlanceAppWidget() {
  * Glance can't use the app's fonts, so icons are drawn with Noto Emoji into a
  * white bitmap and tinted to match, keeping them black and white.
  */
-private fun emojiBitmap(context: Context, emoji: String): Bitmap {
+internal fun emojiBitmap(context: Context, emoji: String): Bitmap {
     val px = (40 * context.resources.displayMetrics.density).toInt().coerceAtLeast(48)
     val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         typeface = ResourcesCompat.getFont(context, R.font.noto_emoji)
@@ -136,11 +140,11 @@ private fun emojiBitmap(context: Context, emoji: String): Bitmap {
     return bitmap
 }
 
-private fun days(n: Long) = if (n == 1L) "1 day" else "$n days"
+internal fun days(n: Long) = if (n == 1L) "1 day" else "$n days"
 
 /** "Next: 1 week, in 2 days", or how the first day reads. */
-private fun nextLine(days: Long): String {
-    if (days == 0L) return "Day one under way"
+internal fun nextLine(days: Long): String {
+    if (days == 0L) return "Next: 1 day, tomorrow"
     val next = Milestones.next(days)
     return "Next: ${Milestones.name(next) ?: days(next)}, in ${days(next - days)}"
 }
@@ -155,12 +159,10 @@ private fun WidgetContent(
     c: Palette,
 ) {
     val size = LocalSize.current
-    var root = GlanceModifier.fillMaxSize()
-    if (c.background != null) root = root.background(c.background).cornerRadius(24.dp)
-    Column(root.padding(horizontal = 18.dp, vertical = 16.dp).clickable(actionStartActivity<MainActivity>())) {
+    Column(widgetRoot(c).clickable(actionStartActivity<MainActivity>())) {
         when {
             locked -> Message("Locked", "Tap to open", c)
-            !plus -> Message("Widget", "Part of Stagira Plus. Tap to open the app.", c)
+            !plus -> Message("Part of Plus", "This widget shows several goals. The Goal and Overview widgets are free.", c)
             goals.isEmpty() -> Message("No goals yet", "Tap to add your first.", c)
             goals.size == 1 || size.width < Wide.width -> Hero(goals.first(), icons, today, c, roomy = size.width >= Wide.width)
             else -> {
@@ -178,13 +180,20 @@ private fun WidgetContent(
     }
 }
 
+/** The card (or none, for Clear) every widget sits on. */
+internal fun widgetRoot(c: Palette): GlanceModifier {
+    var root = GlanceModifier.fillMaxSize()
+    if (c.background != null) root = root.background(c.background).cornerRadius(24.dp)
+    return root.padding(horizontal = 18.dp, vertical = 16.dp)
+}
+
 @Composable
-private fun Header(c: Palette) {
+internal fun Header(c: Palette) {
     Text("STAGIRA", style = TextStyle(color = c.muted, fontSize = 11.sp, fontWeight = FontWeight.Bold))
 }
 
 @Composable
-private fun ColumnScope.Message(title: String, body: String, c: Palette) {
+internal fun ColumnScope.Message(title: String, body: String, c: Palette) {
     Header(c)
     Spacer(GlanceModifier.defaultWeight())
     Text(title, style = TextStyle(color = c.ink, fontSize = 17.sp, fontWeight = FontWeight.Medium))
@@ -193,7 +202,7 @@ private fun ColumnScope.Message(title: String, body: String, c: Palette) {
 }
 
 @Composable
-private fun Icon(goal: Goal, icons: Map<String, Bitmap>, c: Palette, dp: Int) {
+internal fun Icon(goal: Goal, icons: Map<String, Bitmap>, c: Palette, dp: Int) {
     val bitmap = icons[goal.icon] ?: return
     Image(
         ImageProvider(bitmap),
@@ -205,7 +214,7 @@ private fun Icon(goal: Goal, icons: Map<String, Bitmap>, c: Palette, dp: Int) {
 
 /** One goal, its count large, with the next milestone and a progress line. */
 @Composable
-private fun Hero(goal: Goal, icons: Map<String, Bitmap>, today: LocalDate, c: Palette, roomy: Boolean) {
+internal fun Hero(goal: Goal, icons: Map<String, Bitmap>, today: LocalDate, c: Palette, roomy: Boolean) {
     val days = goal.daysKept(today)
     Column(GlanceModifier.fillMaxSize().clickable(openGoal(goal))) {
         Row(GlanceModifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
@@ -223,10 +232,18 @@ private fun Hero(goal: Goal, icons: Map<String, Bitmap>, today: LocalDate, c: Pa
         }
         Spacer(GlanceModifier.defaultWeight())
         Row(verticalAlignment = Alignment.Bottom) {
-            Text("$days", style = TextStyle(color = c.ink, fontSize = if (roomy) 52.sp else 40.sp, fontWeight = FontWeight.Medium), maxLines = 1)
+            Text(
+                if (days == 0L) "Today" else "$days",
+                style = TextStyle(color = c.ink, fontSize = if (days == 0L) 30.sp else if (roomy) 52.sp else 40.sp, fontWeight = FontWeight.Medium),
+                maxLines = 1,
+            )
             Spacer(GlanceModifier.width(6.dp))
             Text(
-                if (days == 1L) "day" else "days",
+                when (days) {
+                    0L -> if (goal.slips.isEmpty()) "started" else "begun again"
+                    1L -> "day"
+                    else -> "days"
+                },
                 style = TextStyle(color = c.muted, fontSize = 13.sp),
                 modifier = GlanceModifier.padding(bottom = if (roomy) 10.dp else 7.dp),
             )
@@ -260,7 +277,7 @@ private fun GoalRow(goal: Goal, icons: Map<String, Bitmap>, today: LocalDate, c:
 }
 
 @Composable
-private fun Progress(days: Long, c: Palette) {
+internal fun Progress(days: Long, c: Palette) {
     LinearProgressIndicator(
         progress = Milestones.progress(days),
         modifier = GlanceModifier.fillMaxWidth().height(3.dp).cornerRadius(2.dp),
@@ -269,7 +286,7 @@ private fun Progress(days: Long, c: Palette) {
     )
 }
 
-private fun openGoal(goal: Goal) = actionStartActivity<MainActivity>(actionParametersOf(OpenGoal to goal.id))
+internal fun openGoal(goal: Goal) = actionStartActivity<MainActivity>(actionParametersOf(OpenGoal to goal.id))
 
 class LedgerWidgetReceiver : GlanceAppWidgetReceiver() {
     override val glanceAppWidget: GlanceAppWidget = LedgerWidget()

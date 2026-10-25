@@ -50,7 +50,7 @@ val LocalSupport = staticCompositionLocalOf<SupportUi?> { null }
 private val included = listOf(
     "Unlimited goals (free includes ${Billing.FREE_GOALS})",
     "Sync with your Google Drive, encrypted if you like",
-    "The home-screen widget",
+    "The Goals widget, with several goals at once",
     "Insights: the Progress card, year view and weekly review",
 )
 
@@ -58,7 +58,8 @@ private val alwaysFree = listOf(
     "Counting days, slips, notes, urges and milestones",
     "Calendar, stats and history",
     "App lock and private titles",
-    "Export your data, any time",
+    "Automatic backup and export",
+    "The Goal and Overview widgets",
 )
 
 /** The Plus offer: what it includes, what stays free, one price. */
@@ -154,7 +155,7 @@ fun SupportSection(support: SupportUi) {
         Column(Modifier.weight(1f)) {
             Text("Stagira Plus", style = MaterialTheme.typography.bodyLarge)
             Text(
-                if (billing.plus) "Unlocked. Thank you." else "Unlimited goals, sync, the widget and insights. One payment.",
+                if (billing.plus) "Unlocked. Thank you." else "Unlimited goals, sync, the Goals widget and insights. One payment.",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )

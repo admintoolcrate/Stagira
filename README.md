@@ -10,14 +10,17 @@ A minimal Android app (**Stagira** on your home screen) that does one thing: nam
 
 - **Goals** — any number, counted from today or a past date, with an optional note on why each
   one matters. The count ticks over at midnight.
-- **Vices and Virtues** — optionally mark a goal a Vice (something you want to do less of) or a
-  Virtue (something you want to do more of). Virtues log "missed days" instead of slips.
+- **Vices and Virtues** — each goal either tackles a Vice (stop or cut down, like drinking less)
+  or practises a Virtue (something good each day, like one good deed). Every day counts as kept
+  unless you log a slip (Vice) or a missed day (Virtue). The new-goal form asks that first, then
+  the name and start; why, target, weekdays and a private title sit under "More options".
 - **Icons** — a black-and-white emoji beside each goal, drawn with the open-source Noto Emoji
   font (see *Third-party material*).
 - **Private titles** — show a cover name ("No more corn") while the real name and note stay
   encrypted behind a PIN. Long-press the app's name on the Goals screen to reveal them; they hide
   again when you leave the app.
-- **Home-screen widget** — one goal large, or a list with progress to each next milestone; Solid,
+- **Home-screen widgets** — Goal (free): one goal you choose, its count large. Overview (free): this
+  week, days kept and the next milestone. Goals (Plus): several goals with progress. All three: Solid,
   See-through or Clear background. Tap a goal to open it. Private goals show their cover names, and
   while the app lock is on it shows only "Locked".
 - **Targets** — an optional aim per goal (30, 90, 180 or 365 days); the ring fills towards it.
@@ -26,10 +29,9 @@ A minimal Android app (**Stagira** on your home screen) that does one thing: nam
   (or long-press the app icon) for Quick log: any goal's slip or urge, a new goal, the weekly review.
 - **Sort** — as added, longest current run, next milestone, or name.
 - **Suggestions** when adding a goal (No alcohol, Exercise, Read …) fill in the icon and type.
-- **Personalise** — Aristotle passages, milestone celebrations, vibration, and the home page's
-  summary and lower sections can each be turned off (all on by default).
+- **Personalise** — Aristotle passages, milestone celebrations and vibration can each be turned off.
 - **Free, with a one-time Plus** — Plus (one payment, no subscription) adds unlimited goals
-  (free holds 3), Google Drive sync, the widget, and the Progress card, year view and weekly
+  (free holds 3), Google Drive sync, the Goals widget, and the Progress card, year view and weekly
   review. Counting, slips, notes, the app lock, private titles and export are always free.
   A tip jar, and an optional "watch an ad to support us" that only loads Google's ad service
   when tapped, with alcohol, gambling and dating ads blocked. Test builds have Plus unlocked.
@@ -60,9 +62,11 @@ A minimal Android app (**Stagira** on your home screen) that does one thing: nam
 - **Stats** — current, longest and average run; share of days kept; fresh starts; slips in the
   last 30 days; a chart of every run's length with a trend line and the median run (tap a bar
   for its dates).
-- **One home page** — a summary (days kept, share of days, clean days this month), your goals
-  with their progress verdicts, milestones coming up, and a combined calendar. Settings sits
-  behind the gear icon.
+- **Two tabs** — Goals is the ledger itself; Overview has the summary (days kept, share of days,
+  kept this month), this week, milestones coming up and a combined calendar.
+- **Automatic backup** (free) — a copy in a file you choose (on the phone or in your Drive),
+  rewritten after each change; restore it on a new phone with Import. Without sync or a backup,
+  Overview suggests one once a month after the first week.
 - **Slip notes** — jot down what happened when you log a slip, or later from History. Notes on
   private goals are sealed with the real title.
 - **Milestones** at 1, 3, 7, 14, 21, 30, 60, 90, 100, 180, 270 and 365 days, then 500, every
@@ -107,7 +111,7 @@ A minimal Android app (**Stagira** on your home screen) that does one thing: nam
 | Threat | Protection |
 |---|---|
 | Someone picks up your unlocked phone | App lock (fingerprint / face / screen lock); private titles behind a PIN; recents preview hidden |
-| Someone sees the lock screen or widget | Reminder text never names a goal; widget shows cover names, or only "Locked" with the app lock on |
+| Someone sees the lock screen or widget | The reminder names a goal only for a milestone, and never a private goal or with the app lock on; widgets show cover names, or only "Locked" with the app lock on |
 | Google, or anyone who reads your Drive data | Sync passphrase: AES-256-GCM, PBKDF2-SHA256 (210,000 rounds); only ciphertext is uploaded |
 | A synced file is replaced with an unencrypted one | Sync stops and asks before ever uploading unencrypted |
 | Guessing the private-titles PIN in the app | 5 free tries, then waits that double from 30 s up to an hour; new PINs need 6+ digits |
@@ -218,7 +222,7 @@ app/src/main/java/com/stagirite/ledger/
   sync/SyncManager.kt     sign-in, sync and encryption state
   security/AppLock.kt     fingerprint / screen-lock gate
   reminders/Reminder.kt   optional daily notification
-  widget/LedgerWidget.kt  home-screen widget (Jetpack Glance)
+  widget/                 home-screen widgets (Jetpack Glance): Goal, Overview, Goals
   ui/                     Compose screens: goals, goal page, overview, settings, calendar, chart
 ```
 
