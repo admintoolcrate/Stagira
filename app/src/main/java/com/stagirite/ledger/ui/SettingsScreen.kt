@@ -70,6 +70,7 @@ import com.stagirite.ledger.data.GoalStore
 import com.stagirite.ledger.data.LedgerCodec
 import com.stagirite.ledger.data.Settings
 import com.stagirite.ledger.data.ThemeMode
+import com.stagirite.ledger.data.WidgetStyle
 import com.stagirite.ledger.sync.SyncManager
 import com.stagirite.ledger.sync.SyncState
 import kotlinx.coroutines.launch
@@ -122,6 +123,30 @@ fun SettingsScreen(
                         ) { Text(mode.name) }
                     }
                 }
+                Spacer(Modifier.height(20.dp))
+                Text("Widget background", style = MaterialTheme.typography.bodyLarge)
+                Spacer(Modifier.height(8.dp))
+                val styles = WidgetStyle.entries
+                SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
+                    styles.forEachIndexed { i, style ->
+                        SegmentedButton(
+                            selected = settings.widgetStyle == style,
+                            onClick = { settings.updateWidgetStyle(style) },
+                            shape = SegmentedButtonDefaults.itemShape(i, styles.size),
+                            icon = {},
+                            colors = SegmentedButtonDefaults.colors(
+                                activeContainerColor = MaterialTheme.colorScheme.primary,
+                                activeContentColor = MaterialTheme.colorScheme.onPrimary,
+                            ),
+                        ) { Text(style.label) }
+                    }
+                }
+                Spacer(Modifier.height(6.dp))
+                Text(
+                    "Clear drops the card and sets the text in white, for darker wallpapers.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
             }
 
             Section("Personalise") { PersonaliseSection(settings) }

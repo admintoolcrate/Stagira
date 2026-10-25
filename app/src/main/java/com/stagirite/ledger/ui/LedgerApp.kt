@@ -157,7 +157,7 @@ private fun LedgerAppContent(
 
     // Keep the home-screen widget in step with the lock and sort order.
     val hasPlus = LocalPlus.current.has
-    LaunchedEffect(settings.appLock, settings.sortOrder, hasPlus) { runCatching { LedgerWidget.refresh(context) } }
+    LaunchedEffect(settings.appLock, settings.sortOrder, settings.widgetStyle, hasPlus) { runCatching { LedgerWidget.refresh(context) } }
     val rawOpen = openId?.let(store::find)
     val openGoal = rawOpen?.let(vault::reveal)
     val anySealed = store.goals.any { it.isPrivate }

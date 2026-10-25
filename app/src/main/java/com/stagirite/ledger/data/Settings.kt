@@ -14,6 +14,13 @@ enum class SortOrder(val label: String) {
     Name("Name"),
 }
 
+/** How the home-screen widget's background is drawn. */
+enum class WidgetStyle(val label: String) {
+    Solid("Solid"),
+    Translucent("See-through"),
+    Clear("Clear"),
+}
+
 enum class LockDelay(val label: String, val millis: Long) {
     Immediately("Immediately", 0),
     OneMinute("After 1 min", 60_000),
@@ -117,6 +124,14 @@ class Settings(context: Context) {
     fun updateHomeExtras(on: Boolean) { homeExtras = on; save("homeExtras", on) }
 
     private fun save(key: String, value: Boolean) = prefs.edit().putBoolean(key, value).apply()
+
+    var widgetStyle by mutableStateOf(enumOr(prefs.getString("widgetStyle", null), WidgetStyle.Solid))
+        private set
+
+    fun updateWidgetStyle(style: WidgetStyle) {
+        widgetStyle = style
+        prefs.edit().putString("widgetStyle", style.name).apply()
+    }
 
     var sortOrder by mutableStateOf(enumOr(prefs.getString("sortOrder", null), SortOrder.Added))
         private set

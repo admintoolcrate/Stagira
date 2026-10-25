@@ -37,8 +37,8 @@ private val pages = listOf(
         "🏛",
         "Stagira",
         // Not "we are what we repeatedly do": that line is Will Durant's summary, often misattributed.
-        "A quiet ledger of the days you keep, named for Aristotle’s home town. He held that character is " +
-            "built by habit, through doing. This ledger counts the doing.",
+        "Named after Aristotle’s birthplace. He taught that character isn’t something you’re " +
+            "born with but something you build, one habit at a time. Stagira keeps count of the days you put in.",
     ),
     GuidePage(
         "⚖",
@@ -88,12 +88,12 @@ fun GuideScreen(onDone: () -> Unit) {
                 ) {
                     Box(
                         Modifier
-                            .size(96.dp)
+                            .size(72.dp)
                             .background(MaterialTheme.colorScheme.surfaceContainerLow, CircleShape),
                         contentAlignment = Alignment.Center,
-                    ) { EmojiGlyph(page.icon, 44.sp) }
-                    Spacer(Modifier.height(32.dp))
-                    Text(page.title, style = MaterialTheme.typography.headlineSmall)
+                    ) { EmojiGlyph(page.icon, 32.sp) }
+                    Spacer(Modifier.height(28.dp))
+                    Text(page.title, style = MaterialTheme.typography.headlineMedium)
                     Spacer(Modifier.height(12.dp))
                     Text(
                         page.body,
@@ -102,7 +102,7 @@ fun GuideScreen(onDone: () -> Unit) {
                         textAlign = androidx.compose.ui.text.style.TextAlign.Center,
                     )
                     if (i == 0 && LocalUiPrefs.current.quotes) {
-                        Spacer(Modifier.height(32.dp))
+                        Spacer(Modifier.height(36.dp))
                         LedgerCard { QuoteBlock(Quotes.slip[2]) }
                     }
                 }

@@ -58,9 +58,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.PlatformTextStyle
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.text.EmojiSupportMatch
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
@@ -260,28 +257,20 @@ fun QuoteBlock(quote: Quote, modifier: Modifier = Modifier) {
     // Turned off under Settings → Personalise.
     if (!LocalUiPrefs.current.quotes) return
     Column(modifier.fillMaxWidth()) {
-        // Inter's quotation marks are thin slants that read as "//", so the marks are set in
-        // the system serif: a large opening mark above, the closing one after the last word.
-        val mark = MaterialTheme.colorScheme.outline
+        // Inter's quotation marks are thin slants that read as "//", so both marks are set
+        // in the system serif, the same size: opening at the top left, closing bottom right.
+        QuoteMark("\u201C", TextAlign.Start)
         Text(
-            "\u201C",
-            style = TextStyle(fontFamily = FontFamily.Serif, fontSize = 56.sp, lineHeight = 56.sp),
-            color = mark,
-            modifier = Modifier.height(34.dp),
-        )
-        Text(
-            buildAnnotatedString {
-                append(quote.text)
-                withStyle(SpanStyle(fontFamily = FontFamily.Serif, color = mark, fontSize = 22.sp)) { append("\u2009\u201D") }
-            },
+            quote.text,
             style = MaterialTheme.typography.bodyLarge.copy(
-                fontSize = 19.sp,
-                lineHeight = 29.sp,
+                fontSize = 17.sp,
+                lineHeight = 26.sp,
                 fontWeight = FontWeight.Light,
                 letterSpacing = 0.sp,
             ),
         )
-        Spacer(Modifier.height(18.dp))
+        QuoteMark("\u201D", TextAlign.End)
+        Spacer(Modifier.height(4.dp))
         Row(verticalAlignment = Alignment.CenterVertically) {
             Spacer(
                 Modifier
@@ -311,6 +300,23 @@ fun QuoteBlock(quote: Quote, modifier: Modifier = Modifier) {
             )
         }
     }
+}
+
+@Composable
+private fun QuoteMark(mark: String, align: TextAlign) {
+    Text(
+        mark,
+        style = TextStyle(
+            fontFamily = FontFamily.Serif,
+            fontSize = 40.sp,
+            lineHeight = 40.sp,
+            platformStyle = PlatformTextStyle(includeFontPadding = false),
+        ),
+        color = MaterialTheme.colorScheme.outline,
+        textAlign = align,
+        // The glyph sits high in its line; a short box trims the space beneath it.
+        modifier = Modifier.fillMaxWidth().height(26.dp),
+    )
 }
 
 /** Asks for a numeric PIN, optionally twice. */
@@ -378,7 +384,7 @@ fun scheduleText(days: Set<java.time.DayOfWeek>): String =
         .joinToString(" \u00B7 ") { it.getDisplayName(java.time.format.TextStyle.SHORT, java.util.Locale.getDefault()) }
 
 /** The line under the name. */
-const val APP_SUBTITLE = "A Ledger of Days"
+const val APP_SUBTITLE = "The Habit Ledger"
 
 /**
  * The name set as a wordmark: "Stagira", with the subtitle in small spaced

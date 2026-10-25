@@ -29,6 +29,7 @@ import androidx.glance.appwidget.provideContent
 import androidx.glance.appwidget.updateAll
 import androidx.glance.background
 import androidx.glance.color.ColorProvider
+import androidx.glance.unit.ColorProvider
 import androidx.glance.layout.Alignment
 import androidx.glance.layout.Box
 import androidx.glance.layout.Column
@@ -49,13 +50,39 @@ import com.stagirite.ledger.MainActivity
 import com.stagirite.ledger.R
 import com.stagirite.ledger.data.Goal
 import com.stagirite.ledger.data.Milestones
+import com.stagirite.ledger.data.WidgetStyle
 import com.stagirite.ledger.data.sortGoals
 import java.time.LocalDate
 
-private val Paper = ColorProvider(day = Color(0xFFFFFFFF), night = Color(0xFF161616))
-private val Ink = ColorProvider(day = Color(0xFF141414), night = Color(0xFFF2F2F0))
-private val Muted = ColorProvider(day = Color(0xFF7A7A76), night = Color(0xFF8E8E8A))
-private val Track = ColorProvider(day = Color(0xFFE6E6E3), night = Color(0xFF2C2C2A))
+/** Colours for one widget style; day and night follow the phone's theme. */
+private class Palette(
+    val background: ColorProvider?,
+    val ink: ColorProvider,
+    val muted: ColorProvider,
+    val track: ColorProvider,
+)
+
+private fun palette(style: WidgetStyle): Palette = when (style) {
+    WidgetStyle.Solid -> Palette(
+        background = ColorProvider(day = Color(0xFFFFFFFF), night = Color(0xFF161616)),
+        ink = ColorProvider(day = Color(0xFF141414), night = Color(0xFFF2F2F0)),
+        muted = ColorProvider(day = Color(0xFF75756F), night = Color(0xFF8E8E8A)),
+        track = ColorProvider(day = Color(0xFFE6E6E3), night = Color(0xFF2E2E2C)),
+    )
+    WidgetStyle.Translucent -> Palette(
+        background = ColorProvider(day = Color(0xB8FFFFFF), night = Color(0xA6101010)),
+        ink = ColorProvider(day = Color(0xFF141414), night = Color(0xFFF2F2F0)),
+        muted = ColorProvider(day = Color(0xFF55554F), night = Color(0xFFB4B4AF)),
+        track = ColorProvider(day = Color(0x33000000), night = Color(0x40FFFFFF)),
+    )
+    // No card at all: white type, like the system clock, over the wallpaper.
+    WidgetStyle.Clear -> Palette(
+        background = null,
+        ink = ColorProvider(day = Color.White, night = Color.White),
+        muted = ColorProvider(day = Color(0xD9FFFFFF), night = Color(0xD9FFFFFF)),
+        track = ColorProvider(day = Color(0x4DFFFFFF), night = Color(0x4DFFFFFF)),
+    )
+}
 
 /** Intent extra: the goal to open when a row is tapped. */
 const val EXTRA_OPEN_GOAL = "open_goal"
@@ -66,9 +93,10 @@ private val Wide = DpSize(250.dp, 110.dp)
 private val Tall = DpSize(250.dp, 250.dp)
 
 /**
- * Home-screen widget. Small, it's one goal and its count; wider or taller, a
- * list with each goal's progress to its next milestone. Private goals show
- * their cover names; with the app lock on, it shows nothing but "Locked".
+ * Home-screen widget. One goal (or a small widget) gets the count large with
+ * its next milestone; more goals share the space as a list, each with a
+ * progress line. Private goals show their cover names; with the app lock on,
+ * it shows nothing but "Locked".
  */
 class LedgerWidget : GlanceAppWidget() {
     override val sizeMode = SizeMode.Responsive(setOf(Small, Wide, Tall))
@@ -78,9 +106,10 @@ class LedgerWidget : GlanceAppWidget() {
         val locked = app.settings.appLock
         val today = LocalDate.now()
         val plus = app.billing.plus
+        val colours = palette(app.settings.widgetStyle)
         val goals = if (locked || !plus) emptyList() else sortGoals(app.store.goals, app.settings.sortOrder, today).take(6)
         val icons = goals.map { it.icon }.filter { it.isNotEmpty() }.distinct().associateWith { emojiBitmap(context, it) }
-        provideContent { WidgetContent(goals, icons, locked, plus, today) }
+        provideContent { WidgetContent(goals, icons, locked, plus, today, colours) }
     }
 
     companion object {
@@ -91,7 +120,7 @@ class LedgerWidget : GlanceAppWidget() {
 
 /**
  * Glance can't use the app's fonts, so icons are drawn with Noto Emoji into a
- * white bitmap and tinted to match the theme, keeping them black and white.
+ * white bitmap and tinted to match, keeping them black and white.
  */
 private fun emojiBitmap(context: Context, emoji: String): Bitmap {
     val px = (40 * context.resources.displayMetrics.density).toInt().coerceAtLeast(48)
@@ -107,107 +136,137 @@ private fun emojiBitmap(context: Context, emoji: String): Bitmap {
     return bitmap
 }
 
+private fun days(n: Long) = if (n == 1L) "1 day" else "$n days"
+
+/** "Next: 1 week, in 2 days", or how the first day reads. */
+private fun nextLine(days: Long): String {
+    if (days == 0L) return "Day one under way"
+    val next = Milestones.next(days)
+    return "Next: ${Milestones.name(next) ?: days(next)}, in ${days(next - days)}"
+}
+
 @Composable
-private fun WidgetContent(goals: List<Goal>, icons: Map<String, Bitmap>, locked: Boolean, plus: Boolean, today: LocalDate) {
+private fun WidgetContent(
+    goals: List<Goal>,
+    icons: Map<String, Bitmap>,
+    locked: Boolean,
+    plus: Boolean,
+    today: LocalDate,
+    c: Palette,
+) {
     val size = LocalSize.current
-    Column(
-        GlanceModifier
-            .fillMaxSize()
-            .background(Paper)
-            .cornerRadius(24.dp)
-            .padding(horizontal = 16.dp, vertical = 14.dp)
-            .clickable(actionStartActivity<MainActivity>()),
-    ) {
+    var root = GlanceModifier.fillMaxSize()
+    if (c.background != null) root = root.background(c.background).cornerRadius(24.dp)
+    Column(root.padding(horizontal = 18.dp, vertical = 16.dp).clickable(actionStartActivity<MainActivity>())) {
         when {
-            locked -> Message("Locked", "Tap to open")
-            !plus -> Message("Widget", "Part of Stagira Plus. Tap to open the app.")
-            goals.isEmpty() -> Message("No goals yet", "Tap to add your first.")
-            size.width < Wide.width -> Single(goals.first(), icons, today)
+            locked -> Message("Locked", "Tap to open", c)
+            !plus -> Message("Widget", "Part of Stagira Plus. Tap to open the app.", c)
+            goals.isEmpty() -> Message("No goals yet", "Tap to add your first.", c)
+            goals.size == 1 || size.width < Wide.width -> Hero(goals.first(), icons, today, c, roomy = size.width >= Wide.width)
             else -> {
-                Header()
-                Spacer(GlanceModifier.height(8.dp))
-                val rows = if (size.height < Tall.height) 2 else 5
-                goals.take(rows).forEach { GoalRow(it, icons, today) }
+                Header(c)
+                Spacer(GlanceModifier.height(6.dp))
+                // Rows share the height evenly, so two goals fill the widget as well as five.
+                val fits = if (size.height < Tall.height) 2 else 5
+                goals.take(fits).forEach { goal ->
+                    Box(GlanceModifier.fillMaxWidth().defaultWeight(), contentAlignment = Alignment.CenterStart) {
+                        GoalRow(goal, icons, today, c)
+                    }
+                }
             }
         }
     }
 }
 
 @Composable
-private fun Header() {
-    Text("STAGIRA", style = TextStyle(color = Muted, fontSize = 11.sp, fontWeight = FontWeight.Bold))
+private fun Header(c: Palette) {
+    Text("STAGIRA", style = TextStyle(color = c.muted, fontSize = 11.sp, fontWeight = FontWeight.Bold))
 }
 
 @Composable
-private fun ColumnScope.Message(title: String, body: String) {
-    Header()
+private fun ColumnScope.Message(title: String, body: String, c: Palette) {
+    Header(c)
     Spacer(GlanceModifier.defaultWeight())
-    Text(title, style = TextStyle(color = Ink, fontSize = 17.sp, fontWeight = FontWeight.Medium))
+    Text(title, style = TextStyle(color = c.ink, fontSize = 17.sp, fontWeight = FontWeight.Medium))
     Spacer(GlanceModifier.height(2.dp))
-    Text(body, style = TextStyle(color = Muted, fontSize = 12.sp), maxLines = 2)
+    Text(body, style = TextStyle(color = c.muted, fontSize = 12.sp), maxLines = 2)
 }
 
 @Composable
-private fun Icon(goal: Goal, icons: Map<String, Bitmap>, dp: Int) {
+private fun Icon(goal: Goal, icons: Map<String, Bitmap>, c: Palette, dp: Int) {
     val bitmap = icons[goal.icon] ?: return
     Image(
         ImageProvider(bitmap),
         contentDescription = null,
-        colorFilter = ColorFilter.tint(Ink),
+        colorFilter = ColorFilter.tint(c.ink),
         modifier = GlanceModifier.size(dp.dp),
     )
 }
 
-/** The small widget: one goal, its count large. */
+/** One goal, its count large, with the next milestone and a progress line. */
 @Composable
-private fun Single(goal: Goal, icons: Map<String, Bitmap>, today: LocalDate) {
+private fun Hero(goal: Goal, icons: Map<String, Bitmap>, today: LocalDate, c: Palette, roomy: Boolean) {
     val days = goal.daysKept(today)
     Column(GlanceModifier.fillMaxSize().clickable(openGoal(goal))) {
         Row(GlanceModifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            Header()
-            Spacer(GlanceModifier.defaultWeight())
-            Icon(goal, icons, 18)
+            if (icons[goal.icon] != null) {
+                Icon(goal, icons, c, 16)
+                Spacer(GlanceModifier.width(8.dp))
+            }
+            Text(
+                goal.title,
+                style = TextStyle(color = c.ink, fontSize = 14.sp, fontWeight = FontWeight.Medium),
+                maxLines = 1,
+                modifier = GlanceModifier.defaultWeight(),
+            )
+            if (roomy) Header(c)
         }
         Spacer(GlanceModifier.defaultWeight())
-        Text("$days", style = TextStyle(color = Ink, fontSize = 40.sp, fontWeight = FontWeight.Medium), maxLines = 1)
-        Text(
-            if (days == 1L) "day" else "days",
-            style = TextStyle(color = Muted, fontSize = 12.sp),
-        )
+        Row(verticalAlignment = Alignment.Bottom) {
+            Text("$days", style = TextStyle(color = c.ink, fontSize = if (roomy) 52.sp else 40.sp, fontWeight = FontWeight.Medium), maxLines = 1)
+            Spacer(GlanceModifier.width(6.dp))
+            Text(
+                if (days == 1L) "day" else "days",
+                style = TextStyle(color = c.muted, fontSize = 13.sp),
+                modifier = GlanceModifier.padding(bottom = if (roomy) 10.dp else 7.dp),
+            )
+        }
         Spacer(GlanceModifier.height(6.dp))
-        Text(goal.title, style = TextStyle(color = Ink, fontSize = 13.sp), maxLines = 1)
+        Text(nextLine(days), style = TextStyle(color = c.muted, fontSize = 11.sp), maxLines = 1)
+        Spacer(GlanceModifier.height(6.dp))
+        Progress(days, c)
     }
 }
 
-/** One line of the list: icon, title, the next milestone, and the count. */
+/** One line of the list: icon, title, next milestone, the count, and a progress line. */
 @Composable
-private fun GoalRow(goal: Goal, icons: Map<String, Bitmap>, today: LocalDate) {
+private fun GoalRow(goal: Goal, icons: Map<String, Bitmap>, today: LocalDate, c: Palette) {
     val days = goal.daysKept(today)
-    val next = Milestones.next(days)
-    Column(GlanceModifier.fillMaxWidth().padding(vertical = 5.dp).clickable(openGoal(goal))) {
+    Column(GlanceModifier.fillMaxWidth().clickable(openGoal(goal))) {
         Row(GlanceModifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             if (icons[goal.icon] != null) {
-                Box(GlanceModifier.size(26.dp), contentAlignment = Alignment.CenterStart) { Icon(goal, icons, 18) }
+                Box(GlanceModifier.size(28.dp), contentAlignment = Alignment.CenterStart) { Icon(goal, icons, c, 18) }
             }
             Column(GlanceModifier.defaultWeight()) {
-                Text(goal.title, style = TextStyle(color = Ink, fontSize = 14.sp, fontWeight = FontWeight.Medium), maxLines = 1)
-                Text(
-                    "Next: ${Milestones.name(next) ?: "$next days"} \u00B7 ${next - days} to go",
-                    style = TextStyle(color = Muted, fontSize = 11.sp),
-                    maxLines = 1,
-                )
+                Text(goal.title, style = TextStyle(color = c.ink, fontSize = 14.sp, fontWeight = FontWeight.Medium), maxLines = 1)
+                Text(nextLine(days), style = TextStyle(color = c.muted, fontSize = 11.sp), maxLines = 1)
             }
-            Spacer(GlanceModifier.width(8.dp))
-            Text("$days", style = TextStyle(color = Ink, fontSize = 24.sp, fontWeight = FontWeight.Medium), maxLines = 1)
+            Spacer(GlanceModifier.width(10.dp))
+            Text("$days", style = TextStyle(color = c.ink, fontSize = 26.sp, fontWeight = FontWeight.Medium), maxLines = 1)
         }
-        Spacer(GlanceModifier.height(5.dp))
-        LinearProgressIndicator(
-            progress = Milestones.progress(days),
-            modifier = GlanceModifier.fillMaxWidth().height(2.dp),
-            color = Ink,
-            backgroundColor = Track,
-        )
+        Spacer(GlanceModifier.height(6.dp))
+        Progress(days, c)
     }
+}
+
+@Composable
+private fun Progress(days: Long, c: Palette) {
+    LinearProgressIndicator(
+        progress = Milestones.progress(days),
+        modifier = GlanceModifier.fillMaxWidth().height(3.dp).cornerRadius(2.dp),
+        color = c.ink,
+        backgroundColor = c.track,
+    )
 }
 
 private fun openGoal(goal: Goal) = actionStartActivity<MainActivity>(actionParametersOf(OpenGoal to goal.id))
