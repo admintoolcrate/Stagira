@@ -1,6 +1,6 @@
-# The Stagirite's Ledger
+# Stagira — A Ledger
 
-A minimal Android app (**Stagirite** on your home screen) that does one thing: name a habit you're keeping —
+A minimal Android app (**Stagira** on your home screen) that does one thing: name a habit you're keeping —
 *no more alcohol*, *no smoking*, *daily run* — and it counts the days.
 
 > "…one swallow does not make spring, nor does one fine day…"
@@ -163,7 +163,7 @@ Google only lets an app use Drive once it's registered. This is free and takes a
 1. Go to [Google Cloud Console](https://console.cloud.google.com/) and create a project.
 2. **APIs & Services → Library**: enable the **Google Drive API**.
 3. **APIs & Services → OAuth consent screen** (Google Auth Platform):
-   - App name "The Stagirite's Ledger", user type **External**.
+   - App name "Stagira — A Ledger", user type **External**.
    - Under **Data access**, add the scope `.../auth/drive.appdata`.
    - Under **Audience**, leave it in **Testing** and add your Google account as a test user.
 4. **Credentials → Create credentials → OAuth client ID → Android**:

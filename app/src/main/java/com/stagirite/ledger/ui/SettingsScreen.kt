@@ -165,7 +165,7 @@ fun SettingsScreen(
 
             Section("Your data") { DataSection(store, sync, lock) }
 
-            LocalSupport.current?.let { support -> Section("Support Stagirite") { SupportSection(support) } }
+            LocalSupport.current?.let { support -> Section("Support Stagira") { SupportSection(support) } }
 
             Section("Help & feedback") { FeedbackSection(lock) }
 
@@ -547,7 +547,7 @@ private fun PrivateTitlesSection(ui: PrivateTitlesUi) {
     var forgetting by rememberSaveable { mutableStateOf(false) }
     Note(
         "Give a goal a cover name, like \u201CNo more corn\u201D, and keep its real name and note " +
-            "behind a PIN. To show real names, long-press \u201CThe Stagirite\u2019s Ledger\u201D at the top " +
+            "behind a PIN. To show real names, long-press \u201CStagira — A Ledger\u201D at the top " +
             "of the Goals screen and enter the PIN; they hide again when you leave the app. " +
             "Real names are stored encrypted, including in sync.",
     )
@@ -599,10 +599,10 @@ private fun AboutSection(onShowGuide: () -> Unit) {
     Spacer(Modifier.height(4.dp))
     Note(
         "Aristotle (384\u2013322 BC) was born in Stagira, in northern Greece, and so is often called " +
-            "\u201Cthe Stagirite\u201D. In the Nicomachean Ethics he argues that good character isn\u2019t " +
-            "something we\u2019re born with but something we build by habit, by doing. A ledger is a " +
-            "book of record: this one records the days you keep. On your home screen it goes by " +
-            "Stagirite for short.",
+            "\u201Cthe Stagirite\u201D. The app takes its name from his home town. In the Nicomachean " +
+            "Ethics he argues that good character isn\u2019t something we\u2019re born with but " +
+            "something we build by habit, by doing. A ledger is a book of record: this one records " +
+            "the days you keep.",
     )
     Spacer(Modifier.height(16.dp))
     Text("Goals", style = MaterialTheme.typography.titleSmall)

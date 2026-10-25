@@ -32,8 +32,8 @@ android {
         applicationId = "com.stagirite.ledger"
         minSdk = 26
         targetSdk = 36
-        versionCode = 6
-        versionName = "2.1"
+        versionCode = 7
+        versionName = "2.2"
 
         // AdMob IDs for "Watch an ad to support us". Set admobAppId and
         // admobRewardedId in gradle.properties (or ~/.gradle/gradle.properties)

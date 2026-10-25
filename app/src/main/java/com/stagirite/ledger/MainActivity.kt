@@ -24,6 +24,7 @@ import com.stagirite.ledger.ui.LedgerTheme
 import com.stagirite.ledger.ui.LocalUiPrefs
 import com.stagirite.ledger.ui.LockScreen
 import com.stagirite.ledger.ui.UiPrefs
+import com.stagirite.ledger.widget.EXTRA_OPEN_GOAL
 
 // A FragmentActivity because the fingerprint prompt needs one.
 class MainActivity : FragmentActivity() {
@@ -32,14 +33,19 @@ class MainActivity : FragmentActivity() {
     /** Set when opened from the weekly-review notification. */
     private var openWeekly by mutableStateOf(false)
 
+    /** Set when a goal is tapped on the home-screen widget. */
+    private var openGoal by mutableStateOf<String?>(null)
+
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         if (intent.getBooleanExtra(Reminder.EXTRA_OPEN_WEEKLY, false)) openWeekly = true
+        intent.getStringExtra(EXTRA_OPEN_GOAL)?.let { openGoal = it }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         if (savedInstanceState == null && intent.getBooleanExtra(Reminder.EXTRA_OPEN_WEEKLY, false)) openWeekly = true
+        if (savedInstanceState == null) openGoal = intent.getStringExtra(EXTRA_OPEN_GOAL)
         setContent {
             val settings = app.settings
             val lock = app.lock
@@ -77,6 +83,8 @@ class MainActivity : FragmentActivity() {
                             support = remember { SupportUi(app.billing, app.supportAd, lock) },
                             openWeekly = openWeekly,
                             onWeeklyOpened = { openWeekly = false },
+                            openGoal = openGoal,
+                            onGoalOpened = { openGoal = null },
                         )
                     }
                 }

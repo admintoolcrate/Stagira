@@ -1,16 +1,16 @@
-# Privacy policy — Stagirite (The Stagirite's Ledger)
+# Privacy policy — Stagira
 
 _Effective 25 October 2026_
 
-Stagirite is a habit and day-count tracker. This policy explains what happens to the
+Stagira is a habit and day-count tracker. This policy explains what happens to the
 information you put into it. In short: **it stays on your phone unless you choose to sync it
 to your own Google account, and we never receive it.**
 
 ## What the app stores
 
 Your goals (names, notes, start dates, slips, urges resisted, schedules, targets and
-settings) are stored on your device, in storage only this app can read. There is no Stagirite
-account and no Stagirite server, and no analytics or tracking code. Ads appear only if you
+settings) are stored on your device, in storage only this app can read. There is no Stagira
+account and no Stagira server, and no analytics or tracking code. Ads appear only if you
 choose to watch one (see below).
 
 ## Optional sync with Google Drive
@@ -67,12 +67,12 @@ you buy something, and Google's ad service if you choose to watch an ad.
 
 - Uninstalling the app deletes everything stored on your phone.
 - To delete the synced copy: Settings → Sync → Disconnect with "Also delete the synced copy"
-  ticked, or in Google Drive on the web: Settings → Manage apps → Stagirite → Delete hidden app
+  ticked, or in Google Drive on the web: Settings → Manage apps → Stagira → Delete hidden app
   data.
 
 ## Children
 
-Stagirite is intended for adults and isn't directed at children.
+Stagira is intended for adults and isn't directed at children.
 
 ## Changes
 

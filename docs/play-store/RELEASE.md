@@ -1,4 +1,4 @@
-# Getting Stagirite onto Google Play
+# Getting Stagira onto Google Play
 
 A checklist, in order. Items marked **(you)** need your accounts or decisions; everything else is
 already set up in this repo.
@@ -9,7 +9,7 @@ Current Google rules this is based on (October 2026):
   with at least 12 testers opted in for the last 14 days** before production access can be
   requested. Organisation accounts are exempt.
   ([Play Console Help](https://support.google.com/googleplay/android-developer/answer/14151465))
-- From 31 August 2026, new apps and updates must **target Android 16 (API 36)**. Stagirite
+- From 31 August 2026, new apps and updates must **target Android 16 (API 36)**. Stagira
   already does (`targetSdk = 36`).
   ([Android developers](https://developer.android.com/google/play/requirements/target-sdk))
 - Every app must complete the **Health apps declaration**, even if it has no health features.
@@ -55,7 +55,7 @@ Then either:
 
 ## 3. Create the app in Play Console (you)
 
-1. **Create app** → name *Stagirite*, default language, **App**, **Free**.
+1. **Create app** → name *Stagira*, default language, **App**, **Free**.
 2. The package name is `com.stagirite.ledger`. It's fixed forever once used.
 3. Accept Play App Signing when you upload the first bundle.
 
@@ -81,7 +81,7 @@ Create these *one-time products* with exactly these ids:
 
 | Product id | What | Suggested price |
 |---|---|---|
-| `plus` | Stagirite Plus | 4.99 |
+| `plus` | Stagira Plus | 4.99 |
 | `tip_small` | Small tip | 1.99 |
 | `tip_medium` | Tip | 4.99 |
 | `tip_large` | Big tip | 9.99 |

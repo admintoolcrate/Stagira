@@ -174,7 +174,7 @@ fun GoalListScreen(
                 title = {
                     // Long-pressing the name shows or hides private titles.
                     Text(
-                        "The Stagirite\u2019s Ledger",
+                        "Stagira — A Ledger",
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                         modifier = Modifier.pointerInput(Unit) { detectTapGestures(onLongPress = { onTitleLongPress() }) },

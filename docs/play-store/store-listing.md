@@ -2,7 +2,7 @@
 
 ## App name (30 characters max)
 
-**Stagirite – Habit Tracker**
+**Stagira – Habit Tracker**
 
 ## Short description (80 characters max)
 
@@ -10,13 +10,13 @@ Count the days you keep. A private, quiet ledger for habits you're building or b
 
 ## Full description (4,000 characters max)
 
-Stagirite is a quiet record of the days you keep.
+Stagira is a quiet record of the days you keep.
 
 Name something you want to do less of, a Vice, or more of, a Virtue, and the ledger counts the
 days. Slip, and you log it in a couple of taps: the count starts again, and every day you kept
 stays in your history.
 
-Aristotle, "the Stagirite", held that character is built by habit, through doing. Stagirite
+Aristotle, born in Stagira, held that character is built by habit, through doing. Stagira
 counts the doing.
 
 WHAT IT DOES
@@ -40,7 +40,7 @@ PRIVATE BY DESIGN
 
 FREE, WITH A ONE-TIME PLUS
 Everything you need to count, log and look back is free, along with the app lock, private titles
-and export. Stagirite Plus, one payment and no subscription, adds unlimited goals (free holds
+and export. Stagira Plus, one payment and no subscription, adds unlimited goals (free holds
 3), Google Drive sync, the widget, and insights: the Progress card, year view and weekly
 review. There's also a tip jar, and an optional ad you can watch to support the app.
 
@@ -48,7 +48,7 @@ CALM BY DESIGN
 Black and white, light and dark, no badges or streak-shaming. Turn off the quotes,
 celebrations or vibration if you'd rather it say less.
 
-Stagirite is a personal tracker, not medical advice or treatment. If you're struggling with
+Stagira is a personal tracker, not medical advice or treatment. If you're struggling with
 alcohol, drugs or gambling, please also reach out to a doctor or a local support service.
 
 ## Category

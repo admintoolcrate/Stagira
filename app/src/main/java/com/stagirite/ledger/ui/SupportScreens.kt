@@ -81,7 +81,7 @@ fun PlusSheet(reason: String, support: SupportUi, onDismiss: () -> Unit) {
                 .navigationBarsPadding()
                 .padding(bottom = 16.dp),
         ) {
-            Text("Stagirite Plus", style = MaterialTheme.typography.headlineSmall)
+            Text("Stagira Plus", style = MaterialTheme.typography.headlineSmall)
             Spacer(Modifier.height(4.dp))
             Text(reason, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Spacer(Modifier.height(20.dp))
@@ -141,7 +141,7 @@ private fun Tick(text: String, muted: Boolean = false) {
     }
 }
 
-/** Settings → Support Stagirite: Plus, the tip jar, and an optional ad. */
+/** Settings → Support Stagira: Plus, the tip jar, and an optional ad. */
 @Composable
 fun SupportSection(support: SupportUi) {
     val context = LocalContext.current
@@ -152,7 +152,7 @@ fun SupportSection(support: SupportUi) {
     // Plus
     Row(verticalAlignment = Alignment.CenterVertically) {
         Column(Modifier.weight(1f)) {
-            Text("Stagirite Plus", style = MaterialTheme.typography.bodyLarge)
+            Text("Stagira Plus", style = MaterialTheme.typography.bodyLarge)
             Text(
                 if (billing.plus) "Unlocked. Thank you." else "Unlimited goals, sync, the widget and insights. One payment.",
                 style = MaterialTheme.typography.bodySmall,

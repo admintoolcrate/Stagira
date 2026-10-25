@@ -80,6 +80,9 @@ fun LedgerApp(
     /** Set when the weekly-review notification was tapped. */
     openWeekly: Boolean = false,
     onWeeklyOpened: () -> Unit = {},
+    /** A goal tapped on the home-screen widget. */
+    openGoal: String? = null,
+    onGoalOpened: () -> Unit = {},
 ) {
     val context = LocalContext.current
     var plusReason by rememberSaveable { mutableStateOf<String?>(null) }
@@ -96,7 +99,7 @@ fun LedgerApp(
     }
 
     CompositionLocalProvider(LocalPlus provides plus, LocalSupport provides support) {
-        LedgerAppContent(store, settings, sync, lock, vault, openWeekly, onWeeklyOpened)
+        LedgerAppContent(store, settings, sync, lock, vault, openWeekly, onWeeklyOpened, openGoal, onGoalOpened)
         plusReason?.let { PlusSheet(it, support, onDismiss = { plusReason = null }) }
     }
 }
@@ -110,6 +113,8 @@ private fun LedgerAppContent(
     vault: PrivateTitles,
     openWeekly: Boolean,
     onWeeklyOpened: () -> Unit,
+    openGoalRequest: String?,
+    onGoalOpened: () -> Unit,
 ) {
     val today by rememberToday()
     var inSettings by rememberSaveable { mutableStateOf(false) }
@@ -120,6 +125,16 @@ private fun LedgerAppContent(
             openId = null
             inWeekly = true
             onWeeklyOpened()
+        }
+    }
+    LaunchedEffect(openGoalRequest) {
+        if (openGoalRequest != null) {
+            if (store.find(openGoalRequest) != null) {
+                inSettings = false
+                inWeekly = false
+                openId = openGoalRequest
+            }
+            onGoalOpened()
         }
     }
     var pinFlow by remember { mutableStateOf<PinFlow?>(null) }

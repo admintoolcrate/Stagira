@@ -1,4 +1,4 @@
 <resources>
-    <string name="app_name">Stagirite</string>
-    <string name="widget_description">Your goals and their day counts</string>
+    <string name="app_name">Stagira</string>
+    <string name="widget_description">One goal at a glance, or your list with progress to each next milestone</string>
 </resources>
