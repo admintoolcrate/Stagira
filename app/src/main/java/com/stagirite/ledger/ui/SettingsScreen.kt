@@ -560,7 +560,8 @@ private fun AboutSection(onShowGuide: () -> Unit) {
         "Aristotle (384\u2013322 BC) was born in Stagira, in northern Greece, and so is often called " +
             "\u201Cthe Stagirite\u201D. In the Nicomachean Ethics he argues that good character isn\u2019t " +
             "something we\u2019re born with but something we build by habit, by doing. A ledger is a " +
-            "book of record: this one records the days you keep.",
+            "book of record: this one records the days you keep. On your home screen it goes by " +
+            "Stagirite for short.",
     )
     Spacer(Modifier.height(16.dp))
     Text("Goals", style = MaterialTheme.typography.titleSmall)

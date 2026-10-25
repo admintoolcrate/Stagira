@@ -1,6 +1,6 @@
 # The Stagirite's Ledger
 
-A minimal Android app that does one thing: name a habit you're keeping —
+A minimal Android app (**Stagirite** on your home screen) that does one thing: name a habit you're keeping —
 *no more alcohol*, *no smoking*, *daily run* — and it counts the days.
 
 > "…one swallow does not make spring, nor does one fine day…"
