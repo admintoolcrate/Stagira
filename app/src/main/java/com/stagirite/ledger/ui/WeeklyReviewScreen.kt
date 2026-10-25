@@ -99,7 +99,7 @@ private fun WeekBody(week: WeekReview, onOpen: (Goal) -> Unit) {
                 Text(headline(week), style = MaterialTheme.typography.headlineSmall)
                 Spacer(Modifier.height(16.dp))
                 Row(Modifier.fillMaxWidth()) {
-                    Figure("${week.cleanDays}/${week.activeDays}", "Clean days", Modifier.weight(1f))
+                    Figure("${week.cleanDays}/${week.activeDays}", "Days kept", Modifier.weight(1f))
                     Figure("${week.slips}", "Slips · was ${week.slipsBefore}", Modifier.weight(1f))
                     Figure("${week.urges}", "Urges resisted · was ${week.urgesBefore}", Modifier.weight(1f))
                 }
@@ -152,7 +152,7 @@ private fun WeekBody(week: WeekReview, onOpen: (Goal) -> Unit) {
 
 /** One plain sentence for the week. */
 private fun headline(w: WeekReview): String = when {
-    w.slips == 0 && w.activeDays > 0 -> "A clean week."
+    w.slips == 0 && w.activeDays > 0 -> "Every day kept this week."
     w.slips < w.slipsBefore -> "Fewer slips than last week."
     w.slips > w.slipsBefore -> "A harder week than the last."
     w.urges > w.urgesBefore -> "Steady, with more urges resisted."

@@ -48,7 +48,7 @@ fun SummaryCard(goals: List<Goal>, today: LocalDate) {
             Figure("${(keptAll.toDouble() / trackedAll * 100).roundToInt()}%", "Of all days", Modifier.weight(1f))
             Figure(
                 if (monthStates.isEmpty()) "–" else "$monthClean/${monthStates.size}",
-                "Clean this month",
+                "Kept this month",
                 Modifier.weight(1f),
             )
         }

@@ -58,16 +58,16 @@ private val pages = listOf(
     GuidePage(
         "⚖",
         "Vices and Virtues",
-        "A Vice is something you want to do less of, like drinking or late-night scrolling. A Virtue " +
-            "is something you want to do more of, like reading or running. Mark each goal as one or the " +
-            "other, or leave it unmarked. If you started a while ago, set the day you began.",
+        "Tackle a vice: stop or cut down on something, like drinking less. Practise a virtue: do something " +
+            "good each day, like one good deed. Either way there\u2019s nothing to log on a good day. Every day " +
+            "counts unless you log a slip or a missed day.",
     ),
     GuidePage(
         "🌱",
         "When you slip",
         "It happens to everyone, and it doesn\u2019t undo the days you kept. Log it in a couple of taps " +
-            "and the count starts again. Your earlier runs stay in your history, and you can jot down " +
-            "what happened, for yourself.",
+            "and begin again. The run you had stays in your history, with a note on what happened if you " +
+            "want one.",
     ),
     GuidePage(
         "🔑",

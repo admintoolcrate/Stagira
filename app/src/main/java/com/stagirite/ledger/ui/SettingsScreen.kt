@@ -642,10 +642,10 @@ private fun AboutSection(onShowGuide: () -> Unit) {
     Text("Goals", style = MaterialTheme.typography.titleSmall)
     Spacer(Modifier.height(4.dp))
     Note(
-        "A goal can be a Vice, something you want to do less of, or a Virtue, something you want to " +
-            "do more of, or neither. Each day kept adds to its count. A slip (for a Virtue, a missed day) " +
-            "starts the count again; the run you had stays in its history, with a note if you add one. " +
-            "Milestones mark the way, and each slip or milestone comes with a passage from Aristotle.",
+        "Each goal tackles a Vice, something to stop or cut down, or practises a Virtue, something good " +
+            "to do each day. Every day counts as kept unless you log a slip (for a Vice) or a missed day " +
+            "(for a Virtue). Then you begin again: the run you had stays in your history, with a note if " +
+            "you add one. Milestones mark the way, with a passage from Aristotle at each.",
     )
     Spacer(Modifier.height(12.dp))
     OutlinedButton(onClick = onShowGuide) { Text("Show the guide") }

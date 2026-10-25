@@ -11,22 +11,32 @@ data class Streak(val start: LocalDate, val end: LocalDate) {
 }
 
 /** Optionally, whether a goal is a vice to do less of or a virtue to do more of. */
+/**
+ * The two kinds of goal. Tackling a Vice means stopping or cutting down
+ * (drinking less); practising a Virtue means doing something good each day
+ * (one good deed a day). Either way a day counts as kept unless it's logged:
+ * a slip for a Vice, a missed day for a Virtue.
+ */
 enum class GoalKind(
     val label: String,
+    /** How it's offered when making a goal. */
+    val choice: String,
     val blurb: String,
     val slip: String,
     val slips: String,
-    /** The button for logging a moment of resolve. */
+    /** The button for logging a moment of resolve (Vices only). */
     val urge: String,
     /** What it's called in stats: "Urges resisted". */
     val urges: String,
 ) {
     Vice(
-        "Vice", "A Vice is something you want to do less of, like drinking or late-night scrolling.",
+        "Vice", "Tackle a vice",
+        "Stop or cut down on something, like drinking less. Each day counts until you slip.",
         "slip", "slips", "Resisted an urge", "Urges resisted",
     ),
     Virtue(
-        "Virtue", "A Virtue is something you want to do more of, like reading or running.",
+        "Virtue", "Practise a virtue",
+        "Do something good each day, like one good deed. Each day counts unless you miss it.",
         "missed day", "missed days", "Did it anyway", "Times you did it anyway",
     ),
 }

@@ -399,7 +399,7 @@ fun Wordmark(modifier: Modifier = Modifier, large: Boolean = true, subtitleAlpha
     Column(modifier) {
         Text(
             "Stagira",
-            style = if (large) LedgerType.name else LedgerType.name.copy(fontSize = 26.sp, lineHeight = 30.sp),
+            style = (if (large) LedgerType.name else LedgerType.name.copy(fontSize = 26.sp, lineHeight = 30.sp)).capped(),
             maxLines = 1,
         )
         if (subtitleAlpha > 0.01f) {

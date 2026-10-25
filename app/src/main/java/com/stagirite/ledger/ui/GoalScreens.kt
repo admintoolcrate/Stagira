@@ -1,5 +1,10 @@
 package com.stagirite.ledger.ui
 
+import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.semantics.Role
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.runtime.LaunchedEffect
 import com.stagirite.ledger.reminders.Reminder
 import androidx.compose.foundation.layout.RowScope
@@ -513,9 +518,18 @@ private fun LedgerRow(goal: Goal, today: LocalDate, onClick: () -> Unit, onLongC
                 }
                 Spacer(Modifier.width(Space.l))
                 Column(horizontalAlignment = Alignment.End) {
-                    RollingNumber(days, LedgerType.count)
+                    // Day zero reads as a start, not as nothing.
+                    if (days == 0L) {
+                        Text("Today", style = LedgerType.count.copy(fontSize = 26.sp, lineHeight = 40.sp).capped())
+                    } else {
+                        RollingNumber(days, LedgerType.count.capped())
+                    }
                     Text(
-                        if (days == 1L) "day" else "days",
+                        when (days) {
+                            0L -> if (goal.slips.isEmpty()) "started" else "begun again"
+                            1L -> "day"
+                            else -> "days"
+                        },
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -778,16 +792,22 @@ fun GoalDetailScreen(
                         KindLabel(goal.kind)
                     }
                 }
-                RollingNumber(
-                    days,
-                    LedgerType.hero,
-                    Modifier.semantics(mergeDescendants = true) {
-                        contentDescription = plural(days, "day") + "; " +
-                            (goal.target?.let { "target ${plural(it, "day")}" } ?: "next milestone ${plural(next, "day")}")
-                    },
-                )
+                val countDescription = Modifier.semantics(mergeDescendants = true) {
+                    contentDescription = (if (days == 0L) "Started today" else plural(days, "day")) + "; " +
+                        (goal.target?.let { "target ${plural(it, "day")}" } ?: "next milestone ${plural(next, "day")}")
+                }
+                if (days == 0L) {
+                    // The first day reads as a beginning rather than a zero.
+                    Text("Today", style = LedgerType.hero.copy(fontSize = 64.sp, lineHeight = 96.sp).capped(), modifier = countDescription)
+                } else {
+                    RollingNumber(days, LedgerType.hero.capped(), countDescription)
+                }
                 Text(
-                    if (days == 1L) "day" else "days",
+                    when (days) {
+                        0L -> if (goal.slips.isEmpty()) "you started" else "you began again"
+                        1L -> "day"
+                        else -> "days"
+                    },
                     style = MaterialTheme.typography.labelLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -1037,7 +1057,7 @@ fun GoalDetailScreen(
         }
         AlertDialog(
             onDismissRequest = finish,
-            title = { Text("Day 0") },
+            title = { Text("Begin again") },
             text = {
                 Column(Modifier.verticalScroll(rememberScrollState())) {
                     Text(
@@ -1166,7 +1186,7 @@ private fun StatsPanel(goal: Goal, today: LocalDate) {
     }
     Row(Modifier.fillMaxWidth()) {
         Figure("${(stats.keptRate * 100).roundToInt()}%", "Days kept", Modifier.weight(1f))
-        Figure("${stats.freshStarts}", "Fresh starts", Modifier.weight(1f))
+        Figure("${stats.freshStarts}", "Begun again", Modifier.weight(1f))
         Figure("${stats.slipsLast30}", "${(goal.kind?.slips ?: "slips").capitalised()}, 30 days", Modifier.weight(1f))
     }
     if (stats.urgesTotal > 0) {
@@ -1337,7 +1357,8 @@ private fun GoalDialog(
     var realTitle by rememberSaveable { mutableStateOf(opened?.title ?: "") }
     var reason by rememberSaveable { mutableStateOf(opened?.reason ?: editing?.reason ?: "") }
     var icon by rememberSaveable { mutableStateOf(editing?.icon ?: "") }
-    var kind by rememberSaveable { mutableStateOf(editing?.kind) }
+    // Every goal is one or the other; older goals without a kind are treated as Vices.
+    var kind by rememberSaveable { mutableStateOf(editing?.kind ?: GoalKind.Vice) }
     var private by rememberSaveable { mutableStateOf(editing?.isPrivate == true) }
     var target by rememberSaveable { mutableStateOf(editing?.target) }
     var schedule by rememberSaveable { mutableStateOf<List<Int>>(editing?.schedule?.map { it.value } ?: emptyList()) }
@@ -1345,6 +1366,10 @@ private fun GoalDialog(
     var picking by rememberSaveable { mutableStateOf(false) }
     var pickingIcon by rememberSaveable { mutableStateOf(false) }
     var confirmDelete by rememberSaveable { mutableStateOf(false) }
+    // Open from the start when editing a goal that already uses any of the extras.
+    var more by rememberSaveable {
+        mutableStateOf(editing != null && (editing.isPrivate || editing.target != null || editing.hasSchedule || editing.reason.isNotBlank()))
+    }
     val since = LocalDate.ofEpochDay(sinceEpochDay)
 
     val canSavePrivate = !private || sealedAway || (privacy.unlocked && realTitle.isNotBlank())
@@ -1355,24 +1380,33 @@ private fun GoalDialog(
         title = { Text(heading) },
         text = {
             Column(Modifier.verticalScroll(rememberScrollState())) {
+                // First, the one choice that shapes everything else: giving something up, or taking it up.
+                Text("What kind of goal?", style = MaterialTheme.typography.bodyMedium)
+                Spacer(Modifier.height(Space.s))
+                GoalKind.entries.forEach { k ->
+                    KindChoice(k, selected = kind == k) {
+                        kind = k
+                        if (k == GoalKind.Vice) schedule = emptyList()
+                    }
+                    Spacer(Modifier.height(Space.s))
+                }
+
                 if (editing == null && title.isBlank()) {
-                    Text("Start from one of these, or write your own.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Spacer(Modifier.height(8.dp))
-                    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        goalTemplates.forEach { t ->
+                    Spacer(Modifier.height(Space.xs))
+                    FlowRow(horizontalArrangement = Arrangement.spacedBy(Space.s)) {
+                        goalTemplates.filter { it.kind == kind }.forEach { t ->
                             SuggestionChip(
                                 onClick = {
                                     title = t.title
                                     icon = t.icon
-                                    kind = t.kind
                                 },
                                 label = { Text(t.title) },
                                 icon = { EmojiGlyph(t.icon, 16.sp) },
                             )
                         }
                     }
-                    Spacer(Modifier.height(12.dp))
                 }
+                Spacer(Modifier.height(Space.m))
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Box(
                         Modifier
@@ -1387,144 +1421,135 @@ private fun GoalDialog(
                             EmojiGlyph(icon, 26.sp)
                         }
                     }
-                    Spacer(Modifier.width(12.dp))
+                    Spacer(Modifier.width(Space.m))
                     OutlinedTextField(
                         value = title,
                         onValueChange = { title = it },
                         label = { Text(if (private) "Shown title (cover)" else "Goal") },
-                        placeholder = { Text(if (private) "e.g. No more corn" else "e.g. No more alcohol") },
+                        placeholder = {
+                            Text(
+                                when {
+                                    private -> "e.g. No more corn"
+                                    kind == GoalKind.Virtue -> "e.g. One good deed a day"
+                                    else -> "e.g. Drink less"
+                                },
+                            )
+                        },
                         singleLine = true,
                         keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
                         modifier = Modifier.weight(1f),
                     )
                 }
 
-                Spacer(Modifier.height(16.dp))
-                val kinds = listOf<GoalKind?>(null) + GoalKind.entries
-                SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
-                    kinds.forEachIndexed { i, k ->
-                        SegmentedButton(
-                            selected = kind == k,
-                            onClick = { kind = k },
-                            shape = SegmentedButtonDefaults.itemShape(i, kinds.size),
-                            icon = {},
-                            colors = SegmentedButtonDefaults.colors(
-                                activeContainerColor = MaterialTheme.colorScheme.primary,
-                                activeContentColor = MaterialTheme.colorScheme.onPrimary,
-                            ),
-                        ) { Text(k?.label ?: "Neither", maxLines = 1) }
-                    }
-                }
-                Text(
-                    kind?.blurb ?: "Optional. Mark it a Vice if you want to do it less, or a Virtue if you want to do it more.",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(top = 6.dp),
-                )
-                if (kind == GoalKind.Virtue) {
-                    Spacer(Modifier.height(12.dp))
-                    Text("Which days?", style = MaterialTheme.typography.bodyMedium)
-                    Spacer(Modifier.height(4.dp))
-                    FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        DayOfWeek.entries.forEach { d ->
-                            FilterChip(
-                                selected = d.value in schedule,
-                                onClick = { schedule = if (d.value in schedule) schedule - d.value else schedule + d.value },
-                                label = { Text(d.getDisplayName(java.time.format.TextStyle.NARROW, java.util.Locale.getDefault())) },
-                            )
-                        }
-                    }
-                    Text(
-                        if (schedule.isEmpty() || schedule.size == 7) "Every day."
-                        else "${scheduleText(schedule.map(DayOfWeek::of).toSet())}. Other days are rest days and never count as missed.",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-
-                Spacer(Modifier.height(12.dp))
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Column(Modifier.weight(1f)) {
-                        Text("Private title", style = MaterialTheme.typography.bodyLarge)
-                        Text(
-                            "Show a cover name; the real one needs your PIN.",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
-                    Switch(
-                        checked = private,
-                        onCheckedChange = { on ->
-                            if (on && !privacy.unlocked) privacy.requestPin()
-                            // Making it public again: the real name becomes the title.
-                            if (!on && realTitle.isNotBlank()) title = realTitle
-                            private = on
-                        },
-                        // A sealed goal can only be made public once its real name is visible.
-                        enabled = !sealedAway,
-                    )
-                }
-                if (private) {
-                    Spacer(Modifier.height(8.dp))
-                    when {
-                        sealedAway -> Text(
-                            "The real name is hidden. Long-press the app’s name on the Goals screen and enter your PIN to see or change it.",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                        !privacy.unlocked -> TextButton(onClick = privacy.requestPin) {
-                            Text(if (privacy.hasPin) "Enter your PIN to add the real name" else "Set a PIN to use private titles")
-                        }
-                        else -> OutlinedTextField(
-                            value = realTitle,
-                            onValueChange = { realTitle = it },
-                            label = { Text("Real title (hidden)") },
-                            singleLine = true,
-                            keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
-                            modifier = Modifier.fillMaxWidth(),
-                        )
-                    }
-                }
-
-                if (!sealedAway) {
-                    Spacer(Modifier.height(8.dp))
-                    OutlinedTextField(
-                        value = reason,
-                        onValueChange = { reason = it },
-                        label = { Text(if (private) "Why it matters (hidden, optional)" else "Why it matters (optional)") },
-                        minLines = 2,
-                        maxLines = 4,
-                        enabled = !private || privacy.unlocked,
-                        keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                }
-
-                Spacer(Modifier.height(12.dp))
-                Text("Target (optional)", style = MaterialTheme.typography.bodyMedium)
-                Spacer(Modifier.height(4.dp))
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    listOf<Long?>(null, 30, 90, 180, 365).forEach { t ->
-                        FilterChip(
-                            selected = target == t,
-                            onClick = { target = t },
-                            label = { Text(t?.let { "$it days" } ?: "None") },
-                        )
-                    }
-                }
-
-                Spacer(Modifier.height(8.dp))
+                Spacer(Modifier.height(Space.s))
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text("Started", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
                     TextButton(onClick = { picking = true }) {
                         Text(if (since == today) "Today" else since.format(mediumDate))
                     }
                 }
-                Text(
-                    "Started earlier? Pick the day you began and the count goes back to it.",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
+
+                // Everything else is optional, and tucked away until wanted.
+                TextButton(onClick = { more = !more }, contentPadding = PaddingValues(0.dp)) {
+                    Text(if (more) "Fewer options" else "More options")
+                    Icon(
+                        if (more) Icons.Filled.KeyboardArrowUp else Icons.Filled.KeyboardArrowDown,
+                        contentDescription = null,
+                        modifier = Modifier.padding(start = Space.xs),
+                    )
+                }
+                if (more) {
+                    if (kind == GoalKind.Virtue) {
+                        Text("Which days?", style = MaterialTheme.typography.bodyMedium)
+                        Spacer(Modifier.height(Space.xs))
+                        FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            DayOfWeek.entries.forEach { d ->
+                                FilterChip(
+                                    selected = d.value in schedule,
+                                    onClick = { schedule = if (d.value in schedule) schedule - d.value else schedule + d.value },
+                                    label = { Text(d.getDisplayName(java.time.format.TextStyle.NARROW, java.util.Locale.getDefault())) },
+                                )
+                            }
+                        }
+                        Text(
+                            if (schedule.isEmpty() || schedule.size == 7) "Every day."
+                            else "${scheduleText(schedule.map(DayOfWeek::of).toSet())}. Other days are rest days and never count as missed.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                        Spacer(Modifier.height(Space.m))
+                    }
+
+                    if (!sealedAway) {
+                        OutlinedTextField(
+                            value = reason,
+                            onValueChange = { reason = it },
+                            label = { Text(if (private) "Why it matters (hidden)" else "Why it matters") },
+                            minLines = 2,
+                            maxLines = 4,
+                            enabled = !private || privacy.unlocked,
+                            keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                        Spacer(Modifier.height(Space.m))
+                    }
+
+                    Text("Target", style = MaterialTheme.typography.bodyMedium)
+                    Spacer(Modifier.height(Space.xs))
+                    FlowRow(horizontalArrangement = Arrangement.spacedBy(Space.s)) {
+                        listOf<Long?>(null, 30, 90, 180, 365).forEach { t ->
+                            FilterChip(
+                                selected = target == t,
+                                onClick = { target = t },
+                                label = { Text(t?.let { "$it days" } ?: "None") },
+                            )
+                        }
+                    }
+
+                    Spacer(Modifier.height(Space.m))
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Column(Modifier.weight(1f)) {
+                            Text("Private title", style = MaterialTheme.typography.bodyLarge)
+                            Text(
+                                "Show a cover name; the real one needs your PIN.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                        Switch(
+                            checked = private,
+                            onCheckedChange = { on ->
+                                if (on && !privacy.unlocked) privacy.requestPin()
+                                // Making it public again: the real name becomes the title.
+                                if (!on && realTitle.isNotBlank()) title = realTitle
+                                private = on
+                            },
+                            // A sealed goal can only be made public once its real name is visible.
+                            enabled = !sealedAway,
+                        )
+                    }
+                    if (private) {
+                        Spacer(Modifier.height(Space.s))
+                        when {
+                            sealedAway -> Text(
+                                "The real name is hidden. Long-press the app\u2019s name on the Goals screen and enter your PIN to see or change it.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                            !privacy.unlocked -> TextButton(onClick = privacy.requestPin) {
+                                Text(if (privacy.hasPin) "Enter your PIN to add the real name" else "Set a PIN to use private titles")
+                            }
+                            else -> OutlinedTextField(
+                                value = realTitle,
+                                onValueChange = { realTitle = it },
+                                label = { Text("Real title (hidden)") },
+                                singleLine = true,
+                                keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
+                                modifier = Modifier.fillMaxWidth(),
+                            )
+                        }
+                    }
+                }
                 if (onDelete != null || onArchive != null) {
                     Spacer(Modifier.height(16.dp))
                     Row {
@@ -1602,6 +1627,26 @@ private fun GoalDialog(
             },
             dismissButton = { TextButton(onClick = { confirmDelete = false }) { Text("Cancel") } },
         )
+    }
+}
+
+/** One of the two kinds of goal, as a card to pick. */
+@Composable
+private fun KindChoice(kind: GoalKind, selected: Boolean, onClick: () -> Unit) {
+    val shape = RoundedCornerShape(14.dp)
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .clip(shape)
+            .border(if (selected) 2.dp else 1.dp, if (selected) MaterialTheme.colorScheme.onBackground else MaterialTheme.colorScheme.outlineVariant, shape)
+            .selectable(selected = selected, role = Role.RadioButton, onClick = onClick)
+            .padding(horizontal = Space.m, vertical = Space.m),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(Modifier.weight(1f)) {
+            Text(kind.choice, style = MaterialTheme.typography.titleSmall)
+            Text(kind.blurb, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
     }
 }
 

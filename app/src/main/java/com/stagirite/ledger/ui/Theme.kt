@@ -14,6 +14,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.platform.LocalDensity
 import com.stagirite.ledger.R
 import androidx.compose.ui.unit.sp
 
@@ -112,6 +113,22 @@ object LedgerType {
     val passage = TextStyle(fontFamily = Garamond, fontSize = 20.sp, lineHeight = 28.sp)
     /** Quotation marks around a passage. */
     val mark = TextStyle(fontFamily = Garamond, fontSize = 44.sp, lineHeight = 44.sp)
+}
+
+/**
+ * Scales big display type with the system text size only up to [max]×, so a
+ * 96sp count doesn't swamp the screen at the largest settings. Body text is
+ * left to scale fully.
+ */
+@Composable
+fun TextStyle.capped(max: Float = 1.25f): TextStyle {
+    val scale = LocalDensity.current.fontScale
+    if (scale <= max) return this
+    val k = max / scale
+    return copy(
+        fontSize = fontSize * k,
+        lineHeight = if (lineHeight.isSp) lineHeight * k else lineHeight,
+    )
 }
 
 /** Spacing in steps of 4dp; layouts use these rather than one-off values. */

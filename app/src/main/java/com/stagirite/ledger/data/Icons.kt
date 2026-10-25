@@ -19,11 +19,13 @@ object GoalIcons {
 data class GoalTemplate(val title: String, val icon: String, val kind: GoalKind)
 
 val goalTemplates = listOf(
-    GoalTemplate("No alcohol", "🍺", GoalKind.Vice),
+    GoalTemplate("Drink less", "🍺", GoalKind.Vice),
+    GoalTemplate("No alcohol", "🍷", GoalKind.Vice),
     GoalTemplate("No smoking", "🚭", GoalKind.Vice),
     GoalTemplate("Less phone", "📱", GoalKind.Vice),
     GoalTemplate("No sugar", "🍬", GoalKind.Vice),
     GoalTemplate("No gambling", "🎲", GoalKind.Vice),
+    GoalTemplate("One good deed a day", "🤝", GoalKind.Virtue),
     GoalTemplate("Exercise", "🏃", GoalKind.Virtue),
     GoalTemplate("Read", "📚", GoalKind.Virtue),
     GoalTemplate("Meditate", "🧘", GoalKind.Virtue),
