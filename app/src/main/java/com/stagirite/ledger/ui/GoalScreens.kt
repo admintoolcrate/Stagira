@@ -1164,7 +1164,7 @@ private fun GoalDialog(
     var kind by rememberSaveable { mutableStateOf(editing?.kind) }
     var private by rememberSaveable { mutableStateOf(editing?.isPrivate == true) }
     var target by rememberSaveable { mutableStateOf(editing?.target) }
-    var schedule by rememberSaveable { mutableStateOf(editing?.schedule?.map { it.value } ?: emptyList()) }
+    var schedule by rememberSaveable { mutableStateOf<List<Int>>(editing?.schedule?.map { it.value } ?: emptyList()) }
     var sinceEpochDay by rememberSaveable { mutableStateOf((editing?.since ?: today).toEpochDay()) }
     var picking by rememberSaveable { mutableStateOf(false) }
     var pickingIcon by rememberSaveable { mutableStateOf(false) }
