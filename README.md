@@ -3,7 +3,8 @@
 A minimal Android app that does one thing: name a habit you're keeping —
 *no more alcohol*, *no smoking*, *daily run* — and it counts the days.
 
-> "One swallow does not make a spring, nor does one day." — Aristotle
+> "…one swallow does not make spring, nor does one fine day…"
+> — Aristotle, *Nicomachean Ethics* I.7, 1098a (tr. H. Rackham)
 
 ## Features
 
@@ -11,7 +12,8 @@ A minimal Android app that does one thing: name a habit you're keeping —
 - The count ticks over at midnight; shown as days, and as years/months/days
 - Progress to the next milestone (1, 3, 7, 14, 21, 30, 60, 90, 180, 270, 365 days, then yearly)
 - **Begin again** when you slip: the count restarts and the run is kept in the goal's history,
-  along with your longest streak and number of fresh starts
+  along with your longest streak and number of fresh starts. You get a short passage from
+  Aristotle for the day you start over (see *Quotations* below)
 - Edit a goal's name or start date; delete a goal
 - Light, dark, or follow the system
 - Optional sync through your Google account (below)
@@ -40,6 +42,23 @@ Every goal carries a last-changed time. On sync the app downloads the copy in Dr
 version of each goal, and uploads the result. Deletions are synced as tombstones so they don't come
 back. Sync runs when you open or leave the app, a couple of seconds after any change, and on
 **Settings → Sync now**.
+
+## Quotations
+
+All quotations are from Aristotle's *Nicomachean Ethics*, translated by H. Rackham (Loeb Classical
+Library, 1926), using the [Perseus Digital Library text](https://github.com/PerseusDL/canonical-greekLit)
+(CC BY-SA 4.0). Each is cited by book and chapter plus the standard Bekker page, and is quoted
+word for word; "…" marks where a sentence is entered or left part way. They live in
+`data/Quotes.kt`, and
+
+```sh
+python3 tools/verify_quotes.py
+```
+
+checks every one against the source text, chapter and page included. CI runs it on every push.
+Several passages come from Book VII, on *akrasia*, which Rackham translates "Unrestraint":
+acting against your own better judgement. Aristotle's view is that this, unlike settled vice,
+can be cured.
 
 ## Setting up Google sign-in (one time)
 

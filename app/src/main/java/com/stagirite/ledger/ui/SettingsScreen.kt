@@ -117,6 +117,14 @@ fun SettingsScreen(store: GoalStore, settings: Settings, sync: SyncManager, onBa
             Section("Your data")
             DataSection(store, sync)
 
+            Section("Sources")
+            Note(
+                "Quotations are from Aristotle, Nicomachean Ethics, translated by H. Rackham " +
+                    "(Loeb Classical Library; London: William Heinemann, 1926), as published by " +
+                    "the Perseus Digital Library under CC BY-SA 4.0. References give book and " +
+                    "chapter, then the standard Bekker page.",
+            )
+
             Spacer(Modifier.height(40.dp))
         }
     }

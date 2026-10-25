@@ -1,15 +1,19 @@
 package com.stagirite.ledger.ui
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
@@ -47,13 +51,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.stagirite.ledger.data.Goal
 import com.stagirite.ledger.data.Milestones
+import com.stagirite.ledger.data.Quote
+import com.stagirite.ledger.data.Quotes
 import com.stagirite.ledger.data.describeSpan
 import com.stagirite.ledger.data.plural
 import java.time.LocalDate
@@ -100,7 +105,7 @@ fun GoalListScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("The Stagirite’s Ledger", fontFamily = Wordmark) },
+                title = { Text("The Stagirite’s Ledger") },
                 actions = {
                     IconButton(onClick = onSettings) {
                         Icon(Icons.Filled.Settings, contentDescription = "Settings")
@@ -166,20 +171,7 @@ private fun EmptyState(modifier: Modifier = Modifier) {
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         Spacer(Modifier.height(48.dp))
-        Text(
-            "“One swallow does not make a spring, nor does one day.”",
-            style = MaterialTheme.typography.bodyMedium,
-            fontFamily = Wordmark,
-            fontStyle = FontStyle.Italic,
-            textAlign = TextAlign.Center,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        Spacer(Modifier.height(4.dp))
-        Text(
-            "Aristotle",
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.outline,
-        )
+        QuoteBlock(Quotes.emptyLedger)
     }
 }
 
@@ -234,7 +226,10 @@ fun GoalDetailScreen(
     var editing by rememberSaveable { mutableStateOf(false) }
     var confirmReset by rememberSaveable { mutableStateOf(false) }
     var confirmDelete by rememberSaveable { mutableStateOf(false) }
+    // Length of the run that just ended, while the "Day 0" screen is showing.
+    var endedRun by rememberSaveable { mutableStateOf<Long?>(null) }
     val days = goal.daysKept(today)
+    val beganAgainToday = days == 0L && goal.history.isNotEmpty()
     val next = Milestones.next(days)
 
     Scaffold(
@@ -302,7 +297,17 @@ fun GoalDetailScreen(
             }
 
             Spacer(Modifier.height(40.dp))
-            OutlinedButton(onClick = { confirmReset = true }) { Text("Begin again") }
+            if (beganAgainToday) {
+                Text(
+                    "You began again today.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Spacer(Modifier.height(20.dp))
+                QuoteBlock(Quotes.forSlip(goal))
+            } else {
+                OutlinedButton(onClick = { confirmReset = true }) { Text("Begin again") }
+            }
 
             if (goal.history.isNotEmpty()) {
                 Spacer(Modifier.height(48.dp))
@@ -365,12 +370,34 @@ fun GoalDetailScreen(
             },
             confirmButton = {
                 TextButton(onClick = {
+                    endedRun = days
                     onReset()
                     confirmReset = false
                 }) { Text("Begin again") }
             },
             dismissButton = {
                 TextButton(onClick = { confirmReset = false }) { Text("Cancel") }
+            },
+        )
+    }
+
+    endedRun?.let { ended ->
+        AlertDialog(
+            onDismissRequest = { endedRun = null },
+            title = { Text("Day 0") },
+            text = {
+                Column {
+                    Text(
+                        if (ended > 0) "Your run of ${plural(ended, "day")} is kept in the history. The count starts again today."
+                        else "The count starts again today.",
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                    Spacer(Modifier.height(20.dp))
+                    QuoteBlock(Quotes.forSlip(goal))
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { endedRun = null }) { Text("Carry on") }
             },
         )
     }
@@ -485,6 +512,41 @@ private fun GoalDialog(
             },
         ) {
             DatePicker(state = state)
+        }
+    }
+}
+
+/** A quotation with a thin rule beside it and its source underneath. */
+@Composable
+fun QuoteBlock(quote: Quote, modifier: Modifier = Modifier) {
+    Row(
+        modifier
+            .fillMaxWidth()
+            .height(IntrinsicSize.Min),
+    ) {
+        Spacer(
+            Modifier
+                .width(2.dp)
+                .fillMaxHeight()
+                .background(MaterialTheme.colorScheme.onBackground),
+        )
+        Spacer(Modifier.width(16.dp))
+        Column {
+            Text(quote.text, style = MaterialTheme.typography.bodyLarge)
+            Spacer(Modifier.height(8.dp))
+            Text(
+                quote.citation,
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            quote.note?.let {
+                Spacer(Modifier.height(6.dp))
+                Text(
+                    it,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.outline,
+                )
+            }
         }
     }
 }

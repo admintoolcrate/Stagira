@@ -6,7 +6,6 @@ import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 
 // Monochrome: ink on paper, paper on ink. No accent colour.
@@ -57,9 +56,6 @@ private val DarkColors = darkColorScheme(
     outlineVariant = Color(0xFF262626),
     error = Color(0xFFF2B8B5),
 )
-
-/** Serif is used only for the name; everything else is the system sans. */
-val Wordmark = FontFamily.Serif
 
 private val LedgerTypography = Typography().run {
     copy(

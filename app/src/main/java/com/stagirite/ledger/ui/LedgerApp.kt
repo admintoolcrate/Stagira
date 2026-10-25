@@ -122,8 +122,6 @@ fun PassphraseDialog(
 ) {
     var pass by remember { mutableStateOf("") }
     var again by remember { mutableStateOf("") }
-    val hint: (@Composable () -> Unit)? =
-        if (needsConfirmation) @Composable { Text("At least $MIN_PASSPHRASE characters") } else null
     val valid = pass.length >= MIN_PASSPHRASE && (!needsConfirmation || pass == again)
 
     AlertDialog(
@@ -138,7 +136,7 @@ fun PassphraseDialog(
                     value = pass,
                     onValueChange = { pass = it },
                     label = { Text("Passphrase") },
-                    supportingText = hint,
+                    supportingText = { if (needsConfirmation) Text("At least $MIN_PASSPHRASE characters") },
                     isError = error != null,
                     singleLine = true,
                     visualTransformation = PasswordVisualTransformation(),
