@@ -8,16 +8,22 @@ A minimal Android app that does one thing: name a habit you're keeping —
 
 ## Features
 
-- Any number of goals, counted from today or a past date
-- The count ticks over at midnight; shown as days, and as years/months/days
-- Progress to the next milestone (1, 3, 7, 14, 21, 30, 60, 90, 180, 270, 365 days, then yearly)
-- **Begin again** when you slip: the count restarts and the run is kept in the goal's history,
-  along with your longest streak and number of fresh starts. You get a short passage from
-  Aristotle for the day you start over (see *Quotations* below)
-- Edit a goal's name or start date; delete a goal
-- Light, dark, or follow the system
-- Optional sync through your Google account (below)
-- Export to / import from a JSON file
+- **Goals** — any number, counted from today or a past date, with an optional note on why each
+  one matters. The count ticks over at midnight.
+- **Begin again** when you slip: the count restarts, the run is kept, and you get a short passage
+  from Aristotle for the day (see *Quotations*).
+- **Backdated entries** — record a slip on any past day (or remove one), from the goal page or by
+  tapping the day in its calendar. Runs, stats and the count all follow.
+- **Calendar** — a month view for each goal: filled discs for kept days, rings for slips.
+- **Stats** — current, longest and average run; share of days kept; fresh starts; slips in the
+  last 30 days; a chart of every run's length (tap a bar for its dates).
+- **Overview** — all goals at a glance: totals, clean days this month, milestones coming up, a
+  combined calendar, and a line per goal.
+- Milestones at 1, 3, 7, 14, 21, 30, 60, 90, 180, 270, 365 days, then yearly, marked on the day.
+- **App lock** with fingerprint, face or screen lock, locking immediately or after 1 or 5 minutes.
+- **Daily reminder** (optional) at a time you choose. It never names your goals.
+- Undo after deleting a goal; edit a goal's name, note or start date.
+- Light, dark, or follow the system. Optional Google sync. Export / import as JSON.
 
 ## Privacy
 
@@ -33,10 +39,17 @@ A minimal Android app that does one thing: name a habit you're keeping —
   Keystore key; the passphrase itself is never stored. Lose the passphrase and the synced copy can't
   be recovered (your phone's copy is unaffected).
 - **Disconnect** revokes the app's access to your Google account and can delete the synced copy.
+- **App lock** keeps the ledger behind your fingerprint, face or screen lock; while it's on, the
+  app is also blanked in recent apps.
 - **Hide in recent apps** blanks the app in the app switcher and blocks screenshots.
+- The daily reminder's notification is generic ("A moment for your ledger."), so nothing about
+  your goals appears on the lock screen.
 - Android auto-backup is turned off, so nothing is copied off the device unless you turn sync on.
 
 ### How sync works
+
+All your devices need this version or later: the ledger format changed to store slip dates
+(older data is converted automatically).
 
 Every goal carries a last-changed time. On sync the app downloads the copy in Drive, keeps the newer
 version of each goal, and uploads the result. Deletions are synced as tombstones so they don't come
@@ -91,14 +104,16 @@ the repo's **Actions** tab, download the `stagirites-ledger-debug` artifact, unz
 
 ```sh
 ./gradlew assembleDebug        # APK in app/build/outputs/apk/debug/
-./gradlew testDebugUnitTest    # unit tests: counting, merging, encryption
+./gradlew testDebugUnitTest    # unit tests: counting, slips, stats, merging, encryption
 ```
 
 ## Project layout
 
 ```
 app/src/main/java/com/stagirite/ledger/
-  data/Goal.kt            day counting, resets, history, merge, milestones
+  data/Goal.kt            start date + slip dates; runs, merge, milestones
+  data/Stats.kt           per-goal stats, calendar day states, overview figures
+  data/Quotes.kt          the Aristotle passages (checked by tools/verify_quotes.py)
   data/LedgerCodec.kt     the JSON format (storage, sync, export)
   data/GoalStore.kt       the ledger on this device
   data/Settings.kt        theme and privacy preferences
@@ -106,7 +121,9 @@ app/src/main/java/com/stagirite/ledger/
   sync/KeyVault.kt        keeps the sync key under the Android Keystore
   sync/DriveClient.kt     tiny Google Drive app-data-folder client
   sync/SyncManager.kt     sign-in, sync and encryption state
-  ui/                     Jetpack Compose screens and theme
+  security/AppLock.kt     fingerprint / screen-lock gate
+  reminders/Reminder.kt   optional daily notification
+  ui/                     Compose screens: goals, goal page, overview, settings, calendar, chart
 ```
 
 Kotlin, Jetpack Compose, Material 3. Android 8.0 (API 26) and up.

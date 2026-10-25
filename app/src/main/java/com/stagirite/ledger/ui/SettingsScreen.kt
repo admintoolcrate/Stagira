@@ -1,6 +1,10 @@
 package com.stagirite.ledger.ui
 
+import android.Manifest
 import android.app.Activity
+import android.content.pm.PackageManager
+import android.os.Build
+import android.text.format.DateFormat
 import android.text.format.DateUtils
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -19,15 +23,11 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
@@ -37,7 +37,18 @@ import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TimePicker
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.rememberTimePickerState
+import androidx.compose.runtime.remember
+import androidx.core.content.ContextCompat
+import androidx.fragment.app.FragmentActivity
+import com.stagirite.ledger.data.LockDelay
+import com.stagirite.ledger.reminders.Reminder
+import com.stagirite.ledger.security.AppLock
+import java.time.LocalTime
+import java.time.format.DateTimeFormatter
+import java.time.format.FormatStyle
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -59,19 +70,16 @@ import java.time.LocalDate
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SettingsScreen(store: GoalStore, settings: Settings, sync: SyncManager, onBack: () -> Unit) {
+fun SettingsScreen(
+    store: GoalStore,
+    settings: Settings,
+    sync: SyncManager,
+    lock: AppLock,
+    bottomBar: @Composable () -> Unit,
+) {
     Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Settings") },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-                    }
-                },
-                colors = plainTopBarColors(),
-            )
-        },
+        topBar = { TopAppBar(title = { Text("Settings") }, colors = plainTopBarColors()) },
+        bottomBar = bottomBar,
     ) { padding ->
         Column(
             Modifier
@@ -97,15 +105,23 @@ fun SettingsScreen(store: GoalStore, settings: Settings, sync: SyncManager, onBa
                 }
             }
 
+            Section("Lock")
+            LockSection(settings, lock)
+
+            Section("Reminder")
+            ReminderSection(settings, lock)
+
             Section("Sync")
-            SyncSection(sync)
+            SyncSection(sync, lock)
 
             Section("Privacy")
             SwitchRow(
                 title = "Hide in recent apps",
-                detail = "Blank the app in the app switcher and block screenshots.",
-                checked = settings.hideInRecents,
+                detail = if (settings.appLock) "On while the app lock is on."
+                else "Blank the app in the app switcher and block screenshots.",
+                checked = settings.secureWindow,
                 onChange = settings::updateHideInRecents,
+                enabled = !settings.appLock,
             )
             Spacer(Modifier.height(12.dp))
             Note(
@@ -115,7 +131,7 @@ fun SettingsScreen(store: GoalStore, settings: Settings, sync: SyncManager, onBa
             )
 
             Section("Your data")
-            DataSection(store, sync)
+            DataSection(store, sync, lock)
 
             Section("Sources")
             Note(
@@ -131,7 +147,7 @@ fun SettingsScreen(store: GoalStore, settings: Settings, sync: SyncManager, onBa
 }
 
 @Composable
-private fun SyncSection(sync: SyncManager) {
+private fun SyncSection(sync: SyncManager, lock: AppLock) {
     val context = LocalContext.current
     val activity = context as Activity
     val scope = rememberCoroutineScope()
@@ -140,7 +156,10 @@ private fun SyncSection(sync: SyncManager) {
     }
     val connect: () -> Unit = {
         scope.launch {
-            sync.connect(activity)?.let { launcher.launch(IntentSenderRequest.Builder(it).build()) }
+            sync.connect(activity)?.let {
+                lock.expectReturn()
+                launcher.launch(IntentSenderRequest.Builder(it).build())
+            }
         }
     }
     var disconnecting by rememberSaveable { mutableStateOf(false) }
@@ -278,7 +297,7 @@ private fun SyncSection(sync: SyncManager) {
 }
 
 @Composable
-private fun DataSection(store: GoalStore, sync: SyncManager) {
+private fun DataSection(store: GoalStore, sync: SyncManager, lock: AppLock) {
     val context = LocalContext.current
     val exporter = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri ->
         if (uri == null) return@rememberLauncherForActivityResult
@@ -307,14 +326,20 @@ private fun DataSection(store: GoalStore, sync: SyncManager) {
         title = "Export",
         detail = "Save your goals to a file. The file isn't encrypted.",
         action = "Export",
-        onClick = { exporter.launch("ledger-${LocalDate.now()}.json") },
+        onClick = {
+            lock.expectReturn()
+            exporter.launch("ledger-${LocalDate.now()}.json")
+        },
     )
     Spacer(Modifier.height(12.dp))
     SettingRow(
         title = "Import",
         detail = "Merge goals from an exported file.",
         action = "Import",
-        onClick = { importer.launch(arrayOf("application/json", "text/plain", "application/octet-stream")) },
+        onClick = {
+            lock.expectReturn()
+            importer.launch(arrayOf("application/json", "text/plain", "application/octet-stream"))
+        },
     )
 }
 
@@ -355,13 +380,118 @@ private fun SettingRow(
 }
 
 @Composable
-private fun SwitchRow(title: String, detail: String, checked: Boolean, onChange: (Boolean) -> Unit) {
+private fun SwitchRow(
+    title: String,
+    detail: String,
+    checked: Boolean,
+    onChange: (Boolean) -> Unit,
+    enabled: Boolean = true,
+) {
     Row(verticalAlignment = Alignment.CenterVertically) {
         Column(Modifier.weight(1f)) {
             Text(title, style = MaterialTheme.typography.bodyLarge)
             Note(detail)
         }
         Spacer(Modifier.width(12.dp))
-        Switch(checked = checked, onCheckedChange = onChange)
+        Switch(checked = checked, onCheckedChange = onChange, enabled = enabled)
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun LockSection(settings: Settings, lock: AppLock) {
+    val activity = LocalContext.current as FragmentActivity
+    val available = remember { AppLock.available(activity) }
+    SwitchRow(
+        title = "App lock",
+        detail = if (available) "Ask for your fingerprint, face or screen lock to open the ledger."
+        else "Set up a fingerprint or screen lock in your phone\u2019s settings to use this.",
+        checked = settings.appLock,
+        enabled = available || settings.appLock,
+        onChange = { on ->
+            // Confirm it works before relying on it, and before turning it off.
+            lock.prompt(activity, if (on) "Turn on app lock" else "Turn off app lock") {
+                settings.updateAppLock(on)
+            }
+        },
+    )
+    if (settings.appLock) {
+        Spacer(Modifier.height(12.dp))
+        val delays = LockDelay.entries
+        SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
+            delays.forEachIndexed { i, delay ->
+                SegmentedButton(
+                    selected = settings.lockDelay == delay,
+                    onClick = { settings.updateLockDelay(delay) },
+                    shape = SegmentedButtonDefaults.itemShape(i, delays.size),
+                    icon = {},
+                    colors = SegmentedButtonDefaults.colors(
+                        activeContainerColor = MaterialTheme.colorScheme.primary,
+                        activeContentColor = MaterialTheme.colorScheme.onPrimary,
+                    ),
+                ) { Text(delay.label, maxLines = 1) }
+            }
+        }
+        Spacer(Modifier.height(4.dp))
+        Note("When to lock after you leave the app.")
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ReminderSection(settings: Settings, lock: AppLock) {
+    val context = LocalContext.current
+    var pickingTime by rememberSaveable { mutableStateOf(false) }
+    val permission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+        settings.updateReminder(granted)
+        Reminder.apply(context, settings)
+    }
+    val time = LocalTime.of(settings.reminderMinutes / 60, settings.reminderMinutes % 60)
+
+    SwitchRow(
+        title = "Daily reminder",
+        detail = "A quiet nudge once a day. It never names your goals.",
+        checked = settings.reminder,
+        onChange = { on ->
+            if (on && Build.VERSION.SDK_INT >= 33 &&
+                ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
+            ) {
+                lock.expectReturn()
+                permission.launch(Manifest.permission.POST_NOTIFICATIONS)
+            } else {
+                settings.updateReminder(on)
+                Reminder.apply(context, settings)
+            }
+        },
+    )
+    if (settings.reminder) {
+        Spacer(Modifier.height(4.dp))
+        SettingRow(
+            title = "Time",
+            detail = time.format(DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT)),
+            action = "Change",
+            onClick = { pickingTime = true },
+        )
+    }
+
+    if (pickingTime) {
+        val state = rememberTimePickerState(
+            initialHour = time.hour,
+            initialMinute = time.minute,
+            is24Hour = DateFormat.is24HourFormat(context),
+        )
+        AlertDialog(
+            onDismissRequest = { pickingTime = false },
+            title = { Text("Reminder time") },
+            text = { TimePicker(state = state) },
+            confirmButton = {
+                TextButton(onClick = {
+                    settings.updateReminder(true, state.hour * 60 + state.minute)
+                    Reminder.apply(context, settings)
+                    pickingTime = false
+                }) { Text("OK") }
+            },
+            dismissButton = { TextButton(onClick = { pickingTime = false }) { Text("Cancel") } },
+        )
     }
 }

@@ -3,6 +3,9 @@
 
     <!-- Used only to talk to Google Drive when sync is turned on. -->
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Optional daily reminder. -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
     <!-- Backups are off: sync is opt-in, so nothing is copied to the cloud without asking. -->
     <application
@@ -23,5 +26,16 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <receiver
+            android:name=".reminders.ReminderReceiver"
+            android:exported="false" />
+        <receiver
+            android:name=".reminders.BootReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
     </application>
 </manifest>

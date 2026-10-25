@@ -4,7 +4,7 @@ import java.time.LocalDate
 import java.time.Period
 import java.time.temporal.ChronoUnit
 
-/** A finished run of days, from [start] up to the day it ended. */
+/** A run of days kept, from [start] up to [end] (a slip, or today for the current run). */
 data class Streak(val start: LocalDate, val end: LocalDate) {
     val days: Long get() = maxOf(0, ChronoUnit.DAYS.between(start, end))
 }
@@ -12,39 +12,62 @@ data class Streak(val start: LocalDate, val end: LocalDate) {
 /**
  * A single habit being kept, e.g. "No more alcohol".
  *
- * Dates are calendar days (no time of day), so the count ticks over at local
- * midnight. [updatedAt] and [deleted] exist for sync: the newest edit of a goal
- * wins, and deletions are kept as tombstones so they spread to other devices.
+ * A goal is its [since] date plus the days it slipped. Everything else (the
+ * current count, past runs, stats, the calendar) is worked out from those, so a
+ * slip can be recorded or removed for any past day.
+ *
+ * [updatedAt] and [deleted] exist for sync: the newest edit of a goal wins, and
+ * deletions are kept as tombstones so they spread to other devices.
  */
 data class Goal(
     val id: String,
     val title: String,
-    val startDate: LocalDate,
-    val history: List<Streak> = emptyList(),
+    val since: LocalDate,
+    /** Sorted, distinct, none before [since]. */
+    val slips: List<LocalDate> = emptyList(),
+    /** Optional note on why this goal matters, shown on its page. */
+    val reason: String = "",
     val createdAt: Long = 0,
     val updatedAt: Long = 0,
     val deleted: Boolean = false,
 ) {
-    /** Whole days kept since [startDate]; the start date itself counts as 0. */
-    fun daysKept(today: LocalDate): Long = maxOf(0, ChronoUnit.DAYS.between(startDate, today))
+    /** The day the current run began: the latest slip, or [since]. */
+    val currentStart: LocalDate get() = slips.lastOrNull() ?: since
 
-    fun longestStreak(today: LocalDate): Long =
-        maxOf(daysKept(today), history.maxOfOrNull { it.days } ?: 0)
+    /** Whole days since the current run began; that day itself counts as 0. */
+    fun daysKept(today: LocalDate): Long = maxOf(0, ChronoUnit.DAYS.between(currentStart, today))
 
-    val freshStarts: Int get() = history.size
+    /** Finished runs, oldest first. */
+    val history: List<Streak>
+        get() = (listOf(since) + slips).zipWithNext { a, b -> Streak(a, b) }
 
-    /** Starts the count over from [today], recording the run that just ended. */
-    fun reset(today: LocalDate, now: Long): Goal = copy(
-        startDate = today,
-        history = history + Streak(startDate, maxOf(startDate, today)),
+    fun runs(today: LocalDate): List<Streak> = history + Streak(currentStart, maxOf(currentStart, today))
+
+    fun longestStreak(today: LocalDate): Long = runs(today).maxOf { it.days }
+
+    val freshStarts: Int get() = slips.size
+
+    fun isSlip(day: LocalDate): Boolean = slips.binarySearch(day) >= 0
+
+    /** Records a slip on [day] (today or any earlier day since the goal began). */
+    fun recordSlip(day: LocalDate, now: Long): Goal {
+        if (day.isBefore(since) || isSlip(day)) return this
+        return copy(slips = (slips + day).sorted(), updatedAt = now)
+    }
+
+    fun removeSlip(day: LocalDate, now: Long): Goal =
+        if (!isSlip(day)) this else copy(slips = slips - day, updatedAt = now)
+
+    /** [since] can't move past the first slip. */
+    fun edit(title: String, since: LocalDate, reason: String, now: Long): Goal = copy(
+        title = title.trim(),
+        since = slips.firstOrNull()?.let { minOf(it, since) } ?: since,
+        reason = reason.trim(),
         updatedAt = now,
     )
 
-    fun edit(title: String, startDate: LocalDate, now: Long): Goal =
-        copy(title = title.trim(), startDate = startDate, updatedAt = now)
-
     fun tombstone(now: Long): Goal =
-        copy(title = "", history = emptyList(), deleted = true, updatedAt = now)
+        copy(title = "", slips = emptyList(), reason = "", deleted = true, updatedAt = now)
 }
 
 /**
@@ -66,6 +89,8 @@ object Milestones {
     /** The most recent milestone reached, or 0 if none yet. */
     fun previous(days: Long): Long =
         if (days < 365) fixed.lastOrNull { it <= days } ?: 0 else (days / 365) * 365
+
+    fun isMilestone(days: Long): Boolean = days > 0 && previous(days) == days
 
     /** Fraction of the way from the previous milestone to the next one, 0..1. */
     fun progress(days: Long): Float {

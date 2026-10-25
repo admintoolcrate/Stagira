@@ -1,13 +1,14 @@
 package com.stagirite.ledger.data
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.time.LocalDate
 
 class GoalTest {
     private val start = LocalDate.of(2026, 1, 1)
-    private val goal = Goal(id = "g", title = "No more alcohol", startDate = start)
+    private val goal = Goal(id = "g", title = "No more alcohol", since = start)
 
     @Test
     fun countsWholeDaysSinceStart() {
@@ -18,24 +19,60 @@ class GoalTest {
     }
 
     @Test
-    fun resetRecordsHistoryAndKeepsLongestStreak() {
+    fun slipTodayStartsTheCountAgainAndKeepsTheRun() {
         val day40 = start.plusDays(40)
-        val reset = goal.reset(day40, now = 5)
-        assertEquals(day40, reset.startDate)
-        assertEquals(listOf(Streak(start, day40)), reset.history)
-        assertEquals(1, reset.freshStarts)
-        assertEquals(5, reset.updatedAt)
-        assertEquals(0, reset.daysKept(day40))
-        assertEquals(40, reset.reset(day40.plusDays(5), now = 6).longestStreak(day40.plusDays(5)))
-        assertEquals(50, reset.longestStreak(day40.plusDays(50)))
+        val g = goal.recordSlip(day40, now = 5)
+        assertEquals(day40, g.currentStart)
+        assertEquals(listOf(Streak(start, day40)), g.history)
+        assertEquals(1, g.freshStarts)
+        assertEquals(5, g.updatedAt)
+        assertEquals(0, g.daysKept(day40))
+        assertEquals(40, g.longestStreak(day40.plusDays(5)))
+        assertEquals(50, g.longestStreak(day40.plusDays(50)))
+    }
+
+    @Test
+    fun backdatedSlipSplitsTheRunItFallsIn() {
+        val today = start.plusDays(30)
+        val g = goal.recordSlip(start.plusDays(20), 1).recordSlip(start.plusDays(10), 2)
+        assertEquals(listOf(start.plusDays(10), start.plusDays(20)), g.slips)
+        assertEquals(
+            listOf(Streak(start, start.plusDays(10)), Streak(start.plusDays(10), start.plusDays(20)), Streak(start.plusDays(20), today)),
+            g.runs(today),
+        )
+        assertEquals(10, g.daysKept(today))
+    }
+
+    @Test
+    fun slipsBeforeTheStartOrTwiceOnADayAreIgnored() {
+        assertEquals(goal, goal.recordSlip(start.minusDays(1), 9))
+        val once = goal.recordSlip(start.plusDays(3), 1)
+        assertEquals(once, once.recordSlip(start.plusDays(3), 2))
+    }
+
+    @Test
+    fun removingASlipJoinsTheRunsBack() {
+        val day = start.plusDays(7)
+        val g = goal.recordSlip(day, 1).removeSlip(day, 2)
+        assertEquals(emptyList<LocalDate>(), g.slips)
+        assertEquals(14, g.daysKept(start.plusDays(14)))
+        assertEquals(2, g.updatedAt)
+    }
+
+    @Test
+    fun startCannotMovePastTheFirstSlip() {
+        val g = goal.recordSlip(start.plusDays(5), 1).edit("x", start.plusDays(9), "", 2)
+        assertEquals(start.plusDays(5), g.since)
+        assertEquals(start.minusDays(4), g.edit("x", start.minusDays(4), "", 3).since)
     }
 
     @Test
     fun tombstoneDropsContent() {
-        val t = goal.reset(start.plusDays(3), 1).tombstone(now = 9)
+        val t = goal.copy(reason = "health").recordSlip(start.plusDays(3), 1).tombstone(now = 9)
         assertTrue(t.deleted)
         assertEquals("", t.title)
-        assertEquals(emptyList<Streak>(), t.history)
+        assertEquals("", t.reason)
+        assertEquals(emptyList<LocalDate>(), t.slips)
         assertEquals(9, t.updatedAt)
     }
 
@@ -43,13 +80,12 @@ class GoalTest {
     fun mergeKeepsNewestVersionOfEachGoal() {
         val a = Goal("a", "A", start, createdAt = 1, updatedAt = 10)
         val b = Goal("b", "B", start, createdAt = 2, updatedAt = 10)
-        val aRenamed = a.edit("A2", start, now = 20)
+        val aRenamed = a.edit("A2", start, "", now = 20)
         val bDeleted = b.tombstone(now = 30)
         val c = Goal("c", "C", start, createdAt = 3, updatedAt = 3)
 
         val merged = mergeGoals(listOf(aRenamed, b), listOf(a, bDeleted, c))
         assertEquals(listOf(aRenamed, bDeleted, c), merged)
-        // Order of arguments doesn't matter.
         assertEquals(merged, mergeGoals(listOf(a, bDeleted, c), listOf(aRenamed, b)))
     }
 
@@ -69,6 +105,10 @@ class GoalTest {
         assertEquals(1095, Milestones.next(800))
         assertEquals(0f, Milestones.progress(0), 0f)
         assertEquals(0.5f, Milestones.progress(45), 0.001f)
+        assertTrue(Milestones.isMilestone(30))
+        assertTrue(Milestones.isMilestone(730))
+        assertFalse(Milestones.isMilestone(31))
+        assertFalse(Milestones.isMilestone(0))
     }
 
     @Test
@@ -81,9 +121,23 @@ class GoalTest {
     @Test
     fun codecRoundTrips() {
         val goals = listOf(
-            goal.reset(start.plusDays(12), 4).copy(createdAt = 2),
+            goal.copy(reason = "for my kids", createdAt = 2).recordSlip(start.plusDays(12), 4),
             Goal("x", "", start, createdAt = 3, updatedAt = 8, deleted = true),
         )
         assertEquals(goals, LedgerCodec.decode(LedgerCodec.encode(goals)))
+    }
+
+    @Test
+    fun codecReadsVersionOne() {
+        // Started Jan 1, slipped Jan 11 and Jan 21; current run from Jan 21.
+        val v1 = """{"version":1,"goals":[{"id":"g","title":"T","start":${start.plusDays(20).toEpochDay()},
+            "history":[[${start.toEpochDay()},${start.plusDays(10).toEpochDay()}],
+                       [${start.plusDays(10).toEpochDay()},${start.plusDays(20).toEpochDay()}]],
+            "created":1,"updated":2,"deleted":false}]}"""
+        val g = LedgerCodec.decode(v1).single()
+        assertEquals(start, g.since)
+        assertEquals(listOf(start.plusDays(10), start.plusDays(20)), g.slips)
+        assertEquals(start.plusDays(20), g.currentStart)
+        assertEquals("", g.reason)
     }
 }

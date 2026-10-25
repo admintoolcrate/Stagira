@@ -23,20 +23,34 @@ class GoalStore(context: Context) {
 
     fun find(id: String): Goal? = all.firstOrNull { it.id == id && !it.deleted }
 
-    fun add(title: String, startDate: LocalDate) {
+    fun add(title: String, since: LocalDate, reason: String = "") {
         val now = System.currentTimeMillis()
-        all.add(Goal(UUID.randomUUID().toString(), title.trim(), startDate, createdAt = now, updatedAt = now))
+        all.add(Goal(UUID.randomUUID().toString(), title.trim(), since, reason = reason.trim(), createdAt = now, updatedAt = now))
         changed()
     }
 
-    fun edit(id: String, title: String, startDate: LocalDate) =
-        replace(id) { it.edit(title, startDate, System.currentTimeMillis()) }
+    fun edit(id: String, title: String, since: LocalDate, reason: String) =
+        replace(id) { it.edit(title, since, reason, System.currentTimeMillis()) }
 
-    fun reset(id: String, today: LocalDate) =
-        replace(id) { it.reset(today, System.currentTimeMillis()) }
+    fun recordSlip(id: String, day: LocalDate) =
+        replace(id) { it.recordSlip(day, System.currentTimeMillis()) }
 
-    fun delete(id: String) =
+    fun removeSlip(id: String, day: LocalDate) =
+        replace(id) { it.removeSlip(day, System.currentTimeMillis()) }
+
+    /** Deletes a goal and returns it, so the deletion can be undone with [restore]. */
+    fun delete(id: String): Goal? {
+        val goal = find(id) ?: return null
         replace(id) { it.tombstone(System.currentTimeMillis()) }
+        return goal
+    }
+
+    fun restore(goal: Goal) {
+        val i = all.indexOfFirst { it.id == goal.id }
+        val revived = goal.copy(deleted = false, updatedAt = System.currentTimeMillis())
+        if (i >= 0) all[i] = revived else all.add(revived)
+        changed()
+    }
 
     /** Folds in goals from elsewhere (sync or import). Returns true if anything changed. */
     fun mergeIn(other: List<Goal>): Boolean {

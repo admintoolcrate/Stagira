@@ -21,8 +21,8 @@ class QuotesTest {
 
     @Test
     fun quoteStaysTheSameForOneFreshStartAndChangesForTheNext() {
-        val goal = Goal("g", "No more alcohol", day).reset(day.plusDays(9), 1)
+        val goal = Goal("g", "No more alcohol", day).recordSlip(day.plusDays(9), 1)
         assertEquals(Quotes.forSlip(goal), Quotes.forSlip(goal.copy(title = "renamed")))
-        assertNotEquals(Quotes.forSlip(goal), Quotes.forSlip(goal.reset(day.plusDays(12), 2)))
+        assertNotEquals(Quotes.forSlip(goal), Quotes.forSlip(goal.recordSlip(day.plusDays(12), 2)))
     }
 }

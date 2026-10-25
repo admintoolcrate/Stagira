@@ -9,6 +9,9 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -17,6 +20,7 @@ import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -25,9 +29,11 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import com.stagirite.ledger.data.GoalStore
 import com.stagirite.ledger.data.Settings
+import com.stagirite.ledger.security.AppLock
 import com.stagirite.ledger.sync.SyncManager
 import com.stagirite.ledger.sync.SyncState
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import java.time.LocalDate
 
 const val MIN_PASSPHRASE = 8
@@ -46,38 +52,50 @@ fun rememberToday(): State<LocalDate> {
 }
 
 @Composable
-fun LedgerApp(store: GoalStore, settings: Settings, sync: SyncManager) {
+fun LedgerApp(store: GoalStore, settings: Settings, sync: SyncManager, lock: AppLock) {
     val today by rememberToday()
-    // "list", "settings", or the id of an open goal.
-    var screen by rememberSaveable { mutableStateOf("list") }
-    val openGoal = store.find(screen)
+    var tab by rememberSaveable { mutableStateOf(Tab.Goals) }
+    var openId by rememberSaveable { mutableStateOf<String?>(null) }
+    val openGoal = openId?.let(store::find)
+    val snackbar = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
+    val navBar: @Composable () -> Unit = { LedgerNavBar(tab) { tab = it } }
 
-    when {
-        screen == "settings" -> {
-            BackHandler { screen = "list" }
-            SettingsScreen(store, settings, sync, onBack = { screen = "list" })
-        }
-        openGoal != null -> {
-            BackHandler { screen = "list" }
-            GoalDetailScreen(
-                goal = openGoal,
-                today = today,
-                onBack = { screen = "list" },
-                onEdit = { title, start -> store.edit(openGoal.id, title, start) },
-                onReset = { store.reset(openGoal.id, today) },
-                onDelete = {
-                    store.delete(openGoal.id)
-                    screen = "list"
-                },
-            )
-        }
-        else -> GoalListScreen(
-            goals = store.goals,
+    if (openGoal != null) {
+        BackHandler { openId = null }
+        GoalDetailScreen(
+            goal = openGoal,
             today = today,
-            onOpen = { screen = it.id },
-            onAdd = store::add,
-            onSettings = { screen = "settings" },
+            onBack = { openId = null },
+            onEdit = { title, since, reason -> store.edit(openGoal.id, title, since, reason) },
+            onSlip = { store.recordSlip(openGoal.id, it) },
+            onRemoveSlip = { store.removeSlip(openGoal.id, it) },
+            onDelete = {
+                val removed = store.delete(openGoal.id)
+                openId = null
+                tab = Tab.Goals
+                if (removed != null) {
+                    scope.launch {
+                        val result = snackbar.showSnackbar("Goal deleted", actionLabel = "Undo", duration = SnackbarDuration.Long)
+                        if (result == SnackbarResult.ActionPerformed) store.restore(removed)
+                    }
+                }
+            },
         )
+    } else {
+        if (tab != Tab.Goals) BackHandler { tab = Tab.Goals }
+        when (tab) {
+            Tab.Goals -> GoalListScreen(
+                goals = store.goals,
+                today = today,
+                snackbar = snackbar,
+                onOpen = { openId = it.id },
+                onAdd = store::add,
+                bottomBar = navBar,
+            )
+            Tab.Overview -> OverviewScreen(store.goals, today, onOpen = { openId = it.id }, bottomBar = navBar)
+            Tab.Settings -> SettingsScreen(store, settings, sync, lock, bottomBar = navBar)
+        }
     }
 
     when (val state = sync.state) {
