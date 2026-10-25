@@ -66,13 +66,47 @@ Suggested answers are in [`data-safety.md`](data-safety.md). In short:
 | Section | Answer |
 |---|---|
 | Privacy policy | A public URL to [`privacy-policy.md`](privacy-policy.md) (see step 6) |
-| Ads | No ads |
+| Ads | **Yes, the app contains ads** (only the optional "Watch an ad to support us") |
 | App access | All functionality is available without special access |
 | Content rating | Questionnaire: references to alcohol, tobacco and gambling as things to cut down on; no violence, no user-to-user content |
 | Target audience | **18 and over** (its examples include alcohol and gambling; this also keeps it out of the Families programme) |
 | Data safety | See `data-safety.md` |
 | Health apps | Tick what matches how you describe it. If the listing talks about quitting drinking, smoking or gambling, *Mental and behavioral health* is the honest fit; if it's pitched as a general habit tracker, review the list and decide. |
 | Government app, financial features, news | No |
+
+## 4b. Plus, tips and the optional ad (you)
+
+**In-app products** (Monetize → Products → In-app products, after the first bundle is uploaded).
+Create these *one-time products* with exactly these ids:
+
+| Product id | What | Suggested price |
+|---|---|---|
+| `plus` | Stagirite Plus | 4.99 |
+| `tip_small` | Small tip | 1.99 |
+| `tip_medium` | Tip | 4.99 |
+| `tip_large` | Big tip | 9.99 |
+
+Then add your Google account as a **licence tester** (Settings → License testing) so you can buy
+them free while testing. Debug builds from GitHub have Plus unlocked anyway; only the Play
+version charges.
+
+**AdMob** (only if you want the "watch an ad" option to earn):
+
+1. Create an account at [admob.google.com](https://admob.google.com), add the app, and create
+   a **Rewarded** ad unit.
+2. Put the two ids in `gradle.properties` (or as CI secrets you pass on), replacing Google's
+   test ids:
+   ```
+   admobAppId=ca-app-pub-XXXXXXXXXXXXXXXX~YYYYYYYYYY
+   admobRewardedId=ca-app-pub-XXXXXXXXXXXXXXXX/ZZZZZZZZZZ
+   ```
+3. **Blocking controls → Sensitive categories:** block *Alcohol*, *Gambling & betting* and
+   *Dating*, and consider *Drugs & supplements*. For a recovery app this matters.
+4. **Privacy & messaging:** create a **European regulations (GDPR)** message for the app; the
+   app shows it automatically to EEA/UK users before an ad.
+5. Link the AdMob app to the Play listing once it's live.
+
+Until step 2, the app uses Google's official test ids: ads show "Test Ad" and pay nothing.
 
 ## 5. Store listing (Grow → Store presence → Main store listing) (you)
 

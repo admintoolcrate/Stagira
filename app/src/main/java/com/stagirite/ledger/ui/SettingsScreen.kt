@@ -149,7 +149,8 @@ fun SettingsScreen(
                 )
                 Spacer(Modifier.height(12.dp))
                 Note(
-                    "No ads, no analytics, and no accounts or servers of ours. " + when {
+                    "No analytics, no accounts or servers of ours, and no ads unless you choose to watch one " +
+                        "under Support. " + when {
                         sync.state == SyncState.Off ->
                             "Your ledger is kept only on this phone. Nothing leaves it unless you turn on sync."
                         sync.encrypted ->
@@ -163,6 +164,8 @@ fun SettingsScreen(
             }
 
             Section("Your data") { DataSection(store, sync, lock) }
+
+            LocalSupport.current?.let { support -> Section("Support Stagirite") { SupportSection(support) } }
 
             Section("Help & feedback") { FeedbackSection(lock) }
 
@@ -206,7 +209,11 @@ private fun SyncSection(sync: SyncManager, lock: AppLock) {
             Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
         }
         Spacer(Modifier.height(16.dp))
-        OutlinedButton(onClick = connect, enabled = !sync.busy) { Text("Connect Google account") }
+        val plus = LocalPlus.current
+        OutlinedButton(
+            onClick = { if (plus.has) connect() else plus.offer("Sync with your Google Drive is part of Plus.") },
+            enabled = !sync.busy,
+        ) { Text("Connect Google account") }
         return
     }
 
@@ -699,6 +706,7 @@ private fun FeedbackSection(lock: AppLock) {
 @Composable
 private fun WeeklySection(settings: Settings, lock: AppLock) {
     val context = LocalContext.current
+    val plus = LocalPlus.current
     var pickingTime by rememberSaveable { mutableStateOf(false) }
     val permission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
         settings.updateWeekly(granted)
@@ -710,7 +718,9 @@ private fun WeeklySection(settings: Settings, lock: AppLock) {
         detail = "A note once a week that your review is ready. It never names your goals.",
         checked = settings.weekly,
         onChange = { on ->
-            if (on && Build.VERSION.SDK_INT >= 33 &&
+            if (on && !plus.has) {
+                plus.offer("The weekly review is part of Plus.")
+            } else if (on && Build.VERSION.SDK_INT >= 33 &&
                 ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
             ) {
                 lock.expectReturn()

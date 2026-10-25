@@ -10,8 +10,8 @@ to your own Google account, and we never receive it.**
 
 Your goals (names, notes, start dates, slips, urges resisted, schedules, targets and
 settings) are stored on your device, in storage only this app can read. There is no Stagirite
-account and no Stagirite server. The app contains no advertising and no analytics or tracking
-code.
+account and no Stagirite server, and no analytics or tracking code. Ads appear only if you
+choose to watch one (see below).
 
 ## Optional sync with Google Drive
 
@@ -33,6 +33,21 @@ phone's own fingerprint, face or screen lock; the app never sees your fingerprin
 whether Android confirmed it. Reminder and weekly-review notifications are generated on your
 phone and never name your goals.
 
+## Purchases (Plus and tips)
+
+Purchases are handled entirely by Google Play. We never see your payment details. The app
+only learns from Google Play whether you own Plus, and remembers that on your phone.
+
+## Optional ads ("Watch an ad to support us")
+
+The app shows an ad only when you tap *Watch an ad to support us* in Settings. Google's ad
+service is not started before that. When you do tap it, Google's Mobile Ads SDK loads an ad and,
+like any ad service, may collect information such as your device's advertising ID, IP address
+and how you interact with the ad, for advertising, measurement and fraud prevention; in the
+EEA and UK you're asked for consent first. No goal data is ever shared with it. Ads about
+alcohol, gambling and dating are blocked. See
+[how Google uses information from apps that use its services](https://policies.google.com/technologies/partner-sites).
+
 ## Bug reports and feature requests
 
 If you send a report from Settings → Help & feedback, the app opens your own email app or web
@@ -44,7 +59,9 @@ policies.
 
 ## Sharing
 
-We don't sell, share or receive your data.
+We don't sell your data, and we never receive your goals. The only data that reaches a third
+party through the app is described above: your own Google Drive if you sync, Google Play when
+you buy something, and Google's ad service if you choose to watch an ad.
 
 ## Deleting your data
 

@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
 
-    <!-- Used only to talk to Google Drive when sync is turned on. -->
+    <!-- Used for Google Drive when sync is on, Google Play purchases, and an ad only if the user asks to watch one. -->
     <uses-permission android:name="android.permission.INTERNET" />
     <!-- Optional daily reminder. -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
@@ -17,6 +18,21 @@
         android:label="@string/app_name"
         android:supportsRtl="true"
         android:theme="@style/Theme.Ledger">
+
+        <!-- Google's ad library ("Watch an ad to support us"). It's never started at launch:
+             the start-up hook below is removed, measurement is delayed, and MobileAds is
+             only initialised when the user taps the button. -->
+        <meta-data
+            android:name="com.google.android.gms.ads.APPLICATION_ID"
+            android:value="${admobAppId}" />
+        <meta-data
+            android:name="com.google.android.gms.ads.DELAY_APP_MEASUREMENT_INIT"
+            android:value="true" />
+        <provider
+            android:name="com.google.android.gms.ads.MobileAdsInitProvider"
+            android:authorities="${applicationId}.mobileadsinitprovider"
+            tools:node="remove" />
+
         <activity
             android:name=".MainActivity"
             android:exported="true"

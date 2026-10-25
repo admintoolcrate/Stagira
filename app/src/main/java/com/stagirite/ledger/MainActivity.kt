@@ -13,7 +13,9 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import com.stagirite.ledger.ui.SupportUi
 import com.stagirite.ledger.reminders.Reminder
 import androidx.fragment.app.FragmentActivity
 import com.stagirite.ledger.data.ThemeMode
@@ -72,6 +74,7 @@ class MainActivity : FragmentActivity() {
                     } else {
                         LedgerApp(
                             app.store, settings, app.sync, lock, app.privateTitles,
+                            support = remember { SupportUi(app.billing, app.supportAd, lock) },
                             openWeekly = openWeekly,
                             onWeeklyOpened = { openWeekly = false },
                         )
@@ -86,6 +89,8 @@ class MainActivity : FragmentActivity() {
         app.lock.onForeground()
         if (app.lock.locked) unlock()
         app.sync.requestSync()
+        // Picks up a Plus bought on another phone, or a refund.
+        app.billing.refresh()
     }
 
     override fun onStop() {

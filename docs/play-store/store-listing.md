@@ -31,12 +31,18 @@ WHAT IT DOES
 • Optional passages from Aristotle's Nicomachean Ethics, quoted word for word and sourced
 
 PRIVATE BY DESIGN
-• No account, no ads, no analytics, no servers of ours
+• No account, no analytics, no servers of ours, and no ads unless you choose to watch one
 • Your ledger is kept on your phone
 • Optional sync to your own Google Drive, end-to-end encrypted with a passphrase if you like
 • App lock with fingerprint, face or screen lock
 • Private titles: show a cover name, keep the real one behind a PIN
 • Reminders and the widget never reveal what your goals are
+
+FREE, WITH A ONE-TIME PLUS
+Everything you need to count, log and look back is free, along with the app lock, private titles
+and export. Stagirite Plus, one payment and no subscription, adds unlimited goals (free holds
+3), Google Drive sync, the widget, and insights: the Progress card, year view and weekly
+review. There's also a tip jar, and an optional ad you can watch to support the app.
 
 CALM BY DESIGN
 Black and white, light and dark, no badges or streak-shaming. Turn off the quotes,

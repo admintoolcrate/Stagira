@@ -21,7 +21,9 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import android.widget.Toast
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
@@ -74,9 +76,40 @@ fun LedgerApp(
     sync: SyncManager,
     lock: AppLock,
     vault: PrivateTitles,
+    support: SupportUi,
     /** Set when the weekly-review notification was tapped. */
     openWeekly: Boolean = false,
     onWeeklyOpened: () -> Unit = {},
+) {
+    val context = LocalContext.current
+    var plusReason by rememberSaveable { mutableStateOf<String?>(null) }
+    val plus = PlusUi(has = support.billing.plus, offer = { plusReason = it })
+
+    // A purchase or tip went through: say thank you once.
+    val thanks = support.billing.thanks
+    LaunchedEffect(thanks) {
+        if (thanks != null) {
+            Toast.makeText(context, thanks, Toast.LENGTH_LONG).show()
+            support.billing.thanks = null
+            plusReason = null
+        }
+    }
+
+    CompositionLocalProvider(LocalPlus provides plus, LocalSupport provides support) {
+        LedgerAppContent(store, settings, sync, lock, vault, openWeekly, onWeeklyOpened)
+        plusReason?.let { PlusSheet(it, support, onDismiss = { plusReason = null }) }
+    }
+}
+
+@Composable
+private fun LedgerAppContent(
+    store: GoalStore,
+    settings: Settings,
+    sync: SyncManager,
+    lock: AppLock,
+    vault: PrivateTitles,
+    openWeekly: Boolean,
+    onWeeklyOpened: () -> Unit,
 ) {
     val today by rememberToday()
     var inSettings by rememberSaveable { mutableStateOf(false) }
@@ -108,7 +141,8 @@ fun LedgerApp(
     }
 
     // Keep the home-screen widget in step with the lock and sort order.
-    LaunchedEffect(settings.appLock, settings.sortOrder) { runCatching { LedgerWidget.refresh(context) } }
+    val hasPlus = LocalPlus.current.has
+    LaunchedEffect(settings.appLock, settings.sortOrder, hasPlus) { runCatching { LedgerWidget.refresh(context) } }
     val rawOpen = openId?.let(store::find)
     val openGoal = rawOpen?.let(vault::reveal)
     val anySealed = store.goals.any { it.isPrivate }

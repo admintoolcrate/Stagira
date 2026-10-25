@@ -26,6 +26,11 @@ A minimal Android app (**Stagirite** on your home screen) that does one thing: n
 - **Suggestions** when adding a goal (No alcohol, Exercise, Read …) fill in the icon and type.
 - **Personalise** — Aristotle passages, milestone celebrations, vibration, and the home page's
   summary and lower sections can each be turned off (all on by default).
+- **Free, with a one-time Plus** — Plus (one payment, no subscription) adds unlimited goals
+  (free holds 3), Google Drive sync, the widget, and the Progress card, year view and weekly
+  review. Counting, slips, notes, the app lock, private titles and export are always free.
+  A tip jar, and an optional "watch an ad to support us" that only loads Google's ad service
+  when tapped, with alcohol, gambling and dating ads blocked. Test builds have Plus unlocked.
 - **Bug reports and feature requests** — from Settings → Help & feedback, sent through GitHub
   (pre-filled issue) or email (admin.toolcrate@gmail.com). Optional device details are shown
   before sending; goal data is never included.
@@ -71,7 +76,8 @@ A minimal Android app (**Stagirite** on your home screen) that does one thing: n
 ## Privacy
 
 - Works fully offline. Sync is **off** until you connect an account.
-- No ads, no analytics, no server of ours. The only network traffic is to Google Drive, and only
+- No analytics and no server of ours. No ads unless you tap *Watch an ad to support us*; Google's
+  ad service isn't started before that. The only network traffic is to Google Drive, and only
   when sync is on.
 - Sync uses Drive's hidden **app data folder** with the `drive.appdata` scope: the app can't see
   any of your other Drive files, and the folder doesn't show up in Drive. (This is the same kind of

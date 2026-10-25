@@ -32,8 +32,19 @@ android {
         applicationId = "com.stagirite.ledger"
         minSdk = 26
         targetSdk = 36
-        versionCode = 5
-        versionName = "2.0"
+        versionCode = 6
+        versionName = "2.1"
+
+        // AdMob IDs for "Watch an ad to support us". Set admobAppId and
+        // admobRewardedId in gradle.properties (or ~/.gradle/gradle.properties)
+        // once you have an AdMob account; until then Google's official test IDs
+        // are used, which only ever show "Test Ad" and never pay out.
+        val admobAppId = (project.findProperty("admobAppId") as String?)
+            ?: "ca-app-pub-3940256099942544~3347511713"
+        val admobRewardedId = (project.findProperty("admobRewardedId") as String?)
+            ?: "ca-app-pub-3940256099942544/5224354917"
+        manifestPlaceholders["admobAppId"] = admobAppId
+        buildConfigField("String", "ADMOB_REWARDED_ID", "\"$admobRewardedId\"")
     }
 
     signingConfigs {
@@ -58,7 +69,12 @@ android {
     }
 
     buildTypes {
+        debug {
+            // Test builds have Plus unlocked, so every feature can be tried.
+            buildConfigField("boolean", "PLUS_FOR_TESTING", "true")
+        }
         release {
+            buildConfigField("boolean", "PLUS_FOR_TESTING", "false")
             signingConfigs.findByName("release")?.let { signingConfig = it }
             isMinifyEnabled = true
             isShrinkResources = true
@@ -73,6 +89,7 @@ android {
 
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 
@@ -94,6 +111,12 @@ dependencies {
     implementation("androidx.biometric:biometric:1.1.0")
     implementation("androidx.glance:glance-appwidget:1.1.1")
     implementation("com.google.android.gms:play-services-auth:21.3.0")
+    // Plus and the tip jar.
+    implementation("com.android.billingclient:billing-ktx:7.1.1")
+    // "Watch an ad to support us": only started when the user taps it.
+    implementation("com.google.android.gms:play-services-ads:23.6.0")
+    // Google's consent form for ads, required in the EEA and UK.
+    implementation("com.google.android.ump:user-messaging-platform:3.1.0")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.2")
     debugImplementation("androidx.compose.ui:ui-tooling")
 

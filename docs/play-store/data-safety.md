@@ -21,8 +21,29 @@ collected), purpose **App functionality** only:
 | App activity | Other user-generated content | Goal names, notes and dates in the synced copy |
 | Health and fitness | Health info | Goals may describe habits such as drinking or smoking |
 
-Everything else (location, contacts, identifiers, financial info, messages, photos, audio,
-web history, app interactions, crash logs, diagnostics): **not collected**.
+### The optional rewarded ad
+
+Google's Mobile Ads SDK is in the app (only started when the user taps *Watch an ad to support
+us*). Declare what Google lists for the SDK in
+[its Data safety guidance](https://developers.google.com/admob/android/privacy/play-data-disclosure)
+— check that page when you fill the form, since Google keeps it current. At the time of writing
+it covers, roughly:
+
+| Category | Type | Collected / shared | Purposes |
+|---|---|---|---|
+| Location | Approximate location (from IP address) | Collected and shared | Advertising, analytics, fraud prevention |
+| Device or other IDs | Advertising ID, app set ID | Collected and shared | Advertising, analytics, fraud prevention |
+| App activity | App interactions (with the ad) | Collected and shared | Advertising, analytics |
+| App info and performance | Diagnostics | Collected and shared | Analytics, fraud prevention |
+
+Mark these **optional**, since they only happen if the user chooses to watch an ad.
+
+### Purchases
+
+Google Play handles payment; the app only stores whether Plus is owned, on the device. Nothing
+about purchases is sent to the developer.
+
+Everything else (contacts, financial info, messages, photos, audio, web history): **not collected**.
 
 ### Why not declare feedback reports
 

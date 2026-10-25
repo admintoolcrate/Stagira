@@ -98,6 +98,7 @@ import com.stagirite.ledger.data.dayState
 import com.stagirite.ledger.data.describeSpan
 import com.stagirite.ledger.data.plural
 import com.stagirite.ledger.security.Opened
+import com.stagirite.ledger.support.Billing
 import com.stagirite.ledger.data.progress
 import com.stagirite.ledger.data.weekReview
 import com.stagirite.ledger.data.stats
@@ -158,6 +159,7 @@ fun GoalListScreen(
     onWeekly: () -> Unit,
 ) {
     var adding by rememberSaveable { mutableStateOf(false) }
+    val plus = LocalPlus.current
     val prefs = LocalUiPrefs.current
     // The title starts large and tucks into a slim bar as the list scrolls.
     val scroll = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
@@ -218,7 +220,14 @@ fun GoalListScreen(
         snackbarHost = { SnackbarHost(snackbar) },
         floatingActionButton = {
             FloatingActionButton(
-                onClick = { adding = true },
+                onClick = {
+                    // Free includes a few goals; nobody loses ones they already have.
+                    if (!plus.has && goals.size >= Billing.FREE_GOALS) {
+                        plus.offer("The free ledger holds ${Billing.FREE_GOALS} goals. Plus gives you as many as you like.")
+                    } else {
+                        adding = true
+                    }
+                },
                 containerColor = MaterialTheme.colorScheme.primary,
                 contentColor = MaterialTheme.colorScheme.onPrimary,
             ) {
@@ -246,7 +255,9 @@ fun GoalListScreen(
                     item(key = "summary") { SummaryCard(goals, today) }
                     item(key = "week") {
                         val w = weekReview(goals, today)
-                        LedgerCard(onClick = onWeekly) {
+                        LedgerCard(onClick = {
+                            if (plus.has) onWeekly() else plus.offer("The weekly review is part of Plus.")
+                        }) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Column(Modifier.weight(1f)) {
                                     Text("This week", style = MaterialTheme.typography.titleSmall)
@@ -980,7 +991,21 @@ private fun SlipOption(title: String, detail: String, enabled: Boolean, onClick:
 private fun StatsPanel(goal: Goal, today: LocalDate) {
     val stats = goal.stats(today)
     val progress = goal.progress(today)
-    ProgressPanel(goal, progress)
+    val plus = LocalPlus.current
+    if (plus.has) {
+        ProgressPanel(goal, progress)
+    } else {
+        // The verdict is shown either way; the detail behind it is Plus.
+        SectionHeading("Progress", Modifier.padding(start = 0.dp))
+        Text(progress.verdict.label, style = MaterialTheme.typography.headlineSmall)
+        Spacer(Modifier.height(4.dp))
+        Text(
+            "See how your runs and slips are changing over time, month by month.",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        TextButton(onClick = { plus.offer("The Progress card is part of Plus.") }) { Text("Unlock with Plus") }
+    }
     Spacer(Modifier.height(28.dp))
     SectionHeading("Figures", Modifier.padding(start = 0.dp))
     Row(Modifier.fillMaxWidth()) {

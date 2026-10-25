@@ -45,8 +45,9 @@ class LedgerWidget : GlanceAppWidget() {
         val app = context.applicationContext as LedgerApplication
         val locked = app.settings.appLock
         val today = LocalDate.now()
-        val goals = if (locked) emptyList() else sortGoals(app.store.goals, app.settings.sortOrder, today).take(4)
-        provideContent { WidgetContent(goals, locked, today) }
+        val plus = app.billing.plus
+        val goals = if (locked || !plus) emptyList() else sortGoals(app.store.goals, app.settings.sortOrder, today).take(4)
+        provideContent { WidgetContent(goals, locked, plus, today) }
     }
 
     companion object {
@@ -56,7 +57,7 @@ class LedgerWidget : GlanceAppWidget() {
 }
 
 @androidx.compose.runtime.Composable
-private fun WidgetContent(goals: List<Goal>, locked: Boolean, today: LocalDate) {
+private fun WidgetContent(goals: List<Goal>, locked: Boolean, plus: Boolean, today: LocalDate) {
     Column(
         GlanceModifier
             .fillMaxSize()
@@ -69,6 +70,7 @@ private fun WidgetContent(goals: List<Goal>, locked: Boolean, today: LocalDate) 
         Spacer(GlanceModifier.height(8.dp))
         when {
             locked -> Text("Locked", style = TextStyle(color = Ink, fontSize = 16.sp))
+            !plus -> Text("The widget is part of Stagirite Plus. Tap to open the app.", style = TextStyle(color = Ink, fontSize = 14.sp))
             goals.isEmpty() -> Text("Add a goal to start counting.", style = TextStyle(color = Ink, fontSize = 14.sp))
             else -> goals.forEach { goal ->
                 Row(GlanceModifier.fillMaxWidth().padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {

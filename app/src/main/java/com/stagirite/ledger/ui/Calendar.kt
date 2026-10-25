@@ -345,13 +345,16 @@ fun LedgerCalendar(
     var yearView by rememberSaveable { mutableStateOf(false) }
     var month by rememberSaveable { mutableStateOf(YearMonth.from(today).toString()) }
     var year by rememberSaveable { mutableStateOf(today.year) }
+    val plus = LocalPlus.current
 
     Column(modifier.fillMaxWidth()) {
         SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth().padding(bottom = 12.dp)) {
             listOf(false, true).forEachIndexed { i, isYear ->
                 SegmentedButton(
                     selected = yearView == isYear,
-                    onClick = { yearView = isYear },
+                    onClick = {
+                        if (isYear && !plus.has) plus.offer("The year view is part of Plus.") else yearView = isYear
+                    },
                     shape = SegmentedButtonDefaults.itemShape(i, 2),
                     icon = {},
                     colors = SegmentedButtonDefaults.colors(
