@@ -183,10 +183,10 @@ class GoalTest {
     }
 
     @Test
-    fun virtuesMissDaysRatherThanSlip() {
+    fun aSlipIsASlipWhateverTheKindOfGoal() {
         assertEquals("slip", goal.slipWord)
         assertEquals("slip", goal.copy(kind = GoalKind.Vice).slipWord)
-        assertEquals("missed day", goal.copy(kind = GoalKind.Virtue).slipWord)
+        assertEquals("slip", goal.copy(kind = GoalKind.Virtue).slipWord)
     }
 
     @Test

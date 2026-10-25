@@ -12,7 +12,7 @@ A minimal Android app (**Stagira** on your home screen) that does one thing: nam
   one matters. The count ticks over at midnight.
 - **Vices and Virtues** — each goal either tackles a Vice (stop or cut down, like drinking less)
   or practises a Virtue (something good each day, like one good deed). Every day counts as kept
-  unless you log a slip (Vice) or a missed day (Virtue). The new-goal form asks that first, then
+  until you log a slip. The new-goal form asks that first, then
   the name and start; why, target, weekdays and a private title sit under "More options".
 - **Icons** — a black-and-white emoji beside each goal, drawn with the open-source Noto Emoji
   font (see *Third-party material*).
@@ -48,12 +48,12 @@ A minimal Android app (**Stagira** on your home screen) that does one thing: nam
 - **Calendar** — a month view for each goal (filled discs for kept days, rings for slips, a dot
   where you resisted an urge) and a **year view** of twelve small months; tap a month to open it.
 - **Scheduled Virtues** — a Virtue can be due on chosen weekdays (e.g. Mon · Wed · Fri). Other
-  days are rest days: they can't be missed, and stats count only the days that were due.
+  days are rest days: no slip can fall on them, and stats count only the days that were due.
 - **Weekly review** — the last seven days against the seven before (clean days, slips, urges
   resisted, milestones, a line per goal), with an optional weekly notification that never names
   a goal.
 - **Urges resisted** — for Vices, one tap logs a moment you felt the urge and didn't, with Undo.
-  Virtues have nothing to log on a good day: they count as kept unless you log a missed day. Counted per day only; shown in stats and on the progress card, and never
+  Virtues have nothing to log on a good day: they count as kept until you log a slip. Counted per day only; shown in stats and on the progress card, and never
   counted against you.
 - **Progress** — measured by the gaps between slips: a verdict (Improving, Steady, Harder
   lately, or Unbroken), your typical run now against before (median of the last 3 runs vs the 3

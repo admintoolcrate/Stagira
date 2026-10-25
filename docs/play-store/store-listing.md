@@ -22,7 +22,7 @@ counts the doing.
 WHAT IT DOES
 • Day counts for any number of goals, from today or a day in the past
 • Vices and Virtues, with Virtues on the weekdays you choose; rest days never count against you
-• Log a slip (or a missed day) for today, yesterday or any earlier day, with an optional note
+• Log a slip for today, yesterday or any earlier day, with an optional note
 • Log urges you resisted; they're shown as strength, never against you
 • Milestones from 1 day to years, with a quiet celebration when you reach one
 • Progress measured by the gaps between slips: are your runs getting longer?

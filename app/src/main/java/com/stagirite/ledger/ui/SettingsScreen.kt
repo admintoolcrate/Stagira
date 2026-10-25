@@ -665,8 +665,8 @@ private fun AboutSection(onShowGuide: () -> Unit) {
     Spacer(Modifier.height(4.dp))
     Note(
         "Each goal tackles a Vice, something to stop or cut down, or practises a Virtue, something good " +
-            "to do each day. Every day counts as kept unless you log a slip (for a Vice) or a missed day " +
-            "(for a Virtue). Then you begin again: the run you had stays in your history, with a note if " +
+            "to do each day. Every day counts as kept until you log a slip. Then you begin again: the run " +
+            "you had stays in your history, with a note if " +
             "you add one. Milestones mark the way, with a passage from Aristotle at each.",
     )
     Spacer(Modifier.height(12.dp))

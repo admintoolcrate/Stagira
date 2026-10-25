@@ -524,7 +524,7 @@ private fun LedgerRow(goal: Goal, today: LocalDate, onClick: () -> Unit, onLongC
     }
 }
 
-/** Whether a slip or missed day can be logged on [day]: in range, due, and not logged already. */
+/** Whether a slip can be logged on [day]: in range, due, and not logged already. */
 private fun Goal.canSlipOn(day: LocalDate, today: LocalDate) =
     !day.isBefore(since) && !day.isAfter(today) && !isSlip(day) && isScheduled(day)
 
@@ -588,9 +588,9 @@ private fun QuickLogSheet(
                     Spacer(Modifier.height(Space.s))
                     Row(horizontalArrangement = Arrangement.spacedBy(Space.s)) {
                         if (goal.kind == GoalKind.Virtue) {
-                            // A Virtue is assumed done; a missed day usually only shows once it's over.
-                            QuickButton("Missed yesterday", goal.canSlipOn(yesterday, today)) { onSlip(goal, yesterday) }
-                            QuickButton("Missed today", goal.canSlipOn(today, today)) { onSlip(goal, today) }
+                            // A Virtue is assumed done; a slip on one usually only shows once the day is over.
+                            QuickButton("Slipped yesterday", goal.canSlipOn(yesterday, today)) { onSlip(goal, yesterday) }
+                            QuickButton("Slipped today", goal.canSlipOn(today, today)) { onSlip(goal, today) }
                         } else {
                             QuickButton(goal.urgeLabel, true) { onUrge(goal) }
                             QuickButton(if (goal.isSlip(today)) "Slip logged" else "Log a ${goal.slipWord}", goal.canSlipOn(today, today)) {
@@ -635,9 +635,9 @@ private fun QuickActionsSheet(
             }
             Spacer(Modifier.height(12.dp))
             if (goal.kind == GoalKind.Virtue) {
-                SlipOption("Missed yesterday", yesterday.format(mediumDate), enabled = goal.canSlipOn(yesterday, today)) { onSlip(yesterday) }
+                SlipOption("Slipped yesterday", yesterday.format(mediumDate), enabled = goal.canSlipOn(yesterday, today)) { onSlip(yesterday) }
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-                SlipOption("Missed today", today.format(mediumDate), enabled = goal.canSlipOn(today, today)) { onSlip(today) }
+                SlipOption("Slipped today", today.format(mediumDate), enabled = goal.canSlipOn(today, today)) { onSlip(today) }
             } else {
                 SlipOption(goal.urgeLabel, "Log it for today", enabled = true, onClick = onUrge)
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
@@ -821,7 +821,7 @@ fun GoalDetailScreen(
                 }
                 Spacer(Modifier.height(Space.m))
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(Space.s)) {
-                    // A Virtue is assumed done, so there's nothing to log on a good day: only a missed one.
+                    // A Virtue is assumed done, so there's nothing to log on a good day: only a slip.
                     if (goal.kind != GoalKind.Virtue) Button(
                         onClick = {
                             buzz()
@@ -841,7 +841,7 @@ fun GoalDetailScreen(
                     HoldButton(
                         text = "Log a $slipWord",
                         onTap = { slipSheet = true },
-                        // Only for slips, which happen at a moment; a missed day is picked from the sheet.
+                        // Not for Virtues: a slip on one is usually noticed later, so the day is picked from the sheet.
                         onHeld = if (canSlipToday && goal.kind != GoalKind.Virtue) ({ logSlip(today) }) else null,
                         modifier = Modifier.weight(1f).height(52.dp),
                     )
@@ -1112,7 +1112,7 @@ private fun SlipSheet(
             val yesterdayOption = @Composable {
                 SlipOption("Yesterday", yesterday.format(mediumDate), enabled = goal.canSlipOn(yesterday, today)) { onPick(yesterday) }
             }
-            // A missed day is usually noticed afterwards, so Virtues offer yesterday first.
+            // A slip on a Virtue is usually noticed afterwards, so Virtues offer yesterday first.
             if (goal.kind == GoalKind.Virtue) yesterdayOption() else todayOption()
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
             if (goal.kind == GoalKind.Virtue) todayOption() else yesterdayOption()
@@ -1456,7 +1456,7 @@ private fun GoalDialog(
                         }
                         Text(
                             if (schedule.isEmpty() || schedule.size == 7) "Every day."
-                            else "${scheduleText(schedule.map(DayOfWeek::of).toSet())}. Other days are rest days and never count as missed.",
+                            else "${scheduleText(schedule.map(DayOfWeek::of).toSet())}. Other days are rest days and never count as slips.",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )

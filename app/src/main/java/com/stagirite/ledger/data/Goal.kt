@@ -15,7 +15,7 @@ data class Streak(val start: LocalDate, val end: LocalDate) {
  * The two kinds of goal. Tackling a Vice means stopping or cutting down
  * (drinking less); practising a Virtue means doing something good each day
  * (one good deed a day). Either way a day counts as kept unless it's logged:
- * a slip for a Vice, a missed day for a Virtue.
+ * a slip. A slip is a slip either way; Vice and Virtue describe the goal.
  */
 enum class GoalKind(
     val label: String,
@@ -36,8 +36,8 @@ enum class GoalKind(
     ),
     Virtue(
         "Virtue", "Practise a virtue",
-        "Do something good each day, like one good deed. Each day counts unless you miss it.",
-        "missed day", "missed days", "Did it anyway", "Times you did it anyway",
+        "Do something good each day, like one good deed. Each day counts until you slip.",
+        "slip", "slips", "Did it anyway", "Times you did it anyway",
     ),
 }
 
@@ -105,7 +105,7 @@ data class Goal(
 
     val isPrivate: Boolean get() = sealed != null
 
-    /** "slip" for a vice or an unlabelled goal, "missed day" for a virtue. */
+    /** Always "slip": the word doesn't change with the kind of goal. */
     val slipWord: String get() = kind?.slip ?: "slip"
 
     /** The urge button's wording for this goal. */
