@@ -1,6 +1,13 @@
 package com.stagirite.ledger.ui
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -34,9 +41,7 @@ import com.stagirite.ledger.data.Quotes
 import com.stagirite.ledger.data.plural
 import com.stagirite.ledger.data.sortGoals
 import com.stagirite.ledger.widget.LedgerWidget
-import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalHapticFeedback
 import com.stagirite.ledger.data.Settings
 import com.stagirite.ledger.security.AppLock
 import com.stagirite.ledger.security.PrivateTitles
@@ -73,7 +78,7 @@ fun LedgerApp(store: GoalStore, settings: Settings, sync: SyncManager, lock: App
     // Goals as they should be shown: real titles only while private titles are unlocked.
     val shown = sortGoals(store.goals.map(vault::reveal), settings.sortOrder, today)
     val context = LocalContext.current
-    val haptics = LocalHapticFeedback.current
+    val buzz = rememberBuzz()
 
     // Keep the home-screen widget in step with the lock and sort order.
     LaunchedEffect(settings.appLock, settings.sortOrder) { runCatching { LedgerWidget.refresh(context) } }
@@ -104,112 +109,136 @@ fun LedgerApp(store: GoalStore, settings: Settings, sync: SyncManager, lock: App
         return
     }
 
-    if (openGoal != null && rawOpen != null) {
-        BackHandler { openId = null }
-        GoalDetailScreen(
-            goal = openGoal,
-            cover = rawOpen.title,
-            today = today,
-            privacy = privacy,
-            onBack = { openId = null },
-            onEdit = { d ->
-                // Made public again: its sealed notes come back out into the clear.
-                val unsealedNotes = if (!d.private && rawOpen.isPrivate) vault.open(rawOpen)?.notes else null
-                store.edit(rawOpen.id, d.title, d.since, d.reason, d.icon, d.kind, sealedFor(d, rawOpen), d.target, unsealedNotes)
-            },
-            canNote = !rawOpen.isPrivate || vault.unlocked,
-            onNote = { day, text ->
-                if (rawOpen.isPrivate) {
-                    val o = vault.open(rawOpen)
-                    if (o != null) {
-                        val notes = if (text.isBlank()) o.notes - day else o.notes + (day to text.trim())
-                        store.setSealed(rawOpen.id, vault.seal(o.title, o.reason, notes))
-                    }
-                } else {
-                    store.setNote(rawOpen.id, day, text)
-                }
-            },
-            onArchive = { archive ->
-                store.setArchived(rawOpen.id, archive)
-                if (archive) {
-                    openId = null
-                    scope.launch {
-                        val r = snackbar.showSnackbar("Goal archived", actionLabel = "Undo")
-                        if (r == SnackbarResult.ActionPerformed) store.setArchived(rawOpen.id, false)
-                    }
-                }
-            },
-            onSlip = { store.recordSlip(rawOpen.id, it) },
-            onRemoveSlip = { store.removeSlip(rawOpen.id, it) },
-            onMoveStart = { store.moveCurrentStart(rawOpen.id, it) },
-            onDelete = {
-                val removed = store.delete(rawOpen.id)
-                openId = null
-                if (removed != null) {
-                    scope.launch {
-                        val result = snackbar.showSnackbar("Goal deleted", actionLabel = "Undo", duration = SnackbarDuration.Long)
-                        if (result == SnackbarResult.ActionPerformed) store.restore(removed)
-                    }
-                }
-            },
-        )
-    } else if (!inSettings) {
-        GoalListScreen(
-            goals = shown,
-            today = today,
-            snackbar = snackbar,
-            privacy = privacy,
-            archived = store.archived.map(vault::reveal),
-            sortOrder = settings.sortOrder,
-            onSort = settings::updateSortOrder,
-            onOpen = { openId = it.id },
-            onAdd = { d -> store.add(d.title, d.since, d.reason, d.icon, d.kind, sealedFor(d, null), d.target) },
-            onQuickSlip = { g ->
-                haptics.performHapticFeedback(HapticFeedbackType.LongPress)
-                store.recordSlip(g.id, today)
-                scope.launch {
-                    val r = snackbar.showSnackbar("${g.slipWord.replaceFirstChar { it.uppercase() }} logged for today", actionLabel = "Undo")
-                    if (r == SnackbarResult.ActionPerformed) store.removeSlip(g.id, today)
-                }
-            },
-            onArchive = { g, archive ->
-                store.setArchived(g.id, archive)
-                if (archive) scope.launch {
-                    val r = snackbar.showSnackbar("Goal archived", actionLabel = "Undo")
-                    if (r == SnackbarResult.ActionPerformed) store.setArchived(g.id, false)
-                }
-            },
-            onTitleLongPress = {
-                if (vault.unlocked) {
-                    vault.lock()
-                    scope.launch { snackbar.showSnackbar("Private titles hidden") }
-                } else if (privacy.hasPin) {
-                    pinFlow = PinFlow.Unlock
-                }
-            },
-            onSettings = { inSettings = true },
-        )
-    } else {
-        BackHandler { inSettings = false }
-        SettingsScreen(
-            store, settings, sync, lock,
-            privateTitles = PrivateTitlesUi(
-                hasPin = privacy.hasPin,
-                unlocked = vault.unlocked,
-                onSetUp = requestPin,
-                onChange = { pinFlow = if (vault.unlocked) PinFlow.Change else PinFlow.Unlock },
-                onForget = {
-                    // Real names can't be read without the PIN, so private goals keep their cover names.
-                    store.updateAll { g -> if (g.isPrivate) g.copy(sealed = null, reason = "") else null }
-                    vault.forget()
+    val screen = when {
+        rawOpen != null -> "goal:${rawOpen.id}"
+        inSettings -> "settings"
+        else -> "home"
+    }
+    BackHandler(enabled = screen != "home") { if (openId != null) openId = null else inSettings = false }
+
+    AnimatedContent(
+        targetState = screen,
+        transitionSpec = {
+            // Deeper screens come in from the right; going back reverses it.
+            val forward = initialState == "home"
+            val dx = if (forward) 1 else -1
+            (fadeIn(tween(240)) + slideInHorizontally(tween(280)) { dx * it / 10 }) togetherWith
+                (fadeOut(tween(160)) + slideOutHorizontally(tween(280)) { -dx * it / 14 })
+        },
+        label = "screen",
+    ) { target ->
+        val targetRaw = if (target.startsWith("goal:")) store.find(target.removePrefix("goal:")) else null
+        when {
+        targetRaw != null -> {
+            val rawOpen = targetRaw
+            val openGoal = vault.reveal(targetRaw)
+            GoalDetailScreen(
+                goal = openGoal,
+                cover = rawOpen.title,
+                today = today,
+                privacy = privacy,
+                onBack = { openId = null },
+                onEdit = { d ->
+                    // Made public again: its sealed notes come back out into the clear.
+                    val unsealedNotes = if (!d.private && rawOpen.isPrivate) vault.open(rawOpen)?.notes else null
+                    store.edit(rawOpen.id, d.title, d.since, d.reason, d.icon, d.kind, sealedFor(d, rawOpen), d.target, unsealedNotes)
                 },
-            ),
-            onShowGuide = {
-                inSettings = false
-                settings.updateGuideSeen(false)
-            },
-            onBack = { inSettings = false },
-        )
+                canNote = !rawOpen.isPrivate || vault.unlocked,
+                onNote = { day, text ->
+                    if (rawOpen.isPrivate) {
+                        val o = vault.open(rawOpen)
+                        if (o != null) {
+                            val notes = if (text.isBlank()) o.notes - day else o.notes + (day to text.trim())
+                            store.setSealed(rawOpen.id, vault.seal(o.title, o.reason, notes))
+                        }
+                    } else {
+                        store.setNote(rawOpen.id, day, text)
+                    }
+                },
+                onArchive = { archive ->
+                    store.setArchived(rawOpen.id, archive)
+                    if (archive) {
+                        openId = null
+                        scope.launch {
+                            val r = snackbar.showSnackbar("Goal archived", actionLabel = "Undo")
+                            if (r == SnackbarResult.ActionPerformed) store.setArchived(rawOpen.id, false)
+                        }
+                    }
+                },
+                onSlip = { store.recordSlip(rawOpen.id, it) },
+                onRemoveSlip = { store.removeSlip(rawOpen.id, it) },
+                onMoveStart = { store.moveCurrentStart(rawOpen.id, it) },
+                onDelete = {
+                    val removed = store.delete(rawOpen.id)
+                    openId = null
+                    if (removed != null) {
+                        scope.launch {
+                            val result = snackbar.showSnackbar("Goal deleted", actionLabel = "Undo", duration = SnackbarDuration.Long)
+                            if (result == SnackbarResult.ActionPerformed) store.restore(removed)
+                        }
+                    }
+                },
+            )
+        }
+        target == "home" -> {
+            GoalListScreen(
+                goals = shown,
+                today = today,
+                snackbar = snackbar,
+                privacy = privacy,
+                archived = store.archived.map(vault::reveal),
+                sortOrder = settings.sortOrder,
+                onSort = settings::updateSortOrder,
+                onOpen = { openId = it.id },
+                onAdd = { d -> store.add(d.title, d.since, d.reason, d.icon, d.kind, sealedFor(d, null), d.target) },
+                onQuickSlip = { g ->
+                    buzz()
+                    store.recordSlip(g.id, today)
+                    scope.launch {
+                        val r = snackbar.showSnackbar("${g.slipWord.replaceFirstChar { it.uppercase() }} logged for today", actionLabel = "Undo")
+                        if (r == SnackbarResult.ActionPerformed) store.removeSlip(g.id, today)
+                    }
+                },
+                onArchive = { g, archive ->
+                    store.setArchived(g.id, archive)
+                    if (archive) scope.launch {
+                        val r = snackbar.showSnackbar("Goal archived", actionLabel = "Undo")
+                        if (r == SnackbarResult.ActionPerformed) store.setArchived(g.id, false)
+                    }
+                },
+                onTitleLongPress = {
+                    if (vault.unlocked) {
+                        vault.lock()
+                        scope.launch { snackbar.showSnackbar("Private titles hidden") }
+                    } else if (privacy.hasPin) {
+                        pinFlow = PinFlow.Unlock
+                    }
+                },
+                onSettings = { inSettings = true },
+            )
+        }
+        target == "settings" -> {
+            SettingsScreen(
+                store, settings, sync, lock,
+                privateTitles = PrivateTitlesUi(
+                    hasPin = privacy.hasPin,
+                    unlocked = vault.unlocked,
+                    onSetUp = requestPin,
+                    onChange = { pinFlow = if (vault.unlocked) PinFlow.Change else PinFlow.Unlock },
+                    onForget = {
+                        // Real names can't be read without the PIN, so private goals keep their cover names.
+                        store.updateAll { g -> if (g.isPrivate) g.copy(sealed = null, reason = "") else null }
+                        vault.forget()
+                    },
+                ),
+                onShowGuide = {
+                    inSettings = false
+                    settings.updateGuideSeen(false)
+                },
+                onBack = { inSettings = false },
+            )
+        }
+        }
     }
 
     pinFlow?.let { flow ->
@@ -263,9 +292,9 @@ fun LedgerApp(store: GoalStore, settings: Settings, sync: SyncManager, lock: App
         val d = g.daysKept(today)
         Milestones.isMilestone(d) && !settings.isCelebrated(celebrationKey(g, d))
     }
-    if (milestoneGoal != null && openGoal == null) {
+    if (milestoneGoal != null && openGoal == null && settings.celebrations) {
         val d = milestoneGoal.daysKept(today)
-        LaunchedEffect(milestoneGoal.id, d) { haptics.performHapticFeedback(HapticFeedbackType.LongPress) }
+        LaunchedEffect(milestoneGoal.id, d) { buzz() }
         MilestoneDialog(milestoneGoal, d, onDismiss = { settings.markCelebrated(celebrationKey(milestoneGoal, d)) })
     }
 

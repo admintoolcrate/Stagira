@@ -123,6 +123,8 @@ fun SettingsScreen(
                 }
             }
 
+            Section("Personalise") { PersonaliseSection(settings) }
+
             Section("Lock") { LockSection(settings, lock) }
 
             Section("Private titles") { PrivateTitlesSection(privateTitles) }
@@ -604,7 +606,10 @@ private fun AboutSection(onShowGuide: () -> Unit) {
             "under CC BY-SA 4.0. References give book and chapter, then the standard Bekker page.",
     )
     Spacer(Modifier.height(8.dp))
-    Note("Icons are drawn with Noto Emoji, \u00A9 2013, 2022 Google, under the SIL Open Font License 1.1.")
+    Note(
+        "Text is set in Inter, \u00A9 2016 The Inter Project Authors, and icons are drawn with Noto Emoji, " +
+            "\u00A9 2013, 2022 Google; both under the SIL Open Font License 1.1.",
+    )
     TextButton(onClick = { showingLicence = true }) { Text("Read the font licence") }
     if (version.isNotEmpty()) Note("Version $version")
 
@@ -625,5 +630,20 @@ private fun AboutSection(onShowGuide: () -> Unit) {
             },
             confirmButton = { TextButton(onClick = { showingLicence = false }) { Text("Close") } },
         )
+    }
+}
+
+@Composable
+private fun PersonaliseSection(settings: Settings) {
+    val rows = listOf(
+        Triple("Passages from Aristotle", "On Day 0, at milestones and in the guide.", settings.quotes to settings::updateQuotes),
+        Triple("Milestone celebrations", "A moment to mark each milestone the day you reach it.", settings.celebrations to settings::updateCelebrations),
+        Triple("Vibration", "A light buzz when you log a slip or reach a milestone.", settings.haptics to settings::updateHaptics),
+        Triple("Summary on the home page", "Days kept and clean days this month, above your goals.", settings.homeSummary to settings::updateHomeSummary),
+        Triple("Coming up and calendar", "Upcoming milestones and the combined calendar, below your goals.", settings.homeExtras to settings::updateHomeExtras),
+    )
+    rows.forEachIndexed { i, (title, detail, state) ->
+        SwitchRow(title = title, detail = detail, checked = state.first, onChange = state.second)
+        if (i < rows.lastIndex) Spacer(Modifier.height(12.dp))
     }
 }

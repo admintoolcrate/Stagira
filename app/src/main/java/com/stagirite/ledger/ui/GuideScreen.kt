@@ -101,7 +101,7 @@ fun GuideScreen(onDone: () -> Unit) {
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         textAlign = androidx.compose.ui.text.style.TextAlign.Center,
                     )
-                    if (i == 0) {
+                    if (i == 0 && LocalUiPrefs.current.quotes) {
                         Spacer(Modifier.height(32.dp))
                         LedgerCard { QuoteBlock(Quotes.slip[2]) }
                     }

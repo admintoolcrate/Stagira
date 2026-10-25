@@ -73,6 +73,33 @@ class Settings(context: Context) {
         prefs.edit().putBoolean("reminder", on).putInt("reminderMinutes", minutes).apply()
     }
 
+    /** Passages from Aristotle on Day 0, milestones, the empty page and the guide. */
+    var quotes by mutableStateOf(prefs.getBoolean("quotes", true))
+        private set
+
+    /** The one-time screen on reaching a milestone. */
+    var celebrations by mutableStateOf(prefs.getBoolean("celebrations", true))
+        private set
+
+    var haptics by mutableStateOf(prefs.getBoolean("haptics", true))
+        private set
+
+    /** The summary card at the top of the home page. */
+    var homeSummary by mutableStateOf(prefs.getBoolean("homeSummary", true))
+        private set
+
+    /** "Coming up" and the combined calendar below the goals. */
+    var homeExtras by mutableStateOf(prefs.getBoolean("homeExtras", true))
+        private set
+
+    fun updateQuotes(on: Boolean) { quotes = on; save("quotes", on) }
+    fun updateCelebrations(on: Boolean) { celebrations = on; save("celebrations", on) }
+    fun updateHaptics(on: Boolean) { haptics = on; save("haptics", on) }
+    fun updateHomeSummary(on: Boolean) { homeSummary = on; save("homeSummary", on) }
+    fun updateHomeExtras(on: Boolean) { homeExtras = on; save("homeExtras", on) }
+
+    private fun save(key: String, value: Boolean) = prefs.edit().putBoolean(key, value).apply()
+
     var sortOrder by mutableStateOf(enumOr(prefs.getString("sortOrder", null), SortOrder.Added))
         private set
 

@@ -7,13 +7,16 @@ import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.fragment.app.FragmentActivity
 import com.stagirite.ledger.data.ThemeMode
 import com.stagirite.ledger.ui.LedgerApp
 import com.stagirite.ledger.ui.LedgerTheme
+import com.stagirite.ledger.ui.LocalUiPrefs
 import com.stagirite.ledger.ui.LockScreen
+import com.stagirite.ledger.ui.UiPrefs
 
 // A FragmentActivity because the fingerprint prompt needs one.
 class MainActivity : FragmentActivity() {
@@ -41,11 +44,20 @@ class MainActivity : FragmentActivity() {
                     window.clearFlags(WindowManager.LayoutParams.FLAG_SECURE)
                 }
             }
-            LedgerTheme(dark) {
-                if (lock.locked) {
-                    LockScreen(onUnlock = { unlock() })
-                } else {
-                    LedgerApp(app.store, settings, app.sync, lock, app.privateTitles)
+            val prefs = UiPrefs(
+                quotes = settings.quotes,
+                celebrations = settings.celebrations,
+                haptics = settings.haptics,
+                homeSummary = settings.homeSummary,
+                homeExtras = settings.homeExtras,
+            )
+            CompositionLocalProvider(LocalUiPrefs provides prefs) {
+                LedgerTheme(dark) {
+                    if (lock.locked) {
+                        LockScreen(onUnlock = { unlock() })
+                    } else {
+                        LedgerApp(app.store, settings, app.sync, lock, app.privateTitles)
+                    }
                 }
             }
         }

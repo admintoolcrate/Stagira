@@ -6,7 +6,12 @@ import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.ExperimentalTextApi
+import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontVariation
 import androidx.compose.ui.text.font.FontWeight
+import com.stagirite.ledger.R
 import androidx.compose.ui.unit.sp
 
 // Monochrome: ink on paper, paper on ink. No accent colour.
@@ -58,15 +63,41 @@ private val DarkColors = darkColorScheme(
     error = Color(0xFFF2B8B5),
 )
 
+/** Inter at one weight, picked from its variable weight axis. */
+@OptIn(ExperimentalTextApi::class)
+private fun inter(weight: FontWeight) = Font(
+    R.font.inter,
+    weight = weight,
+    variationSettings = FontVariation.Settings(FontVariation.weight(weight.weight)),
+)
+
+/** Inter (SIL Open Font License) for everything but the emoji icons. */
+val Inter = FontFamily(
+    inter(FontWeight.Thin),
+    inter(FontWeight.ExtraLight),
+    inter(FontWeight.Light),
+    inter(FontWeight.Normal),
+    inter(FontWeight.Medium),
+    inter(FontWeight.SemiBold),
+)
+
 private val LedgerTypography = Typography().run {
     copy(
-        displayLarge = displayLarge.copy(fontWeight = FontWeight.Thin, letterSpacing = (-2).sp),
-        displayMedium = displayMedium.copy(fontWeight = FontWeight.Light, letterSpacing = (-1).sp),
-        displaySmall = displaySmall.copy(fontWeight = FontWeight.Light, letterSpacing = (-0.5).sp),
-        headlineSmall = headlineSmall.copy(fontWeight = FontWeight.Light),
-        titleLarge = titleLarge.copy(fontWeight = FontWeight.Medium),
-        titleMedium = titleMedium.copy(fontWeight = FontWeight.Medium),
-        labelMedium = labelMedium.copy(letterSpacing = 0.2.sp),
+        displayLarge = displayLarge.copy(fontFamily = Inter, fontWeight = FontWeight.ExtraLight, letterSpacing = (-2.5).sp),
+        displayMedium = displayMedium.copy(fontFamily = Inter, fontWeight = FontWeight.Light, letterSpacing = (-1.2).sp),
+        displaySmall = displaySmall.copy(fontFamily = Inter, fontWeight = FontWeight.Light, letterSpacing = (-0.8).sp),
+        headlineLarge = headlineLarge.copy(fontFamily = Inter, fontWeight = FontWeight.Light, letterSpacing = (-0.6).sp),
+        headlineMedium = headlineMedium.copy(fontFamily = Inter, fontWeight = FontWeight.Light, letterSpacing = (-0.4).sp),
+        headlineSmall = headlineSmall.copy(fontFamily = Inter, fontWeight = FontWeight.Normal, letterSpacing = (-0.3).sp),
+        titleLarge = titleLarge.copy(fontFamily = Inter, fontWeight = FontWeight.SemiBold, letterSpacing = (-0.3).sp),
+        titleMedium = titleMedium.copy(fontFamily = Inter, fontWeight = FontWeight.SemiBold, letterSpacing = (-0.1).sp),
+        titleSmall = titleSmall.copy(fontFamily = Inter, fontWeight = FontWeight.SemiBold),
+        bodyLarge = bodyLarge.copy(fontFamily = Inter, letterSpacing = 0.sp),
+        bodyMedium = bodyMedium.copy(fontFamily = Inter, letterSpacing = 0.sp),
+        bodySmall = bodySmall.copy(fontFamily = Inter, letterSpacing = 0.1.sp),
+        labelLarge = labelLarge.copy(fontFamily = Inter, fontWeight = FontWeight.Medium),
+        labelMedium = labelMedium.copy(fontFamily = Inter, fontWeight = FontWeight.Medium, letterSpacing = 0.2.sp),
+        labelSmall = labelSmall.copy(fontFamily = Inter, fontWeight = FontWeight.Medium, letterSpacing = 0.3.sp),
     )
 }
 

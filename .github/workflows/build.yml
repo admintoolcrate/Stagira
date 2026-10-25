@@ -21,6 +21,9 @@ jobs:
         run: ./gradlew testDebugUnitTest
       - name: Build debug APK
         run: ./gradlew assembleDebug
+      # The optimised (R8) build a store release would use; unsigned, so it isn't uploaded.
+      - name: Check release build
+        run: ./gradlew assembleRelease
       - uses: actions/upload-artifact@v4
         with:
           name: stagirites-ledger-debug

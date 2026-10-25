@@ -1,6 +1,18 @@
 package com.stagirite.ledger.ui
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Canvas
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.background
@@ -94,8 +106,25 @@ fun SectionHeading(title: String, modifier: Modifier = Modifier) {
         title.uppercase(),
         style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 1.4.sp),
         color = MaterialTheme.colorScheme.onSurfaceVariant,
-        modifier = modifier.padding(start = 4.dp, bottom = 8.dp),
+        modifier = modifier
+            .padding(start = 4.dp, bottom = 8.dp)
+            .semantics { heading() },
     )
+}
+
+/** A number that rolls up or down to its new value. */
+@Composable
+fun RollingNumber(value: Long, style: TextStyle, modifier: Modifier = Modifier) {
+    AnimatedContent(
+        targetState = value,
+        transitionSpec = {
+            val up = targetState > initialState
+            (slideInVertically(tween(300)) { if (up) it / 2 else -it / 2 } + fadeIn(tween(300))) togetherWith
+                (slideOutVertically(tween(300)) { if (up) -it / 2 else it / 2 } + fadeOut(tween(200)))
+        },
+        label = "count",
+        modifier = modifier,
+    ) { n -> Text("$n", style = style) }
 }
 
 /** A flat, rounded panel that groups related content. */
@@ -136,18 +165,25 @@ fun ProgressRing(
     progress: Float,
     modifier: Modifier = Modifier,
     stroke: Dp = 4.dp,
+    /** What a screen reader says for the ring and what's in it. */
+    description: String? = null,
     content: @Composable () -> Unit,
 ) {
     val track = MaterialTheme.colorScheme.outlineVariant
     val ink = MaterialTheme.colorScheme.onBackground
-    Box(modifier, contentAlignment = Alignment.Center) {
+    // Eases to its new value, e.g. after a slip or as a day ticks over.
+    val shown by animateFloatAsState(progress, animationSpec = tween(700), label = "ring")
+    Box(
+        modifier.then(if (description != null) Modifier.clearAndSetSemantics { contentDescription = description } else Modifier),
+        contentAlignment = Alignment.Center,
+    ) {
         Canvas(Modifier.fillMaxSize()) {
             val w = stroke.toPx()
             val inset = w / 2
             val arcSize = Size(size.width - w, size.height - w)
             drawArc(track, 0f, 360f, false, Offset(inset, inset), arcSize, style = Stroke(w))
-            if (progress > 0f) {
-                drawArc(ink, -90f, 360f * progress, false, Offset(inset, inset), arcSize, style = Stroke(w, cap = StrokeCap.Round))
+            if (shown > 0f) {
+                drawArc(ink, -90f, 360f * shown, false, Offset(inset, inset), arcSize, style = Stroke(w, cap = StrokeCap.Round))
             }
         }
         content()
@@ -218,6 +254,8 @@ fun KindLabel(kind: GoalKind?, modifier: Modifier = Modifier) {
  */
 @Composable
 fun QuoteBlock(quote: Quote, modifier: Modifier = Modifier) {
+    // Turned off under Settings → Personalise.
+    if (!LocalUiPrefs.current.quotes) return
     Column(modifier.fillMaxWidth()) {
         Text(
             "\u201C",

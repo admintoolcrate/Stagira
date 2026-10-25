@@ -63,7 +63,9 @@ import androidx.compose.material3.SuggestionChip
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.LargeTopAppBar
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
@@ -75,9 +77,8 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.style.TextAlign
@@ -151,24 +152,27 @@ fun GoalListScreen(
 ) {
     var adding by rememberSaveable { mutableStateOf(false) }
     var month by rememberSaveable { mutableStateOf(YearMonth.from(today).toString()) }
+    val prefs = LocalUiPrefs.current
+    // The title starts large and tucks into a slim bar as the list scrolls.
+    val scroll = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
     var menu by remember { mutableStateOf(false) }
     var showArchived by rememberSaveable { mutableStateOf(false) }
     var actionsFor by rememberSaveable { mutableStateOf<String?>(null) }
 
     Scaffold(
+        modifier = Modifier.nestedScroll(scroll.nestedScrollConnection),
         topBar = {
-            TopAppBar(
+            LargeTopAppBar(
                 title = {
                     // Long-pressing the name shows or hides private titles.
-                    Column(Modifier.pointerInput(Unit) { detectTapGestures(onLongPress = { onTitleLongPress() }) }) {
-                        Text("The Stagirite\u2019s Ledger")
-                        Text(
-                            today.format(todayHeading),
-                            style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
+                    Text(
+                        "The Stagirite\u2019s Ledger",
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.pointerInput(Unit) { detectTapGestures(onLongPress = { onTitleLongPress() }) },
+                    )
                 },
+                scrollBehavior = scroll,
                 actions = {
                     IconButton(onClick = onSettings) {
                         Icon(Icons.Filled.Settings, contentDescription = "Settings")
@@ -199,7 +203,10 @@ fun GoalListScreen(
                         }
                     }
                 },
-                colors = plainTopBarColors(),
+                colors = TopAppBarDefaults.largeTopAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.background,
+                    scrolledContainerColor = MaterialTheme.colorScheme.background,
+                ),
             )
         },
         snackbarHost = { SnackbarHost(snackbar) },
@@ -221,12 +228,26 @@ fun GoalListScreen(
                 verticalArrangement = Arrangement.spacedBy(12.dp),
                 modifier = Modifier.padding(padding),
             ) {
-                if (goals.isNotEmpty()) {
+                item(key = "date") {
+                    Text(
+                        today.format(todayHeading),
+                        style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(start = 4.dp),
+                    )
+                }
+                if (goals.isNotEmpty() && prefs.homeSummary) {
                     item(key = "summary") { SummaryCard(goals, today) }
                     item(key = "goals-heading") { SectionHeading("Goals", Modifier.padding(top = 12.dp)) }
                 }
                 items(goals, key = { it.id }) { goal ->
-                    GoalCard(goal, today, onClick = { onOpen(goal) }, onLongClick = { actionsFor = goal.id })
+                    GoalCard(
+                        goal, today,
+                        onClick = { onOpen(goal) },
+                        onLongClick = { actionsFor = goal.id },
+                        // Glides into place when sorted, added or archived.
+                        modifier = Modifier.animateItem(),
+                    )
                 }
                 if (goals.isEmpty()) {
                     item {
@@ -238,7 +259,7 @@ fun GoalListScreen(
                         )
                     }
                 }
-                if (goals.isNotEmpty()) {
+                if (goals.isNotEmpty() && prefs.homeExtras) {
                     item(key = "coming-heading") { SectionHeading("Coming up", Modifier.padding(top = 12.dp)) }
                     item(key = "coming") { ComingUpCard(goals, today, onOpen) }
                     item(key = "calendar-heading") { SectionHeading("All goals", Modifier.padding(top = 12.dp)) }
@@ -334,16 +355,16 @@ private fun EmptyState(modifier: Modifier = Modifier) {
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         Spacer(Modifier.height(40.dp))
-        LedgerCard { QuoteBlock(Quotes.emptyLedger) }
+        if (LocalUiPrefs.current.quotes) LedgerCard { QuoteBlock(Quotes.emptyLedger) }
     }
 }
 
 @Composable
-private fun GoalCard(goal: Goal, today: LocalDate, onClick: () -> Unit, onLongClick: () -> Unit) {
+private fun GoalCard(goal: Goal, today: LocalDate, onClick: () -> Unit, onLongClick: () -> Unit, modifier: Modifier = Modifier) {
     val days = goal.daysKept(today)
     val next = Milestones.next(days)
     val milestoneToday = Milestones.isMilestone(days)
-    LedgerCard(onClick = onClick, onLongClick = onLongClick) {
+    LedgerCard(modifier = modifier, onClick = onClick, onLongClick = onLongClick) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             if (goal.icon.isNotEmpty()) {
                 GoalIcon(goal.icon)
@@ -449,7 +470,7 @@ fun GoalDetailScreen(
     canNote: Boolean = true,
     onNote: (LocalDate, String) -> Unit = { _, _ -> },
 ) {
-    val haptics = LocalHapticFeedback.current
+    val buzz = rememberBuzz()
     var notingDay by rememberSaveable { mutableStateOf<Long?>(null) }
     var editing by rememberSaveable { mutableStateOf(false) }
     var slipSheet by rememberSaveable { mutableStateOf(false) }
@@ -470,7 +491,7 @@ fun GoalDetailScreen(
 
     /** Logs a slip. Today's gets the Day 0 screen; a past one gets an undo bar. */
     val logSlip: (LocalDate) -> Unit = { day ->
-        haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+        buzz()
         if (day == today) {
             endedRun = days
             onSlip(day)
@@ -547,9 +568,14 @@ fun GoalDetailScreen(
                         }
                         Spacer(Modifier.height(16.dp))
                     }
-                    ProgressRing(goal.targetProgress(today) ?: Milestones.progress(days), Modifier.size(208.dp)) {
+                    ProgressRing(
+                        goal.targetProgress(today) ?: Milestones.progress(days),
+                        Modifier.size(208.dp),
+                        description = plural(days, "day") + "; " +
+                            (goal.target?.let { "target ${plural(it, "day")}" } ?: "next milestone ${plural(next, "day")}"),
+                    ) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text("$days", style = MaterialTheme.typography.displayLarge, fontSize = 80.sp)
+                            RollingNumber(days, MaterialTheme.typography.displayLarge.copy(fontSize = 80.sp))
                             Text(
                                 if (days == 1L) "day" else "days",
                                 style = MaterialTheme.typography.labelLarge,
@@ -596,8 +622,10 @@ fun GoalDetailScreen(
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
-                    Spacer(Modifier.height(16.dp))
-                    QuoteBlock(Quotes.forSlip(goal))
+                    if (LocalUiPrefs.current.quotes) {
+                        Spacer(Modifier.height(16.dp))
+                        QuoteBlock(Quotes.forSlip(goal))
+                    }
                 }
             }
 

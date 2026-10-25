@@ -24,6 +24,8 @@ A minimal Android app (**Stagirite** on your home screen) that does one thing: n
 - **Quick actions** — long-press a goal on the list to log a slip today or archive it, with Undo.
 - **Sort** — as added, longest current run, next milestone, or name.
 - **Suggestions** when adding a goal (No alcohol, Exercise, Read …) fill in the icon and type.
+- **Personalise** — Aristotle passages, milestone celebrations, vibration, and the home page's
+  summary and lower sections can each be turned off (all on by default).
 - **Guide** — a short optional introduction on first launch, and an About page explaining the
   name, in Settings.
 - **Begin again** when you slip: the count restarts, the run is kept, and you get a short passage
@@ -108,7 +110,8 @@ can be cured.
 
 ## Third-party material
 
-Icons use [Noto Emoji](https://github.com/google/fonts/tree/main/ofl/notoemoji) (© 2013, 2022
+Text is set in [Inter](https://github.com/google/fonts/tree/main/ofl/inter) (© 2016 The Inter
+Project Authors) and icons use [Noto Emoji](https://github.com/google/fonts/tree/main/ofl/notoemoji) (© 2013, 2022
 Google) under the SIL Open Font License 1.1, which allows bundling the font in an app; its licence
 ships inside the app and is shown in Settings → About. Quotations are from the Perseus Digital
 Library's Rackham text (CC BY-SA 4.0). Details in [`third_party/`](third_party/).
