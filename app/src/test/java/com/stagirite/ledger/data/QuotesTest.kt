@@ -20,6 +20,14 @@ class QuotesTest {
     }
 
     @Test
+    fun virtuesGetNoPassagesAboutGivingIn() {
+        (0 until 20).forEach { n ->
+            val g = Goal("g$n", "Run", day, kind = GoalKind.Virtue).recordSlip(day.plusDays(n + 1L), 1)
+            assertEquals(null, Quotes.forSlip(g).note)
+        }
+    }
+
+    @Test
     fun quoteStaysTheSameForOneFreshStartAndChangesForTheNext() {
         val goal = Goal("g", "No more alcohol", day).recordSlip(day.plusDays(9), 1)
         assertEquals(Quotes.forSlip(goal), Quotes.forSlip(goal.copy(title = "renamed")))

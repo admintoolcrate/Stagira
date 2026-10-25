@@ -54,6 +54,7 @@ fun MonthCalendar(
     onMonthChange: (YearMonth) -> Unit,
     onDayClick: ((LocalDate) -> Unit)? = null,
     modifier: Modifier = Modifier,
+    slipLabel: String = "Slip",
 ) {
     val locale = Locale.getDefault()
     val firstDay = WeekFields.of(locale).firstDayOfWeek
@@ -98,24 +99,24 @@ fun MonthCalendar(
                     Box(Modifier.weight(1f).aspectRatio(1f), contentAlignment = Alignment.Center) {
                         if (index in 0 until month.lengthOfMonth()) {
                             val day = first.plusDays(index.toLong())
-                            DayCell(day, stateOf(day), day == today, onDayClick)
+                            DayCell(day, stateOf(day), day == today, onDayClick, slipLabel)
                         }
                     }
                 }
             }
         }
         Spacer(Modifier.height(8.dp))
-        CalendarLegend()
+        CalendarLegend(slipLabel)
     }
 }
 
 @Composable
-private fun DayCell(day: LocalDate, state: DayState, isToday: Boolean, onClick: ((LocalDate) -> Unit)?) {
+private fun DayCell(day: LocalDate, state: DayState, isToday: Boolean, onClick: ((LocalDate) -> Unit)?, slipLabel: String) {
     val ink = MaterialTheme.colorScheme.onBackground
     val clickable = onClick != null && (state == DayState.Kept || state == DayState.Slip)
     val label = "${day.format(mediumDate)}: " + when (state) {
         DayState.Kept -> "kept"
-        DayState.Slip -> "slip"
+        DayState.Slip -> slipLabel.lowercase()
         DayState.Untracked -> "not tracked"
         DayState.Future -> "upcoming"
     }
@@ -161,7 +162,7 @@ private fun DayCell(day: LocalDate, state: DayState, isToday: Boolean, onClick: 
 }
 
 @Composable
-private fun CalendarLegend() {
+private fun CalendarLegend(slipLabel: String) {
     val ink = MaterialTheme.colorScheme.onBackground
     Row(verticalAlignment = Alignment.CenterVertically) {
         Box(Modifier.size(10.dp).background(ink, CircleShape))
@@ -170,7 +171,7 @@ private fun CalendarLegend() {
         Spacer(Modifier.width(16.dp))
         Box(Modifier.size(10.dp).border(BorderStroke(1.5.dp, ink), CircleShape))
         Spacer(Modifier.width(6.dp))
-        Text("Slip", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(slipLabel, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         Spacer(Modifier.width(16.dp))
         Box(Modifier.width(10.dp).height(2.dp).background(ink))
         Spacer(Modifier.width(6.dp))

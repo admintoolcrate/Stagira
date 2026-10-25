@@ -165,6 +165,31 @@ class GoalTest {
     }
 
     @Test
+    fun codecKeepsIconKindAndSealedTitle() {
+        val g = goal.copy(icon = "🍺", kind = GoalKind.Vice, sealed = "{\"sealed\":1}", title = "No more corn", createdAt = 1)
+        assertEquals(listOf(g), LedgerCodec.decode(LedgerCodec.encode(listOf(g))))
+        val plain = goal.copy(createdAt = 1)
+        assertEquals(null, LedgerCodec.decode(LedgerCodec.encode(listOf(plain))).single().kind)
+    }
+
+    @Test
+    fun privateGoalsKeepNoPlainNote() {
+        val g = goal.edit("No more corn", start, "a secret reason", now = 1, sealed = "x")
+        assertEquals("", g.reason)
+        assertTrue(g.isPrivate)
+        val t = g.tombstone(2)
+        assertEquals(null, t.sealed)
+        assertEquals("", t.icon)
+    }
+
+    @Test
+    fun virtuesMissDaysRatherThanSlip() {
+        assertEquals("slip", goal.slipWord)
+        assertEquals("slip", goal.copy(kind = GoalKind.Vice).slipWord)
+        assertEquals("missed day", goal.copy(kind = GoalKind.Virtue).slipWord)
+    }
+
+    @Test
     fun codecReadsVersionOne() {
         // Started Jan 1, slipped Jan 11 and Jan 21; current run from Jan 21.
         val v1 = """{"version":1,"goals":[{"id":"g","title":"T","start":${start.plusDays(20).toEpochDay()},

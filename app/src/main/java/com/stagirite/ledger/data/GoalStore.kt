@@ -23,14 +23,25 @@ class GoalStore(context: Context) {
 
     fun find(id: String): Goal? = all.firstOrNull { it.id == id && !it.deleted }
 
-    fun add(title: String, since: LocalDate, reason: String = "") {
+    fun add(title: String, since: LocalDate, reason: String = "", icon: String = "", kind: GoalKind? = null, sealed: String? = null) {
         val now = System.currentTimeMillis()
-        all.add(Goal(UUID.randomUUID().toString(), title.trim(), since, reason = reason.trim(), createdAt = now, updatedAt = now))
+        val goal = Goal(UUID.randomUUID().toString(), "", since, createdAt = now, updatedAt = now)
+            .edit(title, since, reason, now, icon, kind, sealed)
+        all.add(goal)
         changed()
     }
 
-    fun edit(id: String, title: String, since: LocalDate, reason: String) =
-        replace(id) { it.edit(title, since, reason, System.currentTimeMillis()) }
+    fun edit(id: String, title: String, since: LocalDate, reason: String, icon: String, kind: GoalKind?, sealed: String?) =
+        replace(id) { it.edit(title, since, reason, System.currentTimeMillis(), icon, kind, sealed) }
+
+    /** Applies [change] to every goal it alters (returns non-null for). */
+    fun updateAll(change: (Goal) -> Goal?) {
+        var any = false
+        all.indices.forEach { i ->
+            change(all[i])?.let { all[i] = it.copy(updatedAt = System.currentTimeMillis()); any = true }
+        }
+        if (any) changed()
+    }
 
     fun moveCurrentStart(id: String, day: LocalDate) =
         replace(id) { it.moveCurrentStart(day, System.currentTimeMillis()) }

@@ -9,6 +9,12 @@ data class Streak(val start: LocalDate, val end: LocalDate) {
     val days: Long get() = maxOf(0, ChronoUnit.DAYS.between(start, end))
 }
 
+/** Optionally, whether a goal is a vice to do less of or a virtue to do more of. */
+enum class GoalKind(val label: String, val blurb: String, val slip: String, val slips: String) {
+    Vice("Vice", "Something to do less of", "slip", "slips"),
+    Virtue("Virtue", "Something to do more of", "missed day", "missed days"),
+}
+
 /**
  * A single habit being kept, e.g. "No more alcohol".
  *
@@ -27,6 +33,14 @@ data class Goal(
     val slips: List<LocalDate> = emptyList(),
     /** Optional note on why this goal matters, shown on its page. */
     val reason: String = "",
+    /** An emoji shown beside the title, drawn in monochrome. */
+    val icon: String = "",
+    val kind: GoalKind? = null,
+    /**
+     * For a private goal: the real title and note, encrypted with the private-titles
+     * PIN. [title] is then the cover name shown to anyone else, and [reason] is empty.
+     */
+    val sealed: String? = null,
     val createdAt: Long = 0,
     val updatedAt: Long = 0,
     val deleted: Boolean = false,
@@ -46,6 +60,11 @@ data class Goal(
     fun longestStreak(today: LocalDate): Long = runs(today).maxOf { it.days }
 
     val freshStarts: Int get() = slips.size
+
+    val isPrivate: Boolean get() = sealed != null
+
+    /** "slip" for a vice or an unlabelled goal, "missed day" for a virtue. */
+    val slipWord: String get() = kind?.slip ?: "slip"
 
     fun isSlip(day: LocalDate): Boolean = slips.binarySearch(day) >= 0
 
@@ -78,15 +97,26 @@ data class Goal(
     }
 
     /** [since] can't move past the first slip. */
-    fun edit(title: String, since: LocalDate, reason: String, now: Long): Goal = copy(
+    fun edit(
+        title: String,
+        since: LocalDate,
+        reason: String,
+        now: Long,
+        icon: String = this.icon,
+        kind: GoalKind? = this.kind,
+        sealed: String? = this.sealed,
+    ): Goal = copy(
         title = title.trim(),
         since = slips.firstOrNull()?.let { minOf(it, since) } ?: since,
-        reason = reason.trim(),
+        reason = if (sealed != null) "" else reason.trim(),
+        icon = icon,
+        kind = kind,
+        sealed = sealed,
         updatedAt = now,
     )
 
     fun tombstone(now: Long): Goal =
-        copy(title = "", slips = emptyList(), reason = "", deleted = true, updatedAt = now)
+        copy(title = "", slips = emptyList(), reason = "", icon = "", kind = null, sealed = null, deleted = true, updatedAt = now)
 }
 
 /**

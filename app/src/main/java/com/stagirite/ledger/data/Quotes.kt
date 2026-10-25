@@ -15,6 +15,9 @@ data class Quote(
     val note: String? = null,
 ) {
     val citation: String get() = "Aristotle, Nicomachean Ethics $ref · tr. H. Rackham"
+
+    /** "Nicomachean Ethics VII.8 · 1150b" style line under the author. */
+    val work: String get() = "Nicomachean Ethics ${ref.replace(", ", " · ")}"
 }
 
 object Quotes {
@@ -88,7 +91,12 @@ object Quotes {
         "I.7, 1098a",
     )
 
-    /** A quote for this goal's latest fresh start; stays the same for that start. */
-    fun forSlip(goal: Goal): Quote =
-        slip[(goal.id.hashCode() + goal.freshStarts).absoluteValue % slip.size]
+    /**
+     * A quote for this goal's latest fresh start; stays the same for that start.
+     * Virtues skip the passages on giving in to temptation, which fit vices.
+     */
+    fun forSlip(goal: Goal): Quote {
+        val pool = if (goal.kind == GoalKind.Virtue) slip.filter { it.note == null } else slip
+        return pool[(goal.id.hashCode() + goal.freshStarts).absoluteValue % pool.size]
+    }
 }

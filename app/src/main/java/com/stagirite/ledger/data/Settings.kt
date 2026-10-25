@@ -66,6 +66,15 @@ class Settings(context: Context) {
         prefs.edit().putBoolean("reminder", on).putInt("reminderMinutes", minutes).apply()
     }
 
+    /** Whether the introductory guide has been seen or skipped. */
+    var guideSeen by mutableStateOf(prefs.getBoolean("guideSeen", false))
+        private set
+
+    fun updateGuideSeen(seen: Boolean) {
+        guideSeen = seen
+        prefs.edit().putBoolean("guideSeen", seen).apply()
+    }
+
     /** Milestones already celebrated on this device, as "goalId:runStart:days". */
     private var celebrated by mutableStateOf(prefs.getStringSet("celebrated", emptySet())!!.toSet())
 

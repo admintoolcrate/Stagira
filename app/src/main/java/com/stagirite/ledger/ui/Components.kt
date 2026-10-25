@@ -40,6 +40,29 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.PlatformTextStyle
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.EmojiSupportMatch
+import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.unit.TextUnit
+import com.stagirite.ledger.R
+import com.stagirite.ledger.data.GoalKind
 import com.stagirite.ledger.data.Quote
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
@@ -163,33 +186,159 @@ fun Figure(value: String, label: String, modifier: Modifier = Modifier) {
     }
 }
 
-/** A quotation with a thin rule beside it and its source underneath. */
+/** The monochrome emoji font (Noto Emoji, SIL Open Font License). */
+val EmojiFont = FontFamily(Font(R.font.noto_emoji))
+
+/** Draws [icon] in the monochrome emoji font, in the current ink colour. */
+@Composable
+fun EmojiGlyph(icon: String, size: TextUnit, modifier: Modifier = Modifier, color: Color = MaterialTheme.colorScheme.onBackground) {
+    Text(
+        icon,
+        modifier = modifier,
+        color = color,
+        style = TextStyle(
+            fontFamily = EmojiFont,
+            fontSize = size,
+            // Don't let the system swap in its colour emoji.
+            platformStyle = PlatformTextStyle(emojiSupportMatch = EmojiSupportMatch.None),
+        ),
+    )
+}
+
+/** A goal's icon in a soft round tile. Nothing is drawn when there's no icon. */
+@Composable
+fun GoalIcon(icon: String, modifier: Modifier = Modifier, tile: Dp = 44.dp) {
+    if (icon.isEmpty()) return
+    Box(
+        modifier
+            .size(tile)
+            .background(MaterialTheme.colorScheme.surfaceContainer, CircleShape),
+        contentAlignment = Alignment.Center,
+    ) {
+        EmojiGlyph(icon, (tile.value * 0.5f).sp)
+    }
+}
+
+/** "VICE" / "VIRTUE", small and spaced. */
+@Composable
+fun KindLabel(kind: GoalKind?, modifier: Modifier = Modifier) {
+    if (kind == null) return
+    Text(
+        kind.label.uppercase(),
+        style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 1.4.sp),
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = modifier,
+    )
+}
+
+/**
+ * A quotation set apart: a large thin opening mark, the passage in light type
+ * with generous leading, then a short rule and the attribution in small capitals.
+ */
 @Composable
 fun QuoteBlock(quote: Quote, modifier: Modifier = Modifier) {
-    Row(
-        modifier
-            .fillMaxWidth()
-            .height(IntrinsicSize.Min),
-    ) {
-        Spacer(
-            Modifier
-                .width(2.dp)
-                .fillMaxHeight()
-                .background(MaterialTheme.colorScheme.onBackground),
+    Column(modifier.fillMaxWidth()) {
+        Text(
+            "\u201C",
+            style = MaterialTheme.typography.displayMedium.copy(fontWeight = FontWeight.Thin, lineHeight = 40.sp),
+            color = MaterialTheme.colorScheme.outline,
+            modifier = Modifier.height(36.dp),
         )
-        Spacer(Modifier.width(16.dp))
-        Column {
-            Text(quote.text, style = MaterialTheme.typography.bodyLarge)
-            Spacer(Modifier.height(8.dp))
-            Text(
-                quote.citation,
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+        Text(
+            quote.text,
+            style = MaterialTheme.typography.bodyLarge.copy(
+                fontSize = 18.sp,
+                lineHeight = 28.sp,
+                fontWeight = FontWeight.Light,
+                letterSpacing = 0.1.sp,
+            ),
+        )
+        Spacer(Modifier.height(18.dp))
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Spacer(
+                Modifier
+                    .width(20.dp)
+                    .height(1.dp)
+                    .background(MaterialTheme.colorScheme.onBackground),
             )
-            quote.note?.let {
-                Spacer(Modifier.height(6.dp))
-                Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.outline)
+            Spacer(Modifier.width(12.dp))
+            Column {
+                Text(
+                    "ARISTOTLE",
+                    style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 1.8.sp, fontWeight = FontWeight.Medium),
+                )
+                Text(
+                    "${quote.work} \u00B7 tr. H. Rackham",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
             }
         }
+        quote.note?.let {
+            Spacer(Modifier.height(12.dp))
+            Text(
+                it,
+                style = MaterialTheme.typography.bodySmall.copy(fontStyle = FontStyle.Italic),
+                color = MaterialTheme.colorScheme.outline,
+            )
+        }
     }
+}
+
+/** Asks for a numeric PIN, optionally twice. */
+@Composable
+fun PinDialog(
+    title: String,
+    message: String,
+    confirm: String,
+    repeat: Boolean,
+    busy: Boolean,
+    error: String?,
+    onConfirm: (String) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    var pin by remember { mutableStateOf("") }
+    var again by remember { mutableStateOf("") }
+    val valid = pin.length in 4..8 && (!repeat || pin == again)
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(title) },
+        text = {
+            Column {
+                Text(message, style = MaterialTheme.typography.bodyMedium)
+                Spacer(Modifier.height(16.dp))
+                OutlinedTextField(
+                    value = pin,
+                    onValueChange = { v -> if (v.length <= 8 && v.all(Char::isDigit)) pin = v },
+                    label = { Text("PIN") },
+                    supportingText = { if (repeat) Text("4 to 8 digits") },
+                    isError = error != null,
+                    singleLine = true,
+                    visualTransformation = PasswordVisualTransformation(),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                if (repeat) {
+                    OutlinedTextField(
+                        value = again,
+                        onValueChange = { v -> if (v.length <= 8 && v.all(Char::isDigit)) again = v },
+                        label = { Text("Repeat PIN") },
+                        isError = again.isNotEmpty() && again != pin,
+                        singleLine = true,
+                        visualTransformation = PasswordVisualTransformation(),
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                }
+                if (error != null) {
+                    Spacer(Modifier.height(8.dp))
+                    Text(error, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = { onConfirm(pin) }, enabled = valid && !busy) { Text(if (busy) "Checking\u2026" else confirm) }
+        },
+        dismissButton = { TextButton(onClick = onDismiss, enabled = !busy) { Text("Cancel") } },
+    )
 }

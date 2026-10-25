@@ -45,7 +45,7 @@ class MainActivity : FragmentActivity() {
                 if (lock.locked) {
                     LockScreen(onUnlock = { unlock() })
                 } else {
-                    LedgerApp(app.store, settings, app.sync, lock)
+                    LedgerApp(app.store, settings, app.sync, lock, app.privateTitles)
                 }
             }
         }
@@ -61,7 +61,11 @@ class MainActivity : FragmentActivity() {
     override fun onStop() {
         super.onStop()
         // Rotating the screen also stops the activity; that isn't leaving the app.
-        if (!isChangingConfigurations) app.lock.onBackground()
+        if (!isChangingConfigurations) {
+            app.lock.onBackground()
+            // Private titles are hidden again whenever the app is left.
+            app.privateTitles.lock()
+        }
         app.sync.requestSync()
     }
 

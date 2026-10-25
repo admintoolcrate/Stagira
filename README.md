@@ -10,6 +10,15 @@ A minimal Android app that does one thing: name a habit you're keeping —
 
 - **Goals** — any number, counted from today or a past date, with an optional note on why each
   one matters. The count ticks over at midnight.
+- **Vices and virtues** — optionally mark a goal a vice (something to do less of) or a virtue
+  (something to do more of). Virtues log "missed days" instead of slips.
+- **Icons** — a black-and-white emoji beside each goal, drawn with the open-source Noto Emoji
+  font (see *Third-party material*).
+- **Private titles** — show a cover name ("No more corn") while the real name and note stay
+  encrypted behind a PIN. Long-press the app's name on the Goals screen to reveal them; they hide
+  again when you leave the app.
+- **Guide** — a short optional introduction on first launch, and an About page explaining the
+  name, in Settings.
 - **Begin again** when you slip: the count restarts, the run is kept, and you get a short passage
   from Aristotle for the day (see *Quotations*).
 - **Backdated entries** — change when a goal (or the current run) started by tapping its "since"
@@ -44,6 +53,10 @@ A minimal Android app that does one thing: name a habit you're keeping —
   Keystore key; the passphrase itself is never stored. Lose the passphrase and the synced copy can't
   be recovered (your phone's copy is unaffected).
 - **Disconnect** revokes the app's access to your Google account and can delete the synced copy.
+- **Private titles**: real names and notes are encrypted (AES-256-GCM, PBKDF2 key from your
+  PIN) on the phone and in sync; only the cover name is stored in the clear. A 4–8 digit PIN
+  keeps them from anyone using or glancing at your phone; against someone with your synced file
+  and time to guess, rely on sync encryption too. Forgetting the PIN can't be undone.
 - **App lock** keeps the ledger behind your fingerprint, face or screen lock; while it's on, the
   app is also blanked in recent apps.
 - **Hide in recent apps** blanks the app in the app switcher and blocks screenshots.
@@ -77,6 +90,13 @@ checks every one against the source text, chapter and page included. CI runs it 
 Several passages come from Book VII, on *akrasia*, which Rackham translates "Unrestraint":
 acting against your own better judgement. Aristotle's view is that this, unlike settled vice,
 can be cured.
+
+## Third-party material
+
+Icons use [Noto Emoji](https://github.com/google/fonts/tree/main/ofl/notoemoji) (© 2013, 2022
+Google) under the SIL Open Font License 1.1, which allows bundling the font in an app; its licence
+ships inside the app and is shown in Settings → About. Quotations are from the Perseus Digital
+Library's Rackham text (CC BY-SA 4.0). Details in [`third_party/`](third_party/).
 
 ## Setting up Google sign-in (one time)
 

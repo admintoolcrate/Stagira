@@ -20,6 +20,9 @@ object LedgerCodec {
                     .put("since", g.since.toEpochDay())
                     .put("slips", slips)
                     .put("reason", g.reason)
+                    .put("icon", g.icon)
+                    .put("kind", g.kind?.name ?: "")
+                    .put("sealed", g.sealed ?: "")
                     .put("created", g.createdAt)
                     .put("updated", g.updatedAt)
                     .put("deleted", g.deleted)
@@ -49,6 +52,9 @@ object LedgerCodec {
                 since = since,
                 slips = slips.filter { !it.isBefore(since) }.distinct().sorted(),
                 reason = o.optString("reason"),
+                icon = o.optString("icon"),
+                kind = GoalKind.entries.firstOrNull { it.name == o.optString("kind") },
+                sealed = o.optString("sealed").ifEmpty { null },
                 createdAt = o.optLong("created"),
                 updatedAt = o.optLong("updated"),
                 deleted = o.optBoolean("deleted"),

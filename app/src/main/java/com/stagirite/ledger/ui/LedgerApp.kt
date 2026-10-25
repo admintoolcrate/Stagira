@@ -34,6 +34,7 @@ import com.stagirite.ledger.data.Quotes
 import com.stagirite.ledger.data.plural
 import com.stagirite.ledger.data.Settings
 import com.stagirite.ledger.security.AppLock
+import com.stagirite.ledger.security.PrivateTitles
 import com.stagirite.ledger.sync.SyncManager
 import com.stagirite.ledger.sync.SyncState
 import kotlinx.coroutines.delay
@@ -56,27 +57,59 @@ fun rememberToday(): State<LocalDate> {
 }
 
 @Composable
-fun LedgerApp(store: GoalStore, settings: Settings, sync: SyncManager, lock: AppLock) {
+fun LedgerApp(store: GoalStore, settings: Settings, sync: SyncManager, lock: AppLock, vault: PrivateTitles) {
     val today by rememberToday()
     var tab by rememberSaveable { mutableStateOf(Tab.Goals) }
     var openId by rememberSaveable { mutableStateOf<String?>(null) }
-    val openGoal = openId?.let(store::find)
+    var pinFlow by remember { mutableStateOf<PinFlow?>(null) }
     val snackbar = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     val navBar: @Composable () -> Unit = { LedgerNavBar(tab) { tab = it } }
 
-    if (openGoal != null) {
+    // Goals as they should be shown: real titles only while private titles are unlocked.
+    val shown = store.goals.map(vault::reveal)
+    val rawOpen = openId?.let(store::find)
+    val openGoal = rawOpen?.let(vault::reveal)
+    val anySealed = store.goals.any { it.isPrivate }
+
+    val requestPin: () -> Unit = {
+        pinFlow = if (vault.hasPin || anySealed) PinFlow.Unlock else PinFlow.Set
+    }
+    val privacy = PrivacyUi(
+        hasPin = vault.hasPin || anySealed,
+        unlocked = vault.unlocked,
+        requestPin = requestPin,
+        open = { vault.open(it) },
+    )
+
+    /** Turns a draft into what's stored: private goals keep only a sealed copy of the real name. */
+    fun sealedFor(draft: GoalDraft, existing: Goal?): String? = when {
+        !draft.private -> null
+        draft.realTitle == null -> existing?.sealed
+        else -> vault.seal(draft.realTitle, draft.reason)
+    }
+
+    if (!settings.guideSeen) {
+        GuideScreen(onDone = { settings.updateGuideSeen(true) })
+        return
+    }
+
+    if (openGoal != null && rawOpen != null) {
         BackHandler { openId = null }
         GoalDetailScreen(
             goal = openGoal,
+            cover = rawOpen.title,
             today = today,
+            privacy = privacy,
             onBack = { openId = null },
-            onEdit = { title, since, reason -> store.edit(openGoal.id, title, since, reason) },
-            onSlip = { store.recordSlip(openGoal.id, it) },
-            onRemoveSlip = { store.removeSlip(openGoal.id, it) },
-            onMoveStart = { store.moveCurrentStart(openGoal.id, it) },
+            onEdit = { d ->
+                store.edit(rawOpen.id, d.title, d.since, d.reason, d.icon, d.kind, sealedFor(d, rawOpen))
+            },
+            onSlip = { store.recordSlip(rawOpen.id, it) },
+            onRemoveSlip = { store.removeSlip(rawOpen.id, it) },
+            onMoveStart = { store.moveCurrentStart(rawOpen.id, it) },
             onDelete = {
-                val removed = store.delete(openGoal.id)
+                val removed = store.delete(rawOpen.id)
                 openId = null
                 tab = Tab.Goals
                 if (removed != null) {
@@ -91,20 +124,90 @@ fun LedgerApp(store: GoalStore, settings: Settings, sync: SyncManager, lock: App
         if (tab != Tab.Goals) BackHandler { tab = Tab.Goals }
         when (tab) {
             Tab.Goals -> GoalListScreen(
-                goals = store.goals,
+                goals = shown,
                 today = today,
                 snackbar = snackbar,
+                privacy = privacy,
                 onOpen = { openId = it.id },
-                onAdd = store::add,
+                onAdd = { d -> store.add(d.title, d.since, d.reason, d.icon, d.kind, sealedFor(d, null)) },
+                onTitleLongPress = {
+                    if (vault.unlocked) {
+                        vault.lock()
+                        scope.launch { snackbar.showSnackbar("Private titles hidden") }
+                    } else if (privacy.hasPin) {
+                        pinFlow = PinFlow.Unlock
+                    }
+                },
                 bottomBar = navBar,
             )
-            Tab.Overview -> OverviewScreen(store.goals, today, onOpen = { openId = it.id }, bottomBar = navBar)
-            Tab.Settings -> SettingsScreen(store, settings, sync, lock, bottomBar = navBar)
+            Tab.Overview -> OverviewScreen(shown, today, onOpen = { openId = it.id }, bottomBar = navBar)
+            Tab.Settings -> SettingsScreen(
+                store, settings, sync, lock,
+                privateTitles = PrivateTitlesUi(
+                    hasPin = privacy.hasPin,
+                    unlocked = vault.unlocked,
+                    onSetUp = requestPin,
+                    onChange = { pinFlow = if (vault.unlocked) PinFlow.Change else PinFlow.Unlock },
+                    onForget = {
+                        // Real names can't be read without the PIN, so private goals keep their cover names.
+                        store.updateAll { g -> if (g.isPrivate) g.copy(sealed = null, reason = "") else null }
+                        vault.forget()
+                    },
+                ),
+                onShowGuide = { settings.updateGuideSeen(false) },
+                bottomBar = navBar,
+            )
         }
     }
 
+    pinFlow?.let { flow ->
+        var busy by remember(flow) { mutableStateOf(false) }
+        var error by remember(flow) { mutableStateOf<String?>(null) }
+        PinDialog(
+            title = when (flow) {
+                PinFlow.Unlock -> "Show private titles"
+                PinFlow.Set -> "Set a PIN for private titles"
+                PinFlow.Change -> "New PIN"
+            },
+            message = when (flow) {
+                PinFlow.Unlock -> "Enter your private-titles PIN."
+                PinFlow.Set -> "This PIN reveals the real names of private goals. It\u2019s separate from your phone\u2019s lock. " +
+                    "If you forget it, the real names can\u2019t be recovered; the cover names stay."
+                PinFlow.Change -> "Private goals will be re-sealed with the new PIN."
+            },
+            confirm = if (flow == PinFlow.Unlock) "Show" else "Save",
+            repeat = flow != PinFlow.Unlock,
+            busy = busy,
+            error = error,
+            onDismiss = { pinFlow = null },
+            onConfirm = { pin ->
+                scope.launch {
+                    busy = true
+                    when (flow) {
+                        PinFlow.Unlock -> {
+                            if (vault.unlock(pin, store.snapshot)) pinFlow = null else error = "That PIN didn\u2019t work."
+                        }
+                        PinFlow.Set -> {
+                            vault.setPin(pin)
+                            pinFlow = null
+                        }
+                        PinFlow.Change -> {
+                            val old = vault.setPin(pin)
+                            store.updateAll { g ->
+                                val (t, r) = vault.open(g, old) ?: return@updateAll null
+                                g.copy(sealed = vault.seal(t, r))
+                            }
+                            pinFlow = null
+                        }
+                    }
+                    busy = false
+                }
+            },
+        )
+    }
+
     // Celebrate a milestone reached today, once per goal and run.
-    val milestoneGoal = store.goals.firstOrNull { g ->
+    val milestoneGoal = shown.firstOrNull { g ->
         val d = g.daysKept(today)
         Milestones.isMilestone(d) && !settings.isCelebrated(celebrationKey(g, d))
     }
@@ -232,3 +335,5 @@ private fun MilestoneDialog(goal: Goal, days: Long, onDismiss: () -> Unit) {
         confirmButton = { TextButton(onClick = onDismiss) { Text("Onward") } },
     )
 }
+
+private enum class PinFlow { Unlock, Set, Change }

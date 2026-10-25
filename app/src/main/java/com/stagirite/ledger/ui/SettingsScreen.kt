@@ -25,6 +25,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -76,6 +77,8 @@ fun SettingsScreen(
     settings: Settings,
     sync: SyncManager,
     lock: AppLock,
+    privateTitles: PrivateTitlesUi,
+    onShowGuide: () -> Unit,
     bottomBar: @Composable () -> Unit,
 ) {
     Scaffold(
@@ -109,6 +112,8 @@ fun SettingsScreen(
 
             Section("Lock") { LockSection(settings, lock) }
 
+            Section("Private titles") { PrivateTitlesSection(privateTitles) }
+
             Section("Reminder") { ReminderSection(settings, lock) }
 
             Section("Sync") { SyncSection(sync, lock) }
@@ -132,14 +137,7 @@ fun SettingsScreen(
 
             Section("Your data") { DataSection(store, sync, lock) }
 
-            Section("Sources") {
-                Note(
-                    "Quotations are from Aristotle, Nicomachean Ethics, translated by H. Rackham " +
-                        "(Loeb Classical Library; London: William Heinemann, 1926), as published by " +
-                        "the Perseus Digital Library under CC BY-SA 4.0. References give book and " +
-                        "chapter, then the standard Bekker page.",
-                )
-            }
+            Section("About") { AboutSection(onShowGuide) }
 
             Spacer(Modifier.height(40.dp))
         }
@@ -490,6 +488,121 @@ private fun ReminderSection(settings: Settings, lock: AppLock) {
                 }) { Text("OK") }
             },
             dismissButton = { TextButton(onClick = { pickingTime = false }) { Text("Cancel") } },
+        )
+    }
+}
+
+/** What the settings screen can do with private titles. */
+class PrivateTitlesUi(
+    val hasPin: Boolean,
+    val unlocked: Boolean,
+    val onSetUp: () -> Unit,
+    val onChange: () -> Unit,
+    val onForget: () -> Unit,
+)
+
+@Composable
+private fun PrivateTitlesSection(ui: PrivateTitlesUi) {
+    var forgetting by rememberSaveable { mutableStateOf(false) }
+    Note(
+        "Give a goal a cover name, like \u201CNo more corn\u201D, and keep its real name and note " +
+            "behind a PIN. To show real names, long-press \u201CThe Stagirite\u2019s Ledger\u201D at the top " +
+            "of the Goals screen and enter the PIN; they hide again when you leave the app. " +
+            "Real names are stored encrypted, including in sync.",
+    )
+    Spacer(Modifier.height(12.dp))
+    if (!ui.hasPin) {
+        OutlinedButton(onClick = ui.onSetUp) { Text("Set a PIN") }
+    } else {
+        SettingRow(
+            title = "PIN",
+            detail = if (ui.unlocked) "Private titles are showing." else "Set. Private titles are hidden.",
+            action = "Change",
+            onClick = ui.onChange,
+        )
+        TextButton(
+            onClick = { forgetting = true },
+            colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error),
+        ) { Text("Forget PIN") }
+    }
+    if (forgetting) {
+        AlertDialog(
+            onDismissRequest = { forgetting = false },
+            title = { Text("Forget the PIN?") },
+            text = {
+                Text(
+                    "Private goals keep their cover names and all their days, but their real names and notes " +
+                        "are deleted, on every device you sync with. This can\u2019t be undone.",
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    forgetting = false
+                    ui.onForget()
+                }) { Text("Forget") }
+            },
+            dismissButton = { TextButton(onClick = { forgetting = false }) { Text("Cancel") } },
+        )
+    }
+}
+
+@Composable
+private fun AboutSection(onShowGuide: () -> Unit) {
+    val context = LocalContext.current
+    var showingLicence by rememberSaveable { mutableStateOf(false) }
+    val version = remember {
+        runCatching { context.packageManager.getPackageInfo(context.packageName, 0).versionName }.getOrNull() ?: ""
+    }
+
+    Text("The name", style = MaterialTheme.typography.titleSmall)
+    Spacer(Modifier.height(4.dp))
+    Note(
+        "Aristotle (384\u2013322 BC) was born in Stagira, in northern Greece, and so is often called " +
+            "\u201Cthe Stagirite\u201D. In the Nicomachean Ethics he argues that good character isn\u2019t " +
+            "something we\u2019re born with but something we build by habit, by doing. A ledger is a " +
+            "book of record: this one records the days you keep.",
+    )
+    Spacer(Modifier.height(16.dp))
+    Text("Goals", style = MaterialTheme.typography.titleSmall)
+    Spacer(Modifier.height(4.dp))
+    Note(
+        "A goal can be a vice, something to do less of, or a virtue, something to do more of; or " +
+            "neither. Each day kept adds to its count. A slip (for a virtue, a missed day) starts the " +
+            "count again, and the run you had is kept in its history. Milestones mark the way, and " +
+            "every slip or milestone comes with a passage from Aristotle.",
+    )
+    Spacer(Modifier.height(12.dp))
+    OutlinedButton(onClick = onShowGuide) { Text("Show the guide") }
+
+    Spacer(Modifier.height(20.dp))
+    Text("Sources and licences", style = MaterialTheme.typography.titleSmall)
+    Spacer(Modifier.height(4.dp))
+    Note(
+        "Quotations are from Aristotle, Nicomachean Ethics, translated by H. Rackham (Loeb Classical " +
+            "Library; London: William Heinemann, 1926), as published by the Perseus Digital Library " +
+            "under CC BY-SA 4.0. References give book and chapter, then the standard Bekker page.",
+    )
+    Spacer(Modifier.height(8.dp))
+    Note("Icons are drawn with Noto Emoji, \u00A9 2013, 2022 Google, under the SIL Open Font License 1.1.")
+    TextButton(onClick = { showingLicence = true }) { Text("Read the font licence") }
+    if (version.isNotEmpty()) Note("Version $version")
+
+    if (showingLicence) {
+        val text = remember {
+            runCatching { context.assets.open("licenses/noto-emoji-OFL.txt").bufferedReader().use { it.readText() } }
+                .getOrDefault("Licence text unavailable.")
+        }
+        AlertDialog(
+            onDismissRequest = { showingLicence = false },
+            title = { Text("SIL Open Font License 1.1") },
+            text = {
+                Text(
+                    text,
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.verticalScroll(rememberScrollState()),
+                )
+            },
+            confirmButton = { TextButton(onClick = { showingLicence = false }) { Text("Close") } },
         )
     }
 }

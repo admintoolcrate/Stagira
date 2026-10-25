@@ -4,7 +4,10 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -28,6 +31,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -50,6 +54,7 @@ import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -64,12 +69,15 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.stagirite.ledger.data.Goal
+import com.stagirite.ledger.data.GoalIcons
+import com.stagirite.ledger.data.GoalKind
 import com.stagirite.ledger.data.Milestones
 import com.stagirite.ledger.data.Quotes
 import com.stagirite.ledger.data.dayState
@@ -84,6 +92,29 @@ import kotlin.math.roundToInt
 
 private val todayHeading = DateTimeFormatter.ofPattern("EEEE d MMMM")
 
+/** What the add/edit dialog hands back. [realTitle] is null when a private goal was edited while locked. */
+data class GoalDraft(
+    val title: String,
+    val since: LocalDate,
+    val reason: String,
+    val icon: String,
+    val kind: GoalKind?,
+    val private: Boolean,
+    val realTitle: String?,
+)
+
+/** What the goal screens need to know about private titles. */
+class PrivacyUi(
+    val hasPin: Boolean,
+    val unlocked: Boolean,
+    /** Ask for the PIN (or to set one up). */
+    val requestPin: () -> Unit,
+    /** The real title and note of a private goal, when unlocked. */
+    val open: (Goal) -> Pair<String, String>?,
+)
+
+private fun String.capitalised() = replaceFirstChar { it.uppercase() }
+
 // ---------------------------------------------------------------- Goal list
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -92,8 +123,10 @@ fun GoalListScreen(
     goals: List<Goal>,
     today: LocalDate,
     snackbar: SnackbarHostState,
+    privacy: PrivacyUi,
     onOpen: (Goal) -> Unit,
-    onAdd: (String, LocalDate, String) -> Unit,
+    onAdd: (GoalDraft) -> Unit,
+    onTitleLongPress: () -> Unit,
     bottomBar: @Composable () -> Unit,
 ) {
     var adding by rememberSaveable { mutableStateOf(false) }
@@ -102,8 +135,9 @@ fun GoalListScreen(
         topBar = {
             TopAppBar(
                 title = {
-                    Column {
-                        Text("The Stagirite’s Ledger")
+                    // Long-pressing the name shows or hides private titles.
+                    Column(Modifier.pointerInput(Unit) { detectTapGestures(onLongPress = { onTitleLongPress() }) }) {
+                        Text("The Stagirite\u2019s Ledger")
                         Text(
                             today.format(todayHeading),
                             style = MaterialTheme.typography.labelMedium,
@@ -144,9 +178,10 @@ fun GoalListScreen(
             heading = "New goal",
             confirm = "Add",
             today = today,
+            privacy = privacy,
             onDismiss = { adding = false },
-            onConfirm = { title, since, reason ->
-                onAdd(title, since, reason)
+            onConfirm = {
+                onAdd(it)
                 adding = false
             },
         )
@@ -182,7 +217,12 @@ private fun GoalCard(goal: Goal, today: LocalDate, onClick: () -> Unit) {
     val milestoneToday = Milestones.isMilestone(days)
     LedgerCard(onClick = onClick) {
         Row(verticalAlignment = Alignment.CenterVertically) {
+            if (goal.icon.isNotEmpty()) {
+                GoalIcon(goal.icon)
+                Spacer(Modifier.width(14.dp))
+            }
             Column(Modifier.weight(1f)) {
+                KindLabel(goal.kind, Modifier.padding(bottom = 2.dp))
                 Text(goal.title, style = MaterialTheme.typography.titleMedium, maxLines = 2, overflow = TextOverflow.Ellipsis)
                 Spacer(Modifier.height(4.dp))
                 Text(
@@ -216,9 +256,12 @@ private enum class GoalTab(val label: String) { Calendar("Calendar"), Stats("Sta
 @Composable
 fun GoalDetailScreen(
     goal: Goal,
+    /** The title as stored: the cover name for a private goal. */
+    cover: String,
     today: LocalDate,
+    privacy: PrivacyUi,
     onBack: () -> Unit,
-    onEdit: (String, LocalDate, String) -> Unit,
+    onEdit: (GoalDraft) -> Unit,
     onSlip: (LocalDate) -> Unit,
     onRemoveSlip: (LocalDate) -> Unit,
     onMoveStart: (LocalDate) -> Unit,
@@ -239,6 +282,7 @@ fun GoalDetailScreen(
     val days = goal.daysKept(today)
     val next = Milestones.next(days)
     val beganAgainToday = goal.slips.lastOrNull() == today
+    val slipWord = goal.slipWord
 
     /** Logs a slip. Today's gets the Day 0 screen; a past one gets an undo bar. */
     val logSlip: (LocalDate) -> Unit = { day ->
@@ -248,7 +292,7 @@ fun GoalDetailScreen(
         } else {
             onSlip(day)
             scope.launch {
-                val r = snackbar.showSnackbar("Slip logged for ${day.format(mediumDate)}", actionLabel = "Undo")
+                val r = snackbar.showSnackbar("${slipWord.capitalised()} logged for ${day.format(mediumDate)}", actionLabel = "Undo")
                 if (r == SnackbarResult.ActionPerformed) onRemoveSlip(day)
             }
         }
@@ -257,7 +301,20 @@ fun GoalDetailScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(goal.title, maxLines = 1, overflow = TextOverflow.Ellipsis) },
+                title = {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(goal.title, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = false))
+                        // Shown only while private titles are unlocked, so a cover name gives nothing away.
+                        if (goal.isPrivate && privacy.unlocked) {
+                            Icon(
+                                Icons.Filled.Lock,
+                                contentDescription = "Private title",
+                                modifier = Modifier.padding(start = 8.dp).size(16.dp),
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                    }
+                },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
@@ -284,6 +341,14 @@ fun GoalDetailScreen(
             // The count
             LedgerCard(padding = 24.dp) {
                 Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
+                    if (goal.icon.isNotEmpty() || goal.kind != null) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            GoalIcon(goal.icon, tile = 36.dp)
+                            if (goal.icon.isNotEmpty() && goal.kind != null) Spacer(Modifier.width(10.dp))
+                            KindLabel(goal.kind)
+                        }
+                        Spacer(Modifier.height(16.dp))
+                    }
                     ProgressRing(Milestones.progress(days), Modifier.size(208.dp)) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             Text("$days", style = MaterialTheme.typography.displayLarge, fontSize = 80.sp)
@@ -318,7 +383,7 @@ fun GoalDetailScreen(
                         onClick = { slipSheet = true },
                         modifier = Modifier.fillMaxWidth().height(48.dp),
                         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
-                    ) { Text("Log a slip") }
+                    ) { Text("Log a $slipWord") }
                 }
             }
 
@@ -369,9 +434,10 @@ fun GoalDetailScreen(
                             stateOf = { goal.dayState(it, today) },
                             onMonthChange = { month = it.toString() },
                             onDayClick = { tappedDay = it.toEpochDay() },
+                            slipLabel = slipWord.capitalised(),
                         )
                         Text(
-                            "Tap a day to log or remove a slip.",
+                            "Tap a day to log or remove a $slipWord.",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.padding(top = 8.dp),
@@ -433,13 +499,13 @@ fun GoalDetailScreen(
             heading = "Edit goal",
             confirm = "Save",
             today = today,
-            initialTitle = goal.title,
-            initialSince = goal.since,
-            initialReason = goal.reason,
+            privacy = privacy,
+            editing = goal,
+            cover = cover,
             latestSince = goal.slips.firstOrNull(),
             onDismiss = { editing = false },
-            onConfirm = { title, since, reason ->
-                onEdit(title, since, reason)
+            onConfirm = {
+                onEdit(it)
                 editing = false
             },
             onDelete = {
@@ -457,15 +523,15 @@ fun GoalDetailScreen(
             title = { Text(day.format(longDate)) },
             text = {
                 Text(
-                    if (isSlip) "Remove the slip on this day? The runs either side join back together."
-                    else "Log a slip on this day? The run it falls in is split in two.",
+                    if (isSlip) "Remove the $slipWord on this day? The runs either side join back together."
+                    else "Log a $slipWord on this day? The run it falls in is split in two.",
                 )
             },
             confirmButton = {
                 TextButton(onClick = {
                     tappedDay = null
                     if (isSlip) onRemoveSlip(day) else logSlip(day)
-                }) { Text(if (isSlip) "Remove slip" else "Log slip") }
+                }) { Text(if (isSlip) "Remove $slipWord" else "Log $slipWord") }
             },
             dismissButton = { TextButton(onClick = { tappedDay = null }) { Text("Cancel") } },
         )
@@ -519,7 +585,7 @@ private fun SlipSheet(
                 .navigationBarsPadding()
                 .padding(bottom = 16.dp),
         ) {
-            Text("Log a slip", style = MaterialTheme.typography.titleLarge)
+            Text("Log a ${goal.slipWord}", style = MaterialTheme.typography.titleLarge)
             Spacer(Modifier.height(4.dp))
             Text(
                 "It happens. The days you’ve kept stay in your history.",
@@ -570,7 +636,7 @@ private fun StatsPanel(goal: Goal, today: LocalDate) {
     Row(Modifier.fillMaxWidth()) {
         Figure("${(stats.keptRate * 100).roundToInt()}%", "Days kept", Modifier.weight(1f))
         Figure("${stats.freshStarts}", "Fresh starts", Modifier.weight(1f))
-        Figure("${stats.slipsLast30}", "Slips, 30 days", Modifier.weight(1f))
+        Figure("${stats.slipsLast30}", "${(goal.kind?.slips ?: "slips").capitalised()}, 30 days", Modifier.weight(1f))
     }
     Text(
         "${plural(stats.daysKept, "day")} kept of ${plural(stats.daysTracked, "day")} since ${goal.since.format(mediumDate)}.",
@@ -665,7 +731,7 @@ private fun HistoryPanel(goal: Goal, today: LocalDate) {
     }
     if (goal.history.isEmpty()) {
         Text(
-            "No slips logged. Every day since ${goal.since.format(mediumDate)} has been kept.",
+            "No ${goal.kind?.slips ?: "slips"} logged. Every day since ${goal.since.format(mediumDate)} has been kept.",
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -683,45 +749,146 @@ private fun GoalDialog(
     heading: String,
     confirm: String,
     today: LocalDate,
+    privacy: PrivacyUi,
     onDismiss: () -> Unit,
-    onConfirm: (String, LocalDate, String) -> Unit,
-    initialTitle: String = "",
-    initialSince: LocalDate = today,
-    initialReason: String = "",
+    onConfirm: (GoalDraft) -> Unit,
+    /** The goal being edited, as shown (real name if unlocked), or null for a new one. */
+    editing: Goal? = null,
+    /** The stored title: the cover name of a private goal. */
+    cover: String? = null,
     latestSince: LocalDate? = null,
     onDelete: (() -> Unit)? = null,
 ) {
-    var title by rememberSaveable { mutableStateOf(initialTitle) }
-    var reason by rememberSaveable { mutableStateOf(initialReason) }
-    var sinceEpochDay by rememberSaveable { mutableStateOf(initialSince.toEpochDay()) }
+    val opened = editing?.let(privacy.open)
+    // A private goal edited while locked: its real name stays sealed and untouched.
+    val sealedAway = editing?.isPrivate == true && opened == null
+    var title by rememberSaveable { mutableStateOf(cover ?: editing?.title ?: "") }
+    var realTitle by rememberSaveable { mutableStateOf(opened?.first ?: "") }
+    var reason by rememberSaveable { mutableStateOf(opened?.second ?: editing?.reason ?: "") }
+    var icon by rememberSaveable { mutableStateOf(editing?.icon ?: "") }
+    var kind by rememberSaveable { mutableStateOf(editing?.kind) }
+    var private by rememberSaveable { mutableStateOf(editing?.isPrivate == true) }
+    var sinceEpochDay by rememberSaveable { mutableStateOf((editing?.since ?: today).toEpochDay()) }
     var picking by rememberSaveable { mutableStateOf(false) }
+    var pickingIcon by rememberSaveable { mutableStateOf(false) }
     var confirmDelete by rememberSaveable { mutableStateOf(false) }
     val since = LocalDate.ofEpochDay(sinceEpochDay)
+
+    val canSavePrivate = !private || sealedAway || (privacy.unlocked && realTitle.isNotBlank())
+    val valid = title.isNotBlank() && canSavePrivate
 
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(heading) },
         text = {
-            Column {
-                OutlinedTextField(
-                    value = title,
-                    onValueChange = { title = it },
-                    label = { Text("Goal") },
-                    placeholder = { Text("e.g. No more alcohol") },
-                    singleLine = true,
-                    keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
-                    modifier = Modifier.fillMaxWidth(),
+            Column(Modifier.verticalScroll(rememberScrollState())) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(
+                        Modifier
+                            .size(52.dp)
+                            .background(MaterialTheme.colorScheme.surfaceContainer, CircleShape)
+                            .clickable { pickingIcon = true },
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        if (icon.isEmpty()) {
+                            Icon(Icons.Filled.Add, contentDescription = "Choose an icon", tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                        } else {
+                            EmojiGlyph(icon, 26.sp)
+                        }
+                    }
+                    Spacer(Modifier.width(12.dp))
+                    OutlinedTextField(
+                        value = title,
+                        onValueChange = { title = it },
+                        label = { Text(if (private) "Shown title (cover)" else "Goal") },
+                        placeholder = { Text(if (private) "e.g. No more corn" else "e.g. No more alcohol") },
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
+                        modifier = Modifier.weight(1f),
+                    )
+                }
+
+                Spacer(Modifier.height(16.dp))
+                val kinds = listOf<GoalKind?>(null) + GoalKind.entries
+                SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
+                    kinds.forEachIndexed { i, k ->
+                        SegmentedButton(
+                            selected = kind == k,
+                            onClick = { kind = k },
+                            shape = SegmentedButtonDefaults.itemShape(i, kinds.size),
+                            icon = {},
+                            colors = SegmentedButtonDefaults.colors(
+                                activeContainerColor = MaterialTheme.colorScheme.primary,
+                                activeContentColor = MaterialTheme.colorScheme.onPrimary,
+                            ),
+                        ) { Text(k?.label ?: "Neither", maxLines = 1) }
+                    }
+                }
+                Text(
+                    kind?.blurb?.let { "$it." } ?: "Optional: mark it a vice to do less of, or a virtue to do more of.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(top = 6.dp),
                 )
-                Spacer(Modifier.height(8.dp))
-                OutlinedTextField(
-                    value = reason,
-                    onValueChange = { reason = it },
-                    label = { Text("Why it matters (optional)") },
-                    minLines = 2,
-                    maxLines = 4,
-                    keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
-                    modifier = Modifier.fillMaxWidth(),
-                )
+
+                Spacer(Modifier.height(12.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Column(Modifier.weight(1f)) {
+                        Text("Private title", style = MaterialTheme.typography.bodyLarge)
+                        Text(
+                            "Show a cover name; the real one needs your PIN.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                    Switch(
+                        checked = private,
+                        onCheckedChange = { on ->
+                            if (on && !privacy.unlocked) privacy.requestPin()
+                            // Making it public again: the real name becomes the title.
+                            if (!on && realTitle.isNotBlank()) title = realTitle
+                            private = on
+                        },
+                        // A sealed goal can only be made public once its real name is visible.
+                        enabled = !sealedAway,
+                    )
+                }
+                if (private) {
+                    Spacer(Modifier.height(8.dp))
+                    when {
+                        sealedAway -> Text(
+                            "The real name is hidden. Long-press the app’s name on the Goals screen and enter your PIN to see or change it.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                        !privacy.unlocked -> TextButton(onClick = privacy.requestPin) {
+                            Text(if (privacy.hasPin) "Enter your PIN to add the real name" else "Set a PIN to use private titles")
+                        }
+                        else -> OutlinedTextField(
+                            value = realTitle,
+                            onValueChange = { realTitle = it },
+                            label = { Text("Real title (hidden)") },
+                            singleLine = true,
+                            keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                    }
+                }
+
+                if (!sealedAway) {
+                    Spacer(Modifier.height(8.dp))
+                    OutlinedTextField(
+                        value = reason,
+                        onValueChange = { reason = it },
+                        label = { Text(if (private) "Why it matters (hidden, optional)" else "Why it matters (optional)") },
+                        minLines = 2,
+                        maxLines = 4,
+                        enabled = !private || privacy.unlocked,
+                        keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                }
+
                 Spacer(Modifier.height(8.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text("Started", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
@@ -745,12 +912,35 @@ private fun GoalDialog(
         },
         confirmButton = {
             Button(
-                onClick = { onConfirm(title, since, reason) },
-                enabled = title.isNotBlank(),
+                onClick = {
+                    onConfirm(
+                        GoalDraft(
+                            title = title,
+                            since = since,
+                            reason = reason,
+                            icon = icon,
+                            kind = kind,
+                            private = private,
+                            realTitle = if (private && !sealedAway) realTitle else null,
+                        )
+                    )
+                },
+                enabled = valid,
             ) { Text(confirm) }
         },
         dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
     )
+
+    if (pickingIcon) {
+        IconPickerDialog(
+            current = icon,
+            onDismiss = { pickingIcon = false },
+            onPick = {
+                icon = it
+                pickingIcon = false
+            },
+        )
+    }
 
     if (picking) {
         DayPickerDialog(
@@ -769,7 +959,7 @@ private fun GoalDialog(
         AlertDialog(
             onDismissRequest = { confirmDelete = false },
             title = { Text("Delete this goal?") },
-            text = { Text("“$initialTitle” and its history will be removed from all your devices. You can undo this straight after.") },
+            text = { Text("It and its history will be removed from all your devices. You can undo this straight after.") },
             confirmButton = {
                 TextButton(onClick = {
                     confirmDelete = false
@@ -779,6 +969,40 @@ private fun GoalDialog(
             dismissButton = { TextButton(onClick = { confirmDelete = false }) { Text("Cancel") } },
         )
     }
+}
+
+/** A grid of monochrome emoji to choose from, or none. */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun IconPickerDialog(current: String, onDismiss: () -> Unit, onPick: (String) -> Unit) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Icon") },
+        text = {
+            Column(Modifier.verticalScroll(rememberScrollState())) {
+                GoalIcons.groups.forEach { (group, icons) ->
+                    SectionHeading(group, Modifier.padding(top = 8.dp))
+                    FlowRow {
+                        icons.forEach { e ->
+                            Box(
+                                Modifier
+                                    .size(48.dp)
+                                    .padding(2.dp)
+                                    .then(
+                                        if (e == current) Modifier.border(BorderStroke(1.5.dp, MaterialTheme.colorScheme.onBackground), CircleShape)
+                                        else Modifier
+                                    )
+                                    .clickable { onPick(e) },
+                                contentAlignment = Alignment.Center,
+                            ) { EmojiGlyph(e, 24.sp) }
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = { TextButton(onClick = onDismiss) { Text("Close") } },
+        dismissButton = { TextButton(onClick = { onPick("") }) { Text("No icon") } },
+    )
 }
 
 /** A date picker limited to [earliest]..[latest]. */

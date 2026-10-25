@@ -27,6 +27,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.stagirite.ledger.data.DayState
 import com.stagirite.ledger.data.Goal
+import com.stagirite.ledger.data.GoalKind
 import com.stagirite.ledger.data.overviewDayState
 import com.stagirite.ledger.data.plural
 import com.stagirite.ledger.data.stats
@@ -106,6 +107,18 @@ private fun OverviewContent(
                     if (monthStates.isEmpty()) "\u2013" else "$monthClean/${monthStates.size}",
                     "Clean days this month",
                     Modifier.weight(1f),
+                )
+            }
+            val vices = goals.count { it.kind == GoalKind.Vice }
+            val virtues = goals.count { it.kind == GoalKind.Virtue }
+            if (vices + virtues > 0) {
+                Text(
+                    listOfNotNull(
+                        vices.takeIf { it > 0 }?.let { if (it == 1) "1 vice" else "$it vices" },
+                        virtues.takeIf { it > 0 }?.let { if (it == 1) "1 virtue" else "$it virtues" },
+                    ).joinToString(" \u00B7 "),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
             Spacer(Modifier.height(4.dp))
