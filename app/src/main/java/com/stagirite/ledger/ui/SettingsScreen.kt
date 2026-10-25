@@ -130,7 +130,11 @@ fun SettingsScreen(
 
             Section("Private titles") { PrivateTitlesSection(privateTitles) }
 
-            Section("Reminder") { ReminderSection(settings, lock) }
+            Section("Reminders") {
+                ReminderSection(settings, lock)
+                Spacer(Modifier.height(16.dp))
+                WeeklySection(settings, lock)
+            }
 
             Section("Sync") { SyncSection(sync, lock) }
 
@@ -689,4 +693,73 @@ private fun FeedbackSection(lock: AppLock) {
     Spacer(Modifier.height(8.dp))
     Note("Sent through GitHub or email, your choice. Reports never include your goals, notes or dates.")
     writing?.let { FeedbackDialog(it, lock, onDismiss = { writing = null }) }
+}
+
+@OptIn(ExperimentalMaterial3Api::class, androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
+@Composable
+private fun WeeklySection(settings: Settings, lock: AppLock) {
+    val context = LocalContext.current
+    var pickingTime by rememberSaveable { mutableStateOf(false) }
+    val permission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+        settings.updateWeekly(granted)
+        Reminder.apply(context, settings)
+    }
+    val time = LocalTime.of(settings.weeklyMinutes / 60, settings.weeklyMinutes % 60)
+    SwitchRow(
+        title = "Weekly review",
+        detail = "A note once a week that your review is ready. It never names your goals.",
+        checked = settings.weekly,
+        onChange = { on ->
+            if (on && Build.VERSION.SDK_INT >= 33 &&
+                ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
+            ) {
+                lock.expectReturn()
+                permission.launch(Manifest.permission.POST_NOTIFICATIONS)
+            } else {
+                settings.updateWeekly(on)
+                Reminder.apply(context, settings)
+            }
+        },
+    )
+    if (settings.weekly) {
+        Spacer(Modifier.height(8.dp))
+        androidx.compose.foundation.layout.FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            java.time.DayOfWeek.entries.forEach { d ->
+                androidx.compose.material3.FilterChip(
+                    selected = settings.weeklyDay == d.value,
+                    onClick = {
+                        settings.updateWeekly(true, day = d.value)
+                        Reminder.apply(context, settings)
+                    },
+                    label = { Text(d.getDisplayName(java.time.format.TextStyle.SHORT, java.util.Locale.getDefault())) },
+                )
+            }
+        }
+        SettingRow(
+            title = "Time",
+            detail = time.format(DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT)),
+            action = "Change",
+            onClick = { pickingTime = true },
+        )
+    }
+    if (pickingTime) {
+        val state = rememberTimePickerState(
+            initialHour = time.hour,
+            initialMinute = time.minute,
+            is24Hour = DateFormat.is24HourFormat(context),
+        )
+        AlertDialog(
+            onDismissRequest = { pickingTime = false },
+            title = { Text("Weekly review time") },
+            text = { TimePicker(state = state) },
+            confirmButton = {
+                TextButton(onClick = {
+                    settings.updateWeekly(true, minutes = state.hour * 60 + state.minute)
+                    Reminder.apply(context, settings)
+                    pickingTime = false
+                }) { Text("OK") }
+            },
+            dismissButton = { TextButton(onClick = { pickingTime = false }) { Text("Cancel") } },
+        )
+    }
 }

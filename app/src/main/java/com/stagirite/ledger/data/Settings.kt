@@ -44,6 +44,24 @@ class Settings(context: Context) {
     var reminderMinutes by mutableStateOf(prefs.getInt("reminderMinutes", 21 * 60))
         private set
 
+    /** A weekly notification pointing to the weekly review. */
+    var weekly by mutableStateOf(prefs.getBoolean("weekly", false))
+        private set
+
+    /** Day of the weekly notification, 1 (Monday) to 7 (Sunday). */
+    var weeklyDay by mutableStateOf(prefs.getInt("weeklyDay", 7))
+        private set
+
+    var weeklyMinutes by mutableStateOf(prefs.getInt("weeklyMinutes", 18 * 60))
+        private set
+
+    fun updateWeekly(on: Boolean, day: Int = weeklyDay, minutes: Int = weeklyMinutes) {
+        weekly = on
+        weeklyDay = day.coerceIn(1, 7)
+        weeklyMinutes = minutes
+        prefs.edit().putBoolean("weekly", on).putInt("weeklyDay", weeklyDay).putInt("weeklyMinutes", minutes).apply()
+    }
+
     /** The recents preview is hidden whenever the app is locked too. */
     val secureWindow: Boolean get() = hideInRecents || appLock
 

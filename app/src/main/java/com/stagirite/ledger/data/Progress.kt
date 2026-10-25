@@ -122,7 +122,7 @@ fun Goal.progress(today: LocalDate, monthsBack: Int = 6): Progress {
         .map { m ->
             val from = maxOf(m.atDay(1), since)
             val until = minOf(m.atEndOfMonth(), today)
-            val days = ChronoUnit.DAYS.between(from, until) + 1
+            val days = scheduledDaysBetween(from, until)
             MonthKept(m, days - past.count { !it.isBefore(from) && !it.isAfter(until) }, days)
         }.toList()
 

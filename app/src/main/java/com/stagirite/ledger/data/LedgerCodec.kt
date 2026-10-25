@@ -2,6 +2,7 @@ package com.stagirite.ledger.data
 
 import org.json.JSONArray
 import org.json.JSONObject
+import java.time.DayOfWeek
 import java.time.LocalDate
 
 /** The ledger's JSON format, used for local storage, sync and export alike. */
@@ -26,6 +27,7 @@ object LedgerCodec {
                     .put("target", g.target ?: 0)
                     .put("archived", g.archived)
                     .put("notes", encodeNotes(g.notes))
+                    .put("schedule", JSONArray().also { a -> g.schedule.sortedBy { it.value }.forEach { a.put(it.value) } })
                     .put("urges", JSONObject().also { o -> g.urges.forEach { (d, n) -> o.put(d.toEpochDay().toString(), n) } })
                     .put("created", g.createdAt)
                     .put("updated", g.updatedAt)
@@ -62,6 +64,9 @@ object LedgerCodec {
                 target = o.optLong("target").takeIf { it > 0 },
                 archived = o.optBoolean("archived"),
                 notes = decodeNotes(o.optJSONObject("notes")),
+                schedule = o.optJSONArray("schedule")?.let { a ->
+                    (0 until a.length()).mapNotNull { a.optInt(it).takeIf { v -> v in 1..7 }?.let(DayOfWeek::of) }.toSet()
+                } ?: emptySet(),
                 urges = o.optJSONObject("urges")?.let { u ->
                     u.keys().asSequence().mapNotNull { k ->
                         val n = u.optInt(k)

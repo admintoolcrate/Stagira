@@ -1,5 +1,6 @@
 package com.stagirite.ledger
 
+import android.content.Intent
 import android.graphics.Color
 import android.os.Bundle
 import android.view.WindowManager
@@ -10,6 +11,10 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import com.stagirite.ledger.reminders.Reminder
 import androidx.fragment.app.FragmentActivity
 import com.stagirite.ledger.data.ThemeMode
 import com.stagirite.ledger.ui.LedgerApp
@@ -22,8 +27,17 @@ import com.stagirite.ledger.ui.UiPrefs
 class MainActivity : FragmentActivity() {
     private val app get() = application as LedgerApplication
 
+    /** Set when opened from the weekly-review notification. */
+    private var openWeekly by mutableStateOf(false)
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        if (intent.getBooleanExtra(Reminder.EXTRA_OPEN_WEEKLY, false)) openWeekly = true
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        if (savedInstanceState == null && intent.getBooleanExtra(Reminder.EXTRA_OPEN_WEEKLY, false)) openWeekly = true
         setContent {
             val settings = app.settings
             val lock = app.lock
@@ -56,7 +70,11 @@ class MainActivity : FragmentActivity() {
                     if (lock.locked) {
                         LockScreen(onUnlock = { unlock() })
                     } else {
-                        LedgerApp(app.store, settings, app.sync, lock, app.privateTitles)
+                        LedgerApp(
+                            app.store, settings, app.sync, lock, app.privateTitles,
+                            openWeekly = openWeekly,
+                            onWeeklyOpened = { openWeekly = false },
+                        )
                     }
                 }
             }

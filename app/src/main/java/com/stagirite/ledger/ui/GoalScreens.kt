@@ -28,6 +28,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Edit
@@ -98,8 +99,10 @@ import com.stagirite.ledger.data.describeSpan
 import com.stagirite.ledger.data.plural
 import com.stagirite.ledger.security.Opened
 import com.stagirite.ledger.data.progress
+import com.stagirite.ledger.data.weekReview
 import com.stagirite.ledger.data.stats
 import kotlinx.coroutines.launch
+import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.YearMonth
 import java.time.format.DateTimeFormatter
@@ -117,6 +120,8 @@ data class GoalDraft(
     val private: Boolean,
     val realTitle: String?,
     val target: Long? = null,
+    /** Weekdays a Virtue is due; empty for every day. */
+    val schedule: Set<DayOfWeek> = emptySet(),
 )
 
 /** What the goal screens need to know about private titles. */
@@ -150,6 +155,7 @@ fun GoalListScreen(
     onArchive: (Goal, Boolean) -> Unit,
     onTitleLongPress: () -> Unit,
     onSettings: () -> Unit,
+    onWeekly: () -> Unit,
 ) {
     var adding by rememberSaveable { mutableStateOf(false) }
     val prefs = LocalUiPrefs.current
@@ -238,6 +244,23 @@ fun GoalListScreen(
                 }
                 if (goals.isNotEmpty() && prefs.homeSummary) {
                     item(key = "summary") { SummaryCard(goals, today) }
+                    item(key = "week") {
+                        val w = weekReview(goals, today)
+                        LedgerCard(onClick = onWeekly) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Column(Modifier.weight(1f)) {
+                                    Text("This week", style = MaterialTheme.typography.titleSmall)
+                                    Text(
+                                        "${w.cleanDays}/${w.activeDays} clean days \u00B7 ${plural(w.slips.toLong(), "slip")}" +
+                                            if (w.urges > 0) " \u00B7 ${w.urges} resisted" else "",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    )
+                                }
+                                Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = "Open weekly review")
+                            }
+                        }
+                    }
                     item(key = "goals-heading") { SectionHeading("Goals", Modifier.padding(top = 12.dp)) }
                 }
                 items(goals, key = { it.id }) { goal ->
@@ -376,7 +399,11 @@ private fun GoalCard(goal: Goal, today: LocalDate, onClick: () -> Unit, onLongCl
             }
             Column(Modifier.weight(1f)) {
                 val verdict = goal.progress(today).verdict.takeIf { it != Verdict.TooSoon }
-                val tags = listOfNotNull(goal.kind?.label, verdict?.label)
+                val tags = listOfNotNull(
+                    goal.kind?.label,
+                    if (goal.hasSchedule) "${goal.schedule.size} days a week" else null,
+                    verdict?.label,
+                )
                 if (tags.isNotEmpty()) {
                     Text(
                         tags.joinToString(" \u00B7 ").uppercase(),
@@ -637,6 +664,14 @@ fun GoalDetailScreen(
                             border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
                         ) { Text("Log a $slipWord", maxLines = 1, overflow = TextOverflow.Ellipsis) }
                     }
+                    if (!goal.isScheduled(today)) {
+                        Spacer(Modifier.height(6.dp))
+                        Text(
+                            "Rest day today \u00B7 ${scheduleText(goal.schedule)}",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
                     val urgesToday = goal.urgesOn(today)
                     if (urgesToday > 0) {
                         Spacer(Modifier.height(6.dp))
@@ -695,10 +730,11 @@ fun GoalDetailScreen(
                             today = today,
                             earliest = goal.since,
                             stateOf = { goal.dayState(it, today) },
-                            onDayClick = { tappedDay = it.toEpochDay() },
+                            onDayClick = { if (goal.isScheduled(it) || goal.isSlip(it)) tappedDay = it.toEpochDay() },
                             slipLabel = slipWord.capitalised(),
                             urgesOf = { goal.urgesOn(it) },
                             showUrgeKey = goal.urges.isNotEmpty(),
+                            showRestKey = goal.hasSchedule,
                         )
                         Text(
                             "Tap a day to log or remove a $slipWord.",
@@ -737,6 +773,7 @@ fun GoalDetailScreen(
             initial = today.minusDays(1).coerceAtLeast(goal.since),
             earliest = goal.since,
             latest = today,
+            allowed = goal::isScheduled,
             onDismiss = { pickingSlipDay = false },
             onPick = {
                 pickingSlipDay = false
@@ -907,12 +944,12 @@ private fun SlipSheet(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             Spacer(Modifier.height(16.dp))
-            SlipOption("Today", today.format(mediumDate), enabled = !goal.isSlip(today)) { onPick(today) }
+            SlipOption("Today", if (!goal.isScheduled(today)) "Rest day" else today.format(mediumDate), enabled = !goal.isSlip(today) && goal.isScheduled(today)) { onPick(today) }
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
             SlipOption(
                 "Yesterday",
                 yesterday.format(mediumDate),
-                enabled = !yesterday.isBefore(goal.since) && !goal.isSlip(yesterday),
+                enabled = !yesterday.isBefore(goal.since) && !goal.isSlip(yesterday) && goal.isScheduled(yesterday),
             ) { onPick(yesterday) }
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
             SlipOption("Another day…", "Pick from a calendar", enabled = true, onClick = onAnotherDay)
@@ -1127,6 +1164,7 @@ private fun GoalDialog(
     var kind by rememberSaveable { mutableStateOf(editing?.kind) }
     var private by rememberSaveable { mutableStateOf(editing?.isPrivate == true) }
     var target by rememberSaveable { mutableStateOf(editing?.target) }
+    var schedule by rememberSaveable { mutableStateOf(editing?.schedule?.map { it.value } ?: emptyList()) }
     var sinceEpochDay by rememberSaveable { mutableStateOf((editing?.since ?: today).toEpochDay()) }
     var picking by rememberSaveable { mutableStateOf(false) }
     var pickingIcon by rememberSaveable { mutableStateOf(false) }
@@ -1207,6 +1245,26 @@ private fun GoalDialog(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(top = 6.dp),
                 )
+                if (kind == GoalKind.Virtue) {
+                    Spacer(Modifier.height(12.dp))
+                    Text("Which days?", style = MaterialTheme.typography.bodyMedium)
+                    Spacer(Modifier.height(4.dp))
+                    FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        DayOfWeek.entries.forEach { d ->
+                            FilterChip(
+                                selected = d.value in schedule,
+                                onClick = { schedule = if (d.value in schedule) schedule - d.value else schedule + d.value },
+                                label = { Text(d.getDisplayName(java.time.format.TextStyle.NARROW, java.util.Locale.getDefault())) },
+                            )
+                        }
+                    }
+                    Text(
+                        if (schedule.isEmpty() || schedule.size == 7) "Every day."
+                        else "${scheduleText(schedule.map(DayOfWeek::of).toSet())}. Other days are rest days and never count as missed.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
 
                 Spacer(Modifier.height(12.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -1320,6 +1378,8 @@ private fun GoalDialog(
                             private = private,
                             realTitle = if (private && !sealedAway) realTitle else null,
                             target = target,
+                            // Only Virtues have schedules; a Vice is every day.
+                            schedule = if (kind == GoalKind.Virtue) schedule.map(DayOfWeek::of).toSet() else emptySet(),
                         )
                     )
                 },
@@ -1412,13 +1472,15 @@ fun DayPickerDialog(
     latest: LocalDate,
     onDismiss: () -> Unit,
     onPick: (LocalDate) -> Unit,
+    allowed: (LocalDate) -> Boolean = { true },
 ) {
     val state = rememberDatePickerState(
         initialSelectedDateMillis = initial.toEpochDay() * MILLIS_PER_DAY,
         selectableDates = object : SelectableDates {
             override fun isSelectableDate(utcTimeMillis: Long): Boolean {
                 val day = utcTimeMillis / MILLIS_PER_DAY
-                return day <= latest.toEpochDay() && (earliest == null || day >= earliest.toEpochDay())
+                return day <= latest.toEpochDay() && (earliest == null || day >= earliest.toEpochDay()) &&
+                    allowed(LocalDate.ofEpochDay(day))
             }
 
             override fun isSelectableYear(year: Int): Boolean =

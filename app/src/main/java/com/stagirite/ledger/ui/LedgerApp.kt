@@ -68,10 +68,27 @@ fun rememberToday(): State<LocalDate> {
 }
 
 @Composable
-fun LedgerApp(store: GoalStore, settings: Settings, sync: SyncManager, lock: AppLock, vault: PrivateTitles) {
+fun LedgerApp(
+    store: GoalStore,
+    settings: Settings,
+    sync: SyncManager,
+    lock: AppLock,
+    vault: PrivateTitles,
+    /** Set when the weekly-review notification was tapped. */
+    openWeekly: Boolean = false,
+    onWeeklyOpened: () -> Unit = {},
+) {
     val today by rememberToday()
     var inSettings by rememberSaveable { mutableStateOf(false) }
+    var inWeekly by rememberSaveable { mutableStateOf(false) }
     var openId by rememberSaveable { mutableStateOf<String?>(null) }
+    LaunchedEffect(openWeekly) {
+        if (openWeekly) {
+            openId = null
+            inWeekly = true
+            onWeeklyOpened()
+        }
+    }
     var pinFlow by remember { mutableStateOf<PinFlow?>(null) }
     val snackbar = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
@@ -121,10 +138,17 @@ fun LedgerApp(store: GoalStore, settings: Settings, sync: SyncManager, lock: App
 
     val screen = when {
         rawOpen != null -> "goal:${rawOpen.id}"
+        inWeekly -> "weekly"
         inSettings -> "settings"
         else -> "home"
     }
-    BackHandler(enabled = screen != "home") { if (openId != null) openId = null else inSettings = false }
+    BackHandler(enabled = screen != "home") {
+        when {
+            openId != null -> openId = null
+            inWeekly -> inWeekly = false
+            else -> inSettings = false
+        }
+    }
 
     AnimatedContent(
         targetState = screen,
@@ -151,7 +175,7 @@ fun LedgerApp(store: GoalStore, settings: Settings, sync: SyncManager, lock: App
                 onEdit = { d ->
                     // Made public again: its sealed notes come back out into the clear.
                     val unsealedNotes = if (!d.private && rawOpen.isPrivate) vault.open(rawOpen)?.notes else null
-                    store.edit(rawOpen.id, d.title, d.since, d.reason, d.icon, d.kind, sealedFor(d, rawOpen), d.target, unsealedNotes)
+                    store.edit(rawOpen.id, d.title, d.since, d.reason, d.icon, d.kind, sealedFor(d, rawOpen), d.target, unsealedNotes, d.schedule)
                 },
                 canNote = !rawOpen.isPrivate || vault.unlocked,
             onUrge = { store.resistUrge(rawOpen.id, today) },
@@ -202,7 +226,7 @@ fun LedgerApp(store: GoalStore, settings: Settings, sync: SyncManager, lock: App
                 sortOrder = settings.sortOrder,
                 onSort = settings::updateSortOrder,
                 onOpen = { openId = it.id },
-                onAdd = { d -> store.add(d.title, d.since, d.reason, d.icon, d.kind, sealedFor(d, null), d.target) },
+                onAdd = { d -> store.add(d.title, d.since, d.reason, d.icon, d.kind, sealedFor(d, null), d.target, d.schedule) },
                 onQuickSlip = { g ->
                     buzz()
                     store.recordSlip(g.id, today)
@@ -235,7 +259,11 @@ fun LedgerApp(store: GoalStore, settings: Settings, sync: SyncManager, lock: App
                     }
                 },
                 onSettings = { inSettings = true },
+            onWeekly = { inWeekly = true },
             )
+        }
+        target == "weekly" -> {
+            WeeklyReviewScreen(shown, today, onOpen = { openId = it.id }, onBack = { inWeekly = false })
         }
         target == "settings" -> {
             SettingsScreen(

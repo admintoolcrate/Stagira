@@ -1,5 +1,6 @@
 package com.stagirite.ledger.data
 
+import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.Period
 import java.time.temporal.ChronoUnit
@@ -67,6 +68,11 @@ data class Goal(
     val notes: Map<LocalDate, String> = emptyMap(),
     /** Urges resisted (or, for a Virtue, times done despite wanting to skip), counted per day. */
     val urges: Map<LocalDate, Int> = emptyMap(),
+    /**
+     * The weekdays a goal is due on; empty means every day. Other days are rest
+     * days: they can't be missed and don't count either way.
+     */
+    val schedule: Set<DayOfWeek> = emptySet(),
     val createdAt: Long = 0,
     val updatedAt: Long = 0,
     val deleted: Boolean = false,
@@ -98,6 +104,11 @@ data class Goal(
 
     fun urgesOn(day: LocalDate): Int = urges[day] ?: 0
 
+    val hasSchedule: Boolean get() = schedule.isNotEmpty() && schedule.size < 7
+
+    /** Whether the goal is due on [day] (always, without a schedule). */
+    fun isScheduled(day: LocalDate): Boolean = !hasSchedule || day.dayOfWeek in schedule
+
     /** Logs one more urge resisted on [day]. */
     fun resistUrge(day: LocalDate, now: Long): Goal =
         if (day.isBefore(since)) this else copy(urges = urges + (day to urgesOn(day) + 1), updatedAt = now)
@@ -113,7 +124,8 @@ data class Goal(
 
     /** Records a slip on [day] (today or any earlier day since the goal began). */
     fun recordSlip(day: LocalDate, now: Long): Goal {
-        if (day.isBefore(since) || isSlip(day)) return this
+        // A rest day can't be missed.
+        if (day.isBefore(since) || isSlip(day) || !isScheduled(day)) return this
         return copy(slips = (slips + day).sorted(), updatedAt = now)
     }
 
@@ -161,6 +173,7 @@ data class Goal(
         sealed: String? = this.sealed,
         target: Long? = this.target,
         notes: Map<LocalDate, String> = this.notes,
+        schedule: Set<DayOfWeek> = this.schedule,
     ): Goal = copy(
         title = title.trim(),
         since = slips.firstOrNull()?.let { minOf(it, since) } ?: since,
@@ -171,12 +184,15 @@ data class Goal(
         target = target?.takeIf { it > 0 },
         // Sealed goals keep their notes inside the seal.
         notes = if (sealed != null) emptyMap() else notes.filterKeys { it in slips },
+        // Every day is the same as no schedule.
+        schedule = if (schedule.size == 7) emptySet() else schedule,
         updatedAt = now,
     )
 
     fun tombstone(now: Long): Goal = copy(
         title = "", slips = emptyList(), reason = "", icon = "", kind = null, sealed = null,
-        target = null, archived = false, notes = emptyMap(), urges = emptyMap(), deleted = true, updatedAt = now,
+        target = null, archived = false, notes = emptyMap(), urges = emptyMap(), schedule = emptySet(),
+        deleted = true, updatedAt = now,
     )
 
     /** Progress towards [target], 0..1, or null with no target. */

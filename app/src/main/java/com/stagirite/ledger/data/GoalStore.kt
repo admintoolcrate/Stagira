@@ -34,10 +34,11 @@ class GoalStore(context: Context) {
         kind: GoalKind? = null,
         sealed: String? = null,
         target: Long? = null,
+        schedule: Set<java.time.DayOfWeek> = emptySet(),
     ) {
         val now = System.currentTimeMillis()
         val goal = Goal(UUID.randomUUID().toString(), "", since, createdAt = now, updatedAt = now)
-            .edit(title, since, reason, now, icon, kind, sealed, target)
+            .edit(title, since, reason, now, icon, kind, sealed, target, schedule = schedule)
         all.add(goal)
         changed()
     }
@@ -52,7 +53,10 @@ class GoalStore(context: Context) {
         sealed: String?,
         target: Long?,
         notes: Map<LocalDate, String>? = null,
-    ) = replace(id) { it.edit(title, since, reason, System.currentTimeMillis(), icon, kind, sealed, target, notes ?: it.notes) }
+        schedule: Set<java.time.DayOfWeek>? = null,
+    ) = replace(id) {
+        it.edit(title, since, reason, System.currentTimeMillis(), icon, kind, sealed, target, notes ?: it.notes, schedule ?: it.schedule)
+    }
 
     /** Applies [change] to every goal it alters (returns non-null for). */
     fun updateAll(change: (Goal) -> Goal?) {

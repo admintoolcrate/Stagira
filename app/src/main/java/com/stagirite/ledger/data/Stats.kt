@@ -27,7 +27,8 @@ data class GoalStats(
 
 fun Goal.stats(today: LocalDate): GoalStats {
     val runs = runs(today)
-    val tracked = maxOf(0, ChronoUnit.DAYS.between(since, today) + 1)
+    // Only days the goal was due count; rest days are neither kept nor missed.
+    val tracked = scheduledDaysBetween(since, today)
     val slipsSoFar = slips.count { !it.isAfter(today) }
     val monthAgo = today.minusDays(29)
     return GoalStats(
@@ -45,21 +46,37 @@ fun Goal.stats(today: LocalDate): GoalStats {
     )
 }
 
-enum class DayState { Untracked, Kept, Slip, Future }
+enum class DayState { Untracked, Kept, Slip, Rest, Future }
 
 fun Goal.dayState(day: LocalDate, today: LocalDate): DayState = when {
     day.isAfter(today) -> DayState.Future
     day.isBefore(since) -> DayState.Untracked
     isSlip(day) -> DayState.Slip
+    !isScheduled(day) -> DayState.Rest
     else -> DayState.Kept
+}
+
+/** Days from [from] to [to] inclusive that the goal was due on. */
+fun Goal.scheduledDaysBetween(from: LocalDate, to: LocalDate): Long {
+    if (to.isBefore(from)) return 0
+    val total = ChronoUnit.DAYS.between(from, to) + 1
+    if (!hasSchedule) return total
+    var n = 0L
+    var d = from
+    while (!d.isAfter(to)) {
+        if (d.dayOfWeek in schedule) n++
+        d = d.plusDays(1)
+    }
+    return n
 }
 
 /** Across every goal: how a day went for all the goals being tracked then. */
 fun overviewDayState(goals: List<Goal>, day: LocalDate, today: LocalDate): DayState {
     if (day.isAfter(today)) return DayState.Future
-    val states = goals.map { it.dayState(day, today) }.filter { it != DayState.Untracked }
+    val all = goals.map { it.dayState(day, today) }
+    val states = all.filter { it != DayState.Untracked && it != DayState.Rest }
     return when {
-        states.isEmpty() -> DayState.Untracked
+        states.isEmpty() -> if (DayState.Rest in all) DayState.Rest else DayState.Untracked
         DayState.Slip in states -> DayState.Slip
         else -> DayState.Kept
     }

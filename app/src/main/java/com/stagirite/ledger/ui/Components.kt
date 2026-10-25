@@ -370,3 +370,8 @@ fun PinDialog(
         dismissButton = { TextButton(onClick = onDismiss, enabled = !busy) { Text("Cancel") } },
     )
 }
+
+/** "Mon · Wed · Fri" in the user's language, Monday first. */
+fun scheduleText(days: Set<java.time.DayOfWeek>): String =
+    java.time.DayOfWeek.entries.filter { it in days }
+        .joinToString(" \u00B7 ") { it.getDisplayName(java.time.format.TextStyle.SHORT, java.util.Locale.getDefault()) }

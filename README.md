@@ -38,6 +38,11 @@ A minimal Android app (**Stagirite** on your home screen) that does one thing: n
   tapping the day in its calendar. Runs, stats and the count all follow.
 - **Calendar** — a month view for each goal (filled discs for kept days, rings for slips, a dot
   where you resisted an urge) and a **year view** of twelve small months; tap a month to open it.
+- **Scheduled Virtues** — a Virtue can be due on chosen weekdays (e.g. Mon · Wed · Fri). Other
+  days are rest days: they can't be missed, and stats count only the days that were due.
+- **Weekly review** — the last seven days against the seven before (clean days, slips, urges
+  resisted, milestones, a line per goal), with an optional weekly notification that never names
+  a goal.
 - **Urges resisted** — one tap logs a moment you felt the urge and didn't (for a Virtue: "did it
   anyway"), with Undo. Counted per day only; shown in stats and on the progress card, and never
   counted against you.

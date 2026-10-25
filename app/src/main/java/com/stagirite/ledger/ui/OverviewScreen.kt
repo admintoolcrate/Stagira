@@ -37,7 +37,7 @@ fun SummaryCard(goals: List<Goal>, today: LocalDate) {
     val monthStart = YearMonth.from(today).atDay(1)
     val monthStates = (0 until today.dayOfMonth)
         .map { overviewDayState(goals, monthStart.plusDays(it.toLong()), today) }
-        .filter { it != DayState.Untracked }
+        .filter { it != DayState.Untracked && it != DayState.Rest }
     val monthClean = monthStates.count { it == DayState.Kept }
     val vices = goals.count { it.kind == GoalKind.Vice }
     val virtues = goals.count { it.kind == GoalKind.Virtue }
@@ -104,6 +104,7 @@ fun CombinedCalendarCard(goals: List<Goal>, today: LocalDate) {
             stateOf = { overviewDayState(goals, it, today) },
             urgesOf = { d -> goals.sumOf { it.urgesOn(d) } },
             showUrgeKey = goals.any { it.urges.isNotEmpty() },
+            showRestKey = goals.any { it.hasSchedule },
         )
         Spacer(Modifier.height(8.dp))
         Text(

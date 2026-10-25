@@ -72,6 +72,7 @@ fun MonthCalendar(
     /** Urges resisted on a day; days with any get a small dot. */
     urgesOf: (LocalDate) -> Int = { 0 },
     showUrgeKey: Boolean = false,
+    showRestKey: Boolean = false,
 ) {
     val locale = Locale.getDefault()
     val firstDay = WeekFields.of(locale).firstDayOfWeek
@@ -123,7 +124,7 @@ fun MonthCalendar(
             }
         }
         Spacer(Modifier.height(8.dp))
-        CalendarLegend(slipLabel, showUrgeKey)
+        CalendarLegend(slipLabel, showUrgeKey, showRestKey)
     }
 }
 
@@ -142,6 +143,7 @@ private fun DayCell(
         DayState.Kept -> "kept"
         DayState.Slip -> slipLabel.lowercase()
         DayState.Untracked -> "not tracked"
+        DayState.Rest -> "rest day"
         DayState.Future -> "upcoming"
     } + if (urges > 0) ", ${if (urges == 1) "1 urge" else "$urges urges"} resisted" else ""
     Column(
@@ -166,7 +168,7 @@ private fun DayCell(
             contentAlignment = Alignment.Center,
         ) {
             Text(
-                "${day.dayOfMonth}",
+                if (state == DayState.Rest) "\u2013" else "${day.dayOfMonth}",
                 style = MaterialTheme.typography.labelMedium,
                 color = when (state) {
                     DayState.Kept -> MaterialTheme.colorScheme.background
@@ -192,7 +194,7 @@ private fun DayCell(
 }
 
 @Composable
-private fun CalendarLegend(slipLabel: String, showUrgeKey: Boolean = false) {
+private fun CalendarLegend(slipLabel: String, showUrgeKey: Boolean = false, showRestKey: Boolean = false) {
     val ink = MaterialTheme.colorScheme.onBackground
     Row(verticalAlignment = Alignment.CenterVertically) {
         Box(Modifier.size(10.dp).background(ink, CircleShape))
@@ -206,6 +208,10 @@ private fun CalendarLegend(slipLabel: String, showUrgeKey: Boolean = false) {
         Box(Modifier.width(10.dp).height(2.dp).background(ink))
         Spacer(Modifier.width(6.dp))
         Text("Today", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        if (showRestKey) {
+            Spacer(Modifier.width(16.dp))
+            Text("\u2013 Rest", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.outline)
+        }
         if (showUrgeKey) {
             Spacer(Modifier.width(16.dp))
             Box(Modifier.size(4.dp).background(ink, CircleShape))
@@ -255,13 +261,15 @@ fun YearCalendar(
                     val states = days.map(stateOf)
                     val kept = states.count { it == DayState.Kept }
                     val slipped = states.count { it == DayState.Slip }
+                    val rested = states.count { it == DayState.Rest }
                     Column(
                         Modifier
                             .weight(1f)
                             .clickable(enabled = !month.atDay(1).isAfter(today)) { onMonthClick(month) }
                             .semantics {
                                 contentDescription = "${month.format(DateTimeFormatter.ofPattern("LLLL").withLocale(locale))}: " +
-                                    "$kept kept, $slipped ${if (slipped == 1) "slip" else "slips"}"
+                                    "$kept kept, $slipped ${if (slipped == 1) "slip" else "slips"}" +
+                                    if (rested > 0) ", $rested rest days" else ""
                             }
                             .padding(vertical = 6.dp),
                     ) {
@@ -293,6 +301,8 @@ fun YearCalendar(
                                         style = Stroke(stroke),
                                     )
                                     DayState.Untracked -> drawRoundRect(faint, Offset(x, y), Size(dot, dot), corner)
+                                    // Rest days: a small centred mark, so the week's rhythm shows.
+                                    DayState.Rest -> drawCircle(faint, dot * 0.18f, Offset(x + dot / 2, y + dot / 2))
                                     DayState.Future -> Unit
                                 }
                             }
@@ -330,6 +340,7 @@ fun LedgerCalendar(
     slipLabel: String = "Slip",
     urgesOf: (LocalDate) -> Int = { 0 },
     showUrgeKey: Boolean = false,
+    showRestKey: Boolean = false,
 ) {
     var yearView by rememberSaveable { mutableStateOf(false) }
     var month by rememberSaveable { mutableStateOf(YearMonth.from(today).toString()) }
@@ -376,6 +387,7 @@ fun LedgerCalendar(
                 slipLabel = slipLabel,
                 urgesOf = urgesOf,
                 showUrgeKey = showUrgeKey,
+                showRestKey = showRestKey,
             )
         }
     }
