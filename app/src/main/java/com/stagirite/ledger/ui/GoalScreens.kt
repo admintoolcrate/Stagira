@@ -1,5 +1,7 @@
 package com.stagirite.ledger.ui
 
+import androidx.compose.runtime.LaunchedEffect
+import com.stagirite.ledger.reminders.Reminder
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
@@ -165,6 +167,8 @@ fun GoalListScreen(
     onTitleLongPress: () -> Unit,
     onSettings: () -> Unit,
     onWeekly: () -> Unit,
+    quick: String? = null,
+    onQuickHandled: () -> Unit = {},
 ) {
     var adding by rememberSaveable { mutableStateOf(false) }
     val plus = LocalPlus.current
@@ -183,6 +187,14 @@ fun GoalListScreen(
         } else {
             adding = true
         }
+    }
+
+    LaunchedEffect(quick) {
+        when (quick) {
+            Reminder.QUICK_LOG -> quickLog = true
+            Reminder.QUICK_NEW -> newGoal()
+        }
+        if (quick != null) onQuickHandled()
     }
 
     Scaffold(
@@ -445,7 +457,7 @@ private fun EmptyState(modifier: Modifier = Modifier) {
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         Spacer(Modifier.height(32.dp))
-        if (LocalUiPrefs.current.quotes) LedgerCard { QuoteBlock(Quotes.emptyLedger) }
+        if (LocalUiPrefs.current.quotes) LedgerCard { QuoteBlock(Quotes.forEmptyLedger(LocalDate.now())) }
         Spacer(Modifier.weight(1f))
     }
 }
@@ -1091,13 +1103,16 @@ private fun SlipSheet(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             Spacer(Modifier.height(16.dp))
-            SlipOption("Today", if (!goal.isScheduled(today)) "Rest day" else today.format(mediumDate), enabled = !goal.isSlip(today) && goal.isScheduled(today)) { onPick(today) }
+            val todayOption = @Composable {
+                SlipOption("Today", if (!goal.isScheduled(today)) "Rest day" else today.format(mediumDate), enabled = goal.canSlipOn(today, today)) { onPick(today) }
+            }
+            val yesterdayOption = @Composable {
+                SlipOption("Yesterday", yesterday.format(mediumDate), enabled = goal.canSlipOn(yesterday, today)) { onPick(yesterday) }
+            }
+            // A missed day is usually noticed afterwards, so Virtues offer yesterday first.
+            if (goal.kind == GoalKind.Virtue) yesterdayOption() else todayOption()
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-            SlipOption(
-                "Yesterday",
-                yesterday.format(mediumDate),
-                enabled = !yesterday.isBefore(goal.since) && !goal.isSlip(yesterday) && goal.isScheduled(yesterday),
-            ) { onPick(yesterday) }
+            if (goal.kind == GoalKind.Virtue) todayOption() else yesterdayOption()
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
             SlipOption("Another day…", "Pick from a calendar", enabled = true, onClick = onAnotherDay)
         }

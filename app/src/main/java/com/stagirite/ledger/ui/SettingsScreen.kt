@@ -151,11 +151,9 @@ fun SettingsScreen(
 
             Section("Personalise") { PersonaliseSection(settings) }
 
-            Section("App lock", group = "Privacy & security") { LockSection(settings, lock) }
-
-            Section("Private titles") { PrivateTitlesSection(privateTitles) }
-
-            Section("Privacy") {
+            Section("Lock and privacy", group = "Privacy & security") {
+                LockSection(settings, lock)
+                Spacer(Modifier.height(Space.l))
                 SwitchRow(
                     title = "Hide in recent apps",
                     detail = if (settings.appLock) "On while the app lock is on."
@@ -179,6 +177,8 @@ fun SettingsScreen(
                     },
                 )
             }
+
+            Section("Private titles") { PrivateTitlesSection(privateTitles) }
 
             Section("Daily and weekly", group = "Reminders") {
                 ReminderSection(settings, lock)
@@ -689,12 +689,18 @@ private fun AboutSection(onShowGuide: () -> Unit) {
 
 @Composable
 private fun PersonaliseSection(settings: Settings) {
-    val rows = listOf(
-        Triple("Passages from Aristotle", "On Day 0, at milestones and in the guide.", settings.quotes to settings::updateQuotes),
+    val rows: List<Triple<String, String, Pair<Boolean, (Boolean) -> Unit>>> = listOf(
+        Triple("Passages from Aristotle", "When you begin again, at milestones, on an empty page and in the guide.", settings.quotes to settings::updateQuotes),
         Triple("Milestone celebrations", "A moment to mark each milestone the day you reach it.", settings.celebrations to settings::updateCelebrations),
         Triple("Vibration", "A light buzz when you log a slip or reach a milestone.", settings.haptics to settings::updateHaptics),
-        Triple("Summary on the home page", "Days kept and clean days this month, above your goals.", settings.homeSummary to settings::updateHomeSummary),
-        Triple("Coming up and calendar", "Upcoming milestones and the combined calendar, below your goals.", settings.homeExtras to settings::updateHomeExtras),
+        Triple(
+            "More on the home page",
+            "The month\u2019s summary and this week above your goals; what\u2019s coming up and a calendar below.",
+            (settings.homeSummary || settings.homeExtras) to { on: Boolean ->
+                settings.updateHomeSummary(on)
+                settings.updateHomeExtras(on)
+            },
+        ),
     )
     rows.forEachIndexed { i, (title, detail, state) ->
         SwitchRow(title = title, detail = detail, checked = state.first, onChange = state.second)

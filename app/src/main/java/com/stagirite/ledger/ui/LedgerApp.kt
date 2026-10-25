@@ -83,6 +83,9 @@ fun LedgerApp(
     /** A goal tapped on the home-screen widget. */
     openGoal: String? = null,
     onGoalOpened: () -> Unit = {},
+    /** A home-screen action from a shortcut or the reminder. */
+    quick: String? = null,
+    onQuickHandled: () -> Unit = {},
 ) {
     val context = LocalContext.current
     var plusReason by rememberSaveable { mutableStateOf<String?>(null) }
@@ -99,7 +102,7 @@ fun LedgerApp(
     }
 
     CompositionLocalProvider(LocalPlus provides plus, LocalSupport provides support) {
-        LedgerAppContent(store, settings, sync, lock, vault, openWeekly, onWeeklyOpened, openGoal, onGoalOpened)
+        LedgerAppContent(store, settings, sync, lock, vault, openWeekly, onWeeklyOpened, openGoal, onGoalOpened, quick, onQuickHandled)
         plusReason?.let { PlusSheet(it, support, onDismiss = { plusReason = null }) }
     }
 }
@@ -115,6 +118,8 @@ private fun LedgerAppContent(
     onWeeklyOpened: () -> Unit,
     openGoalRequest: String?,
     onGoalOpened: () -> Unit,
+    quick: String?,
+    onQuickHandled: () -> Unit,
 ) {
     val today by rememberToday()
     var inSettings by rememberSaveable { mutableStateOf(false) }
@@ -125,6 +130,14 @@ private fun LedgerAppContent(
             openId = null
             inWeekly = true
             onWeeklyOpened()
+        }
+    }
+    // A shortcut's action belongs to the home page, so go there first.
+    LaunchedEffect(quick) {
+        if (quick != null) {
+            openId = null
+            inSettings = false
+            inWeekly = false
         }
     }
     LaunchedEffect(openGoalRequest) {
@@ -319,7 +332,9 @@ private fun LedgerAppContent(
                     }
                 },
                 onSettings = { inSettings = true },
-            onWeekly = { inWeekly = true },
+                onWeekly = { inWeekly = true },
+                quick = quick,
+                onQuickHandled = onQuickHandled,
             )
         }
         target == "weekly" -> {

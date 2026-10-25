@@ -1,4 +1,8 @@
 <resources>
     <string name="app_name">Stagira</string>
     <string name="widget_description">One goal at a glance, or your list with progress to each next milestone</string>
+    <string name="shortcut_log_short">Quick log</string>
+    <string name="shortcut_log_long">Log a slip or an urge</string>
+    <string name="shortcut_new_short">New goal</string>
+    <string name="shortcut_new_long">Start a new goal</string>
 </resources>

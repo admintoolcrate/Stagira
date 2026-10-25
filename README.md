@@ -17,11 +17,13 @@ A minimal Android app (**Stagira** on your home screen) that does one thing: nam
 - **Private titles** — show a cover name ("No more corn") while the real name and note stay
   encrypted behind a PIN. Long-press the app's name on the Goals screen to reveal them; they hide
   again when you leave the app.
-- **Home-screen widget** — up to four goals and their counts. Private goals show their cover
-  names, and while the app lock is on it shows only "Locked".
+- **Home-screen widget** — one goal large, or a list with progress to each next milestone; Solid,
+  See-through or Clear background. Tap a goal to open it. Private goals show their cover names, and
+  while the app lock is on it shows only "Locked".
 - **Targets** — an optional aim per goal (30, 90, 180 or 365 days); the ring fills towards it.
 - **Archive** — hide finished or paused goals without losing them; restore any time.
-- **Quick actions** — long-press a goal on the list to log a slip today or archive it, with Undo.
+- **Quick actions** — long-press a goal on the list to log a slip or archive it, with Undo. Hold +
+  (or long-press the app icon) for Quick log: any goal's slip or urge, a new goal, the weekly review.
 - **Sort** — as added, longest current run, next milestone, or name.
 - **Suggestions** when adding a goal (No alcohol, Exercise, Read …) fill in the icon and type.
 - **Personalise** — Aristotle passages, milestone celebrations, vibration, and the home page's
@@ -69,7 +71,8 @@ A minimal Android app (**Stagira** on your home screen) that does one thing: nam
   passage.
 - **Log a slip** in two taps: Today, Yesterday, or another day from a calendar, with Undo.
 - **App lock** with fingerprint, face or screen lock, locking immediately or after 1 or 5 minutes.
-- **Daily reminder** (optional) at a time you choose. It never names your goals.
+- **Daily reminder** (optional) at a time you choose, with a Quick log button. It mentions a
+  milestone falling that day, by name only when the goal isn't private and the app isn't locked.
 - Undo after deleting a goal; edit a goal's name, note or start date.
 - Light, dark, or follow the system. Optional Google sync. Export / import as JSON.
 

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="48dp"
+    android:height="48dp"
+    android:viewportWidth="48"
+    android:viewportHeight="48">
+    <path android:fillColor="@color/ink" android:pathData="M24,0a24,24 0,1 1,0 48a24,24 0,1 1,0 -48z" />
+    <!-- Four tally strokes and a cross stroke, as in the notification icon. -->
+    <path
+        android:strokeColor="#FFF2F2F0"
+        android:strokeWidth="2.2"
+        android:strokeLineCap="round"
+        android:pathData="M17,16 L17,32 M21.5,16 L21.5,32 M26,16 L26,32 M30.5,16 L30.5,32 M14.5,28.5 L33.5,19.5" />
+</vector>

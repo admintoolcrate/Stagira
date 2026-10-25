@@ -59,6 +59,24 @@ object Quotes {
             "…it is easy to fail and difficult to succeed—easy to miss the target and difficult to hit it…",
             "II.6, 1106b",
         ),
+        Quote(
+            "Yet nevertheless even in adversity nobility shines through, when a man endures repeated and severe " +
+                "misfortune with patience, not owing to insensibility but from generosity and greatness of soul.",
+            "I.10, 1100b",
+        ),
+        Quote(
+            "For where we are free to act we are also free to refrain from acting, and where we are able to say No " +
+                "we are also able to say Yes…",
+            "III.5, 1113b",
+        ),
+        Quote(
+            "…it consequently depends on us whether we are virtuous or vicious.",
+            "III.5, 1113b",
+        ),
+        Quote(
+            "This is why it is a hard task to be good, for it is hard to find the middle point in anything…",
+            "II.9, 1109a",
+        ),
     )
 
     /** Words for reaching a milestone. */
@@ -81,15 +99,50 @@ object Quotes {
             "Moreover, to be happy takes a complete lifetime; for one swallow does not make spring, nor does one fine day\u2026",
             "I.7, 1098a",
         ),
+        Quote(
+            "…temperance and hardiness will not be painful when they have become habitual.",
+            "X.9, 1179b",
+        ),
+        Quote(
+            "We become temperate by abstaining from pleasures, and at the same time we are best able to abstain " +
+                "from pleasures when we have become temperate.",
+            "II.2, 1104a",
+        ),
+        Quote(
+            "Hence it is incumbent on us to control the character of our activities, since on the quality of these " +
+                "depends the quality of our dispositions.",
+            "II.1, 1103b",
+        ),
+        Quote(
+            "…to do these things properly is rare, praiseworthy, and noble.",
+            "II.9, 1109a",
+        ),
     )
 
     fun forMilestone(goal: Goal, days: Long): Quote =
         milestone[(goal.id.hashCode() + days.toInt()).absoluteValue % milestone.size]
 
-    val emptyLedger = Quote(
-        "…one swallow does not make spring, nor does one fine day…",
-        "I.7, 1098a",
+    /** For the empty page: about starting, and about doing rather than talking. */
+    val starting = listOf(
+        Quote(
+            "…one swallow does not make spring, nor does one fine day…",
+            "I.7, 1098a",
+        ),
+        Quote(
+            "…men become builders by building houses, harpers by playing on the harp.",
+            "II.1, 1103a",
+        ),
+        Quote(
+            "In so doing they act like invalids who listen carefully to what the doctor says, but entirely neglect " +
+                "to carry out his prescriptions.",
+            "II.4, 1105b",
+            "On people who talk about virtue instead of practising it.",
+        ),
     )
+
+    /** A passage for the empty page; a different one each day. */
+    fun forEmptyLedger(today: java.time.LocalDate): Quote =
+        starting[(today.toEpochDay() % starting.size).toInt()]
 
     /**
      * A quote for this goal's latest fresh start; stays the same for that start.

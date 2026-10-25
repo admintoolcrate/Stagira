@@ -36,16 +36,21 @@ class MainActivity : FragmentActivity() {
     /** Set when a goal is tapped on the home-screen widget. */
     private var openGoal by mutableStateOf<String?>(null)
 
+    /** Set from a launcher shortcut or the reminder: open Quick log or a new goal. */
+    private var quick by mutableStateOf<String?>(null)
+
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         if (intent.getBooleanExtra(Reminder.EXTRA_OPEN_WEEKLY, false)) openWeekly = true
         intent.getStringExtra(EXTRA_OPEN_GOAL)?.let { openGoal = it }
+        intent.getStringExtra(Reminder.EXTRA_QUICK)?.let { quick = it }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         if (savedInstanceState == null && intent.getBooleanExtra(Reminder.EXTRA_OPEN_WEEKLY, false)) openWeekly = true
         if (savedInstanceState == null) openGoal = intent.getStringExtra(EXTRA_OPEN_GOAL)
+        if (savedInstanceState == null) quick = intent.getStringExtra(Reminder.EXTRA_QUICK)
         setContent {
             val settings = app.settings
             val lock = app.lock
@@ -85,6 +90,8 @@ class MainActivity : FragmentActivity() {
                             onWeeklyOpened = { openWeekly = false },
                             openGoal = openGoal,
                             onGoalOpened = { openGoal = null },
+                            quick = quick,
+                            onQuickHandled = { quick = null },
                         )
                     }
                 }

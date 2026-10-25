@@ -1,5 +1,7 @@
 package com.stagirite.ledger.reminders
 
+import com.stagirite.ledger.data.Milestones
+import com.stagirite.ledger.LedgerApplication
 import android.app.AlarmManager
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -25,6 +27,11 @@ object Reminder {
     private const val WEEKLY_CHANNEL = "weekly"
     const val ACTION_WEEKLY = "com.stagirite.ledger.WEEKLY"
     const val EXTRA_OPEN_WEEKLY = "openWeekly"
+
+    /** Opens a home-screen action: [QUICK_LOG] or [QUICK_NEW]. Used by launcher shortcuts and the reminder. */
+    const val EXTRA_QUICK = "quick"
+    const val QUICK_LOG = "log"
+    const val QUICK_NEW = "new"
 
     fun apply(context: Context, settings: Settings) {
         if (settings.reminder) schedule(context, settings.reminderMinutes) else cancel(context)
@@ -102,17 +109,45 @@ object Reminder {
             Intent(context, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP),
             PendingIntent.FLAG_IMMUTABLE,
         )
+        val quickLog = PendingIntent.getActivity(
+            context, 2,
+            Intent(context, MainActivity::class.java)
+                .putExtra(EXTRA_QUICK, QUICK_LOG)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP),
+            PendingIntent.FLAG_IMMUTABLE,
+        )
         val notification = NotificationCompat.Builder(context, CHANNEL)
             .setSmallIcon(R.drawable.ic_notification)
             .setContentTitle("Stagira")
-            .setContentText("A moment for your ledger.")
+            .setContentText(dailyText(context))
             .setContentIntent(open)
+            .addAction(0, "Quick log", quickLog)
             .setAutoCancel(true)
             .build()
         try {
             NotificationManagerCompat.from(context).notify(1, notification)
         } catch (_: SecurityException) {
             // Notifications were turned off for the app; nothing to do.
+        }
+    }
+
+    /**
+     * Today's line: a milestone if one falls today, otherwise a reminder that
+     * nothing needs logging unless something happened. Names stay out of it
+     * when the app is locked or the goal is private.
+     */
+    private fun dailyText(context: Context): String {
+        val app = context.applicationContext as LedgerApplication
+        val today = LocalDate.now()
+        val reached = app.store.goals.filter { Milestones.isMilestone(it.daysKept(today)) }
+        return when {
+            reached.isEmpty() -> "Anything to log? If not, today counts as kept."
+            reached.size > 1 -> "${reached.size} of your goals reach a milestone today."
+            app.settings.appLock || reached[0].isPrivate -> "One of your goals reaches a milestone today."
+            else -> {
+                val days = reached[0].daysKept(today)
+                "${reached[0].title} reaches ${Milestones.name(days) ?: "$days days"} today."
+            }
         }
     }
 
