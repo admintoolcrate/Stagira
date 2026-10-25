@@ -60,8 +60,8 @@ private val pages = listOf(
         "⚖",
         "Vices and Virtues",
         "Tackle a vice: stop or cut down on something, like drinking less. Practise a virtue: do something " +
-            "good each day, like one good deed. Either way there\u2019s nothing to log on a good day. Every day " +
-            "counts until you log a slip.",
+            "good each day, like one good deed. Either way, good days count on their own: there\u2019s nothing " +
+            "to log unless something goes wrong.",
     ),
     GuidePage(
         "🌱",

@@ -11,8 +11,8 @@ A minimal Android app (**Stagira** on your home screen) that does one thing: nam
 - **Goals** — any number, counted from today or a past date, with an optional note on why each
   one matters. The count ticks over at midnight.
 - **Vices and Virtues** — each goal either tackles a Vice (stop or cut down, like drinking less)
-  or practises a Virtue (something good each day, like one good deed). Every day counts as kept
-  until you log a slip. The new-goal form asks that first, then
+  or practises a Virtue (something good each day, like one good deed). Good days count on
+  their own; you only log a slip if one happens. The new-goal form asks that first, then
   the name and start; why, target, weekdays and a private title sit under "More options".
 - **Icons** — a black-and-white emoji beside each goal, drawn with the open-source Noto Emoji
   font (see *Third-party material*).
@@ -53,7 +53,7 @@ A minimal Android app (**Stagira** on your home screen) that does one thing: nam
   resisted, milestones, a line per goal), with an optional weekly notification that never names
   a goal.
 - **Urges resisted** — for Vices, one tap logs a moment you felt the urge and didn't, with Undo.
-  Virtues have nothing to log on a good day: they count as kept until you log a slip. Counted per day only; shown in stats and on the progress card, and never
+  Virtues have nothing to log on a good day: good days count on their own. Counted per day only; shown in stats and on the progress card, and never
   counted against you.
 - **Progress** — measured by the gaps between slips: a verdict (Improving, Steady, Harder
   lately, or Unbroken), your typical run now against before (median of the last 3 runs vs the 3

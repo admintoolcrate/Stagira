@@ -31,12 +31,12 @@ enum class GoalKind(
 ) {
     Vice(
         "Vice", "Tackle a vice",
-        "Stop or cut down on something, like drinking less. Each day counts until you slip.",
+        "Stop or cut down on something, like drinking less. Every day you hold to it adds to the count.",
         "slip", "slips", "Resisted an urge", "Urges resisted",
     ),
     Virtue(
         "Virtue", "Practise a virtue",
-        "Do something good each day, like one good deed. Each day counts until you slip.",
+        "Do something good each day, like one good deed. Every day you keep it up adds to the count.",
         "slip", "slips", "Did it anyway", "Times you did it anyway",
     ),
 }
