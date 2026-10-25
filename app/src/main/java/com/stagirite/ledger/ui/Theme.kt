@@ -11,6 +11,9 @@ import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontVariation
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.unit.dp
 import com.stagirite.ledger.R
 import androidx.compose.ui.unit.sp
 
@@ -81,11 +84,51 @@ val Inter = FontFamily(
     inter(FontWeight.SemiBold),
 )
 
+/**
+ * EB Garamond (SIL Open Font License): the classical voice, kept to three jobs:
+ * the name, the day counts and Aristotle's words. Inter does everything else.
+ */
+val Garamond = FontFamily(
+    Font(R.font.eb_garamond_regular, FontWeight.Normal),
+    Font(R.font.eb_garamond_medium, FontWeight.Medium),
+    Font(R.font.eb_garamond_italic, FontWeight.Normal, FontStyle.Italic),
+)
+
+/**
+ * The type scale. Interface text uses Material's roles below; the serif sizes
+ * live here so every screen draws from the same few.
+ */
+object LedgerType {
+    /** Counts line up in columns and don't jiggle as they roll. */
+    private const val FIGURES = "tnum"
+
+    /** The goal page's count. */
+    val hero = TextStyle(fontFamily = Garamond, fontSize = 96.sp, lineHeight = 96.sp, fontFeatureSettings = FIGURES)
+    /** A count in a list row. */
+    val count = TextStyle(fontFamily = Garamond, fontSize = 40.sp, lineHeight = 40.sp, fontFeatureSettings = FIGURES)
+    /** The wordmark. */
+    val name = TextStyle(fontFamily = Garamond, fontSize = 36.sp, lineHeight = 40.sp, letterSpacing = 0.sp)
+    /** A passage from Aristotle. */
+    val passage = TextStyle(fontFamily = Garamond, fontSize = 20.sp, lineHeight = 28.sp)
+    /** Quotation marks around a passage. */
+    val mark = TextStyle(fontFamily = Garamond, fontSize = 44.sp, lineHeight = 44.sp)
+}
+
+/** Spacing in steps of 4dp; layouts use these rather than one-off values. */
+object Space {
+    val xs = 4.dp
+    val s = 8.dp
+    val m = 12.dp
+    val l = 16.dp
+    val xl = 24.dp
+    val xxl = 32.dp
+}
+
 private val LedgerTypography = Typography().run {
     copy(
-        displayLarge = displayLarge.copy(fontFamily = Inter, fontWeight = FontWeight.ExtraLight, letterSpacing = (-2.5).sp),
-        displayMedium = displayMedium.copy(fontFamily = Inter, fontWeight = FontWeight.Light, letterSpacing = (-1.2).sp),
-        displaySmall = displaySmall.copy(fontFamily = Inter, fontWeight = FontWeight.Light, letterSpacing = (-0.8).sp),
+        displayLarge = displayLarge.copy(fontFamily = Garamond, fontWeight = FontWeight.Normal, letterSpacing = (-1).sp, fontFeatureSettings = "tnum"),
+        displayMedium = displayMedium.copy(fontFamily = Garamond, fontWeight = FontWeight.Normal, letterSpacing = (-0.5).sp, fontFeatureSettings = "tnum"),
+        displaySmall = displaySmall.copy(fontFamily = Garamond, fontWeight = FontWeight.Normal, letterSpacing = 0.sp, fontFeatureSettings = "tnum"),
         headlineLarge = headlineLarge.copy(fontFamily = Inter, fontWeight = FontWeight.Light, letterSpacing = (-0.6).sp),
         headlineMedium = headlineMedium.copy(fontFamily = Inter, fontWeight = FontWeight.Light, letterSpacing = (-0.4).sp),
         headlineSmall = headlineSmall.copy(fontFamily = Inter, fontWeight = FontWeight.Normal, letterSpacing = (-0.3).sp),

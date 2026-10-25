@@ -28,6 +28,21 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.stagirite.ledger.data.Quotes
+import com.stagirite.ledger.data.GoalTemplate
+import com.stagirite.ledger.data.goalTemplates
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardCapitalization
+import java.time.LocalDate
 import kotlinx.coroutines.launch
 
 private class GuidePage(val icon: String, val title: String, val body: String)
@@ -63,11 +78,26 @@ private val pages = listOf(
     ),
 )
 
+/**
+ * The introductory guide. With [onCreate], it ends on a page that asks what
+ * you're starting, so the first visit lands on a goal already counting.
+ */
 @Composable
-fun GuideScreen(onDone: () -> Unit) {
-    val pager = rememberPagerState { pages.size }
+fun GuideScreen(onDone: () -> Unit, onCreate: ((GoalDraft) -> Unit)? = null) {
+    val count = pages.size + if (onCreate != null) 1 else 0
+    val pager = rememberPagerState { count }
     val scope = rememberCoroutineScope()
-    val last = pager.currentPage == pages.lastIndex
+    val last = pager.currentPage == count - 1
+    var title by rememberSaveable { mutableStateOf("") }
+    var template by remember { mutableStateOf<GoalTemplate?>(null) }
+    val finish = {
+        val name = title.trim()
+        if (onCreate != null && name.isNotEmpty()) {
+            val t = template?.takeIf { it.title == name }
+            onCreate(GoalDraft(name, LocalDate.now(), "", t?.icon ?: "", t?.kind, false, null))
+        }
+        onDone()
+    }
 
     Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
         Column(
@@ -80,6 +110,10 @@ fun GuideScreen(onDone: () -> Unit) {
                 if (!last) TextButton(onClick = onDone) { Text("Skip") }
             }
             HorizontalPager(pager, Modifier.weight(1f)) { i ->
+                if (i == pages.size) {
+                    FirstGoalPage(title, onTitle = { title = it; template = null }, onTemplate = { template = it; title = it.title })
+                    return@HorizontalPager
+                }
                 val page = pages[i]
                 Column(
                     Modifier.fillMaxSize(),
@@ -122,9 +156,54 @@ fun GuideScreen(onDone: () -> Unit) {
                 }
             }
             Button(
-                onClick = { if (last) onDone() else scope.launch { pager.animateScrollToPage(pager.currentPage + 1) } },
+                onClick = { if (last) finish() else scope.launch { pager.animateScrollToPage(pager.currentPage + 1) } },
                 modifier = Modifier.fillMaxWidth().height(52.dp),
-            ) { Text(if (last) "Begin" else "Next") }
+            ) {
+                Text(
+                    when {
+                        !last -> "Next"
+                        onCreate != null && title.isNotBlank() -> "Start counting"
+                        onCreate != null -> "Skip for now"
+                        else -> "Begin"
+                    },
+                )
+            }
+        }
+    }
+}
+
+/** The last page of a first visit: name something, or pick a common one. */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun FirstGoalPage(title: String, onTitle: (String) -> Unit, onTemplate: (GoalTemplate) -> Unit) {
+    Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.Center) {
+        Text("What are you starting?", style = MaterialTheme.typography.headlineMedium)
+        Spacer(Modifier.height(Space.s))
+        Text(
+            "Something to stop, or something to keep doing. The count starts today; you can change the date later.",
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Spacer(Modifier.height(Space.xl))
+        OutlinedTextField(
+            value = title,
+            onValueChange = onTitle,
+            label = { Text("Goal") },
+            placeholder = { Text("e.g. No alcohol") },
+            singleLine = true,
+            keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences, imeAction = ImeAction.Done),
+            modifier = Modifier.fillMaxWidth(),
+        )
+        Spacer(Modifier.height(Space.l))
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(Space.s), verticalArrangement = Arrangement.spacedBy(Space.s)) {
+            goalTemplates.forEach { t ->
+                FilterChip(
+                    selected = title == t.title,
+                    onClick = { onTemplate(t) },
+                    label = { Text(t.title) },
+                    leadingIcon = { EmojiGlyph(t.icon, 14.sp) },
+                )
+            }
         }
     }
 }

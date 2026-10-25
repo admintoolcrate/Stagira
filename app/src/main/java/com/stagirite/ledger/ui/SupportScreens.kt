@@ -184,7 +184,7 @@ fun SupportSection(support: SupportUi) {
         Text(
             "Tips work in the version from Google Play.",
             style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.outline,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
     }
 

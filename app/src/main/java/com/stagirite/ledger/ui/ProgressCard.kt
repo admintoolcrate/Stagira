@@ -147,7 +147,7 @@ fun ProgressPanel(goal: Goal, p: Progress) {
             "Back-to-back means within ${Progress.CLOSE_DAYS} days of the one before. A new personal best is a run " +
             "longer than every run before it.",
         style = MaterialTheme.typography.bodySmall,
-        color = MaterialTheme.colorScheme.outline,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
 
     if (p.months.isNotEmpty()) {

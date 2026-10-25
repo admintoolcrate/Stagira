@@ -107,7 +107,7 @@ fun SettingsScreen(
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 16.dp),
         ) {
-            Section("Appearance") {
+            Section("Theme and widget", group = "Look & feel") {
                 val modes = ThemeMode.entries
                 SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
                     modes.forEachIndexed { i, mode ->
@@ -151,17 +151,9 @@ fun SettingsScreen(
 
             Section("Personalise") { PersonaliseSection(settings) }
 
-            Section("Lock") { LockSection(settings, lock) }
+            Section("App lock", group = "Privacy & security") { LockSection(settings, lock) }
 
             Section("Private titles") { PrivateTitlesSection(privateTitles) }
-
-            Section("Reminders") {
-                ReminderSection(settings, lock)
-                Spacer(Modifier.height(16.dp))
-                WeeklySection(settings, lock)
-            }
-
-            Section("Sync") { SyncSection(sync, lock) }
 
             Section("Privacy") {
                 SwitchRow(
@@ -188,11 +180,19 @@ fun SettingsScreen(
                 )
             }
 
-            Section("Your data") { DataSection(store, sync, lock) }
+            Section("Daily and weekly", group = "Reminders") {
+                ReminderSection(settings, lock)
+                Spacer(Modifier.height(16.dp))
+                WeeklySection(settings, lock)
+            }
 
-            LocalSupport.current?.let { support -> Section("Support Stagira") { SupportSection(support) } }
+            Section("Sync", group = "Your data") { SyncSection(sync, lock) }
 
-            Section("Help & feedback") { FeedbackSection(lock) }
+            Section("Backup and export") { DataSection(store, sync, lock) }
+
+            LocalSupport.current?.let { support -> Section("Plus, tips and ads", group = "Support Stagira") { SupportSection(support) } }
+
+            Section("Help & feedback", group = "Help & about") { FeedbackSection(lock) }
 
             Section("About") { AboutSection(onShowGuide) }
 
@@ -412,10 +412,19 @@ private fun DataSection(store: GoalStore, sync: SyncManager, lock: AppLock) {
 }
 
 @Composable
-private fun Section(title: String, content: @Composable ColumnScope.() -> Unit) {
-    Spacer(Modifier.height(24.dp))
-    SectionHeading(title)
-    LedgerCard(content = content)
+private fun Section(title: String, group: String? = null, content: @Composable ColumnScope.() -> Unit) {
+    // A group opens with a spaced heading; the cards inside it follow closely.
+    if (group != null) {
+        Spacer(Modifier.height(Space.xxl))
+        SectionHeading(group)
+    } else {
+        Spacer(Modifier.height(Space.m))
+    }
+    LedgerCard {
+        Text(title, style = MaterialTheme.typography.titleSmall)
+        Spacer(Modifier.height(Space.m))
+        content()
+    }
 }
 
 @Composable
@@ -651,8 +660,9 @@ private fun AboutSection(onShowGuide: () -> Unit) {
     )
     Spacer(Modifier.height(8.dp))
     Note(
-        "Text is set in Inter, \u00A9 2016 The Inter Project Authors, and icons are drawn with Noto Emoji, " +
-            "\u00A9 2013, 2022 Google; both under the SIL Open Font License 1.1.",
+        "Text is set in Inter, \u00A9 2016 The Inter Project Authors, and EB Garamond, \u00A9 2017 The EB " +
+            "Garamond Project Authors; icons are drawn with Noto Emoji, \u00A9 2013, 2022 Google. All three " +
+            "are under the SIL Open Font License 1.1.",
     )
     TextButton(onClick = { showingLicence = true }) { Text("Read the font licence") }
     if (version.isNotEmpty()) Note("Version $version")

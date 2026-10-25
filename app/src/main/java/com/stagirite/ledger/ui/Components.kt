@@ -1,5 +1,22 @@
 package com.stagirite.ledger.ui
 
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.foundation.border
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.onClick
+import androidx.compose.ui.semantics.onLongClick
+import androidx.compose.ui.text.style.TextOverflow
+import kotlinx.coroutines.launch
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
@@ -257,20 +274,12 @@ fun QuoteBlock(quote: Quote, modifier: Modifier = Modifier) {
     // Turned off under Settings → Personalise.
     if (!LocalUiPrefs.current.quotes) return
     Column(modifier.fillMaxWidth()) {
-        // Inter's quotation marks are thin slants that read as "//", so both marks are set
-        // in the system serif, the same size: opening at the top left, closing bottom right.
+        // The passage and both marks are set in the bundled serif, so they look the same on
+        // every phone: the opening mark at the top left, its twin at the bottom right.
         QuoteMark("\u201C", TextAlign.Start)
-        Text(
-            quote.text,
-            style = MaterialTheme.typography.bodyLarge.copy(
-                fontSize = 17.sp,
-                lineHeight = 26.sp,
-                fontWeight = FontWeight.Light,
-                letterSpacing = 0.sp,
-            ),
-        )
+        Text(quote.text, style = LedgerType.passage)
         QuoteMark("\u201D", TextAlign.End)
-        Spacer(Modifier.height(4.dp))
+        Spacer(Modifier.height(Space.xs))
         Row(verticalAlignment = Alignment.CenterVertically) {
             Spacer(
                 Modifier
@@ -295,8 +304,8 @@ fun QuoteBlock(quote: Quote, modifier: Modifier = Modifier) {
             Spacer(Modifier.height(12.dp))
             Text(
                 it,
-                style = MaterialTheme.typography.bodySmall.copy(fontStyle = FontStyle.Italic),
-                color = MaterialTheme.colorScheme.outline,
+                style = MaterialTheme.typography.bodySmall.copy(fontFamily = Garamond, fontStyle = FontStyle.Italic, fontSize = 14.sp),
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
     }
@@ -306,16 +315,11 @@ fun QuoteBlock(quote: Quote, modifier: Modifier = Modifier) {
 private fun QuoteMark(mark: String, align: TextAlign) {
     Text(
         mark,
-        style = TextStyle(
-            fontFamily = FontFamily.Serif,
-            fontSize = 40.sp,
-            lineHeight = 40.sp,
-            platformStyle = PlatformTextStyle(includeFontPadding = false),
-        ),
+        style = LedgerType.mark.copy(platformStyle = PlatformTextStyle(includeFontPadding = false)),
         color = MaterialTheme.colorScheme.outline,
         textAlign = align,
         // The glyph sits high in its line; a short box trims the space beneath it.
-        modifier = Modifier.fillMaxWidth().height(26.dp),
+        modifier = Modifier.fillMaxWidth().height(24.dp).clearAndSetSemantics {},
     )
 }
 
@@ -395,11 +399,7 @@ fun Wordmark(modifier: Modifier = Modifier, large: Boolean = true, subtitleAlpha
     Column(modifier) {
         Text(
             "Stagira",
-            style = if (large) {
-                MaterialTheme.typography.headlineLarge.copy(fontWeight = FontWeight.Normal, letterSpacing = (-0.5).sp)
-            } else {
-                MaterialTheme.typography.titleLarge
-            },
+            style = if (large) LedgerType.name else LedgerType.name.copy(fontSize = 26.sp, lineHeight = 30.sp),
             maxLines = 1,
         )
         if (subtitleAlpha > 0.01f) {
@@ -410,5 +410,90 @@ fun Wordmark(modifier: Modifier = Modifier, large: Boolean = true, subtitleAlpha
                 maxLines = 1,
             )
         }
+    }
+}
+
+/** Text tabs with a short rule under the chosen one, over a hairline. */
+@Composable
+fun TextTabs(labels: List<String>, selected: Int, onSelect: (Int) -> Unit) {
+    Column(Modifier.fillMaxWidth()) {
+        Row(Modifier.fillMaxWidth()) {
+            labels.forEachIndexed { i, label ->
+                val on = i == selected
+                Column(
+                    Modifier
+                        .weight(1f)
+                        .selectable(selected = on, role = Role.Tab, onClick = { onSelect(i) })
+                        .padding(top = Space.m),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                    Text(
+                        label,
+                        style = MaterialTheme.typography.labelLarge,
+                        color = if (on) MaterialTheme.colorScheme.onBackground else MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    Spacer(Modifier.height(Space.m))
+                    Box(
+                        Modifier
+                            .width(28.dp)
+                            .height(2.dp)
+                            .background(if (on) MaterialTheme.colorScheme.onBackground else Color.Transparent),
+                    )
+                }
+            }
+        }
+        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+        Spacer(Modifier.height(Space.l))
+    }
+}
+
+/**
+ * An outlined button that also answers a press-and-hold: the fill sweeps
+ * across while held, and [onHeld] runs when it reaches the end. Letting go
+ * early cancels; a quick tap runs [onTap]. With [onHeld] null it's a plain button.
+ */
+@Composable
+fun HoldButton(text: String, onTap: () -> Unit, onHeld: (() -> Unit)?, modifier: Modifier = Modifier) {
+    val fill = remember { Animatable(0f) }
+    val scope = rememberCoroutineScope()
+    val buzz = rememberBuzz()
+    val shape = RoundedCornerShape(26.dp)
+    val ink = MaterialTheme.colorScheme.onBackground
+    val outline = MaterialTheme.colorScheme.outline
+    val held by rememberUpdatedState(onHeld)
+    val tap by rememberUpdatedState(onTap)
+    Box(
+        modifier
+            .clip(shape)
+            .border(1.dp, outline, shape)
+            .drawBehind { drawRect(ink.copy(alpha = 0.14f), size = size.copy(width = size.width * fill.value)) }
+            .semantics(mergeDescendants = true) {
+                role = Role.Button
+                onClick(label = text) { tap(); true }
+                held?.let { onLongClick(label = "Log for today") { it(); true } }
+            }
+            .pointerInput(Unit) {
+                detectTapGestures(onPress = {
+                    val action = held
+                    val sweep = if (action == null) null else scope.launch {
+                        fill.animateTo(1f, tween(durationMillis = 700, easing = LinearEasing))
+                        buzz()
+                        action()
+                        fill.snapTo(0f)
+                    }
+                    val released = tryAwaitRelease()
+                    if (sweep == null) {
+                        if (released) tap()
+                    } else if (sweep.isActive) {
+                        val quick = fill.value < 0.2f
+                        sweep.cancel()
+                        scope.launch { fill.animateTo(0f, tween(150)) }
+                        if (released && quick) tap()
+                    }
+                })
+            },
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(text, style = MaterialTheme.typography.labelLarge, maxLines = 1, overflow = TextOverflow.Ellipsis)
     }
 }

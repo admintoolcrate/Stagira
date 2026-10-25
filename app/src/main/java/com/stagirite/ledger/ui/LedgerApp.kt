@@ -181,7 +181,15 @@ private fun LedgerAppContent(
     }
 
     if (!settings.guideSeen) {
-        GuideScreen(onDone = { settings.updateGuideSeen(true) })
+        GuideScreen(
+            onDone = { settings.updateGuideSeen(true) },
+            // A first visit ends by naming a goal; shown again later, it's just the guide.
+            onCreate = if (store.goals.isEmpty() && store.archived.isEmpty()) {
+                { d -> store.add(d.title, d.since, d.reason, d.icon, d.kind, null, d.target, d.schedule) }
+            } else {
+                null
+            },
+        )
         return
     }
 

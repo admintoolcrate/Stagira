@@ -210,7 +210,7 @@ private fun CalendarLegend(slipLabel: String, showUrgeKey: Boolean = false, show
         Text("Today", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         if (showRestKey) {
             Spacer(Modifier.width(16.dp))
-            Text("\u2013 Rest", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.outline)
+            Text("\u2013 Rest", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         if (showUrgeKey) {
             Spacer(Modifier.width(16.dp))

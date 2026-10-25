@@ -113,7 +113,7 @@ fun FeedbackDialog(kind: ReportKind, lock: AppLock, onDismiss: () -> Unit) {
                     "GitHub opens a new issue in your browser (you’ll need a GitHub account). Email opens your " +
                         "email app. Either way you can check the text before it’s sent.",
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.outline,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
         },

@@ -1,5 +1,11 @@
 package com.stagirite.ledger.ui
 
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Surface
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -167,6 +173,16 @@ fun GoalListScreen(
     var menu by remember { mutableStateOf(false) }
     var showArchived by rememberSaveable { mutableStateOf(false) }
     var actionsFor by rememberSaveable { mutableStateOf<String?>(null) }
+    var quickLog by rememberSaveable { mutableStateOf(false) }
+    val buzz = rememberBuzz()
+    val newGoal = {
+        // Free includes a few goals; nobody loses ones they already have.
+        if (!plus.has && goals.size >= Billing.FREE_GOALS) {
+            plus.offer("The free ledger holds ${Billing.FREE_GOALS} goals. Plus gives you as many as you like.")
+        } else {
+            adding = true
+        }
+    }
 
     Scaffold(
         modifier = Modifier.nestedScroll(scroll.nestedScrollConnection),
@@ -221,19 +237,28 @@ fun GoalListScreen(
         },
         snackbarHost = { SnackbarHost(snackbar) },
         floatingActionButton = {
-            FloatingActionButton(
-                onClick = {
-                    // Free includes a few goals; nobody loses ones they already have.
-                    if (!plus.has && goals.size >= Billing.FREE_GOALS) {
-                        plus.offer("The free ledger holds ${Billing.FREE_GOALS} goals. Plus gives you as many as you like.")
-                    } else {
-                        adding = true
-                    }
-                },
-                containerColor = MaterialTheme.colorScheme.primary,
+            // Tap for a new goal; hold for quick logging (a slip, an urge resisted, the weekly review).
+            Surface(
+                shape = RoundedCornerShape(18.dp),
+                color = MaterialTheme.colorScheme.primary,
                 contentColor = MaterialTheme.colorScheme.onPrimary,
+                shadowElevation = 6.dp,
+                modifier = Modifier.size(60.dp),
             ) {
-                Icon(Icons.Filled.Add, contentDescription = "New goal")
+                Box(
+                    Modifier.combinedClickable(
+                        onClickLabel = "New goal",
+                        onLongClickLabel = "Quick log",
+                        onClick = newGoal,
+                        onLongClick = {
+                            buzz()
+                            quickLog = true
+                        },
+                    ),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(Icons.Filled.Add, contentDescription = "New goal. Hold for quick log")
+                }
             }
         },
     ) { padding ->
@@ -241,8 +266,7 @@ fun GoalListScreen(
             EmptyState(Modifier.padding(padding))
         } else {
             LazyColumn(
-                contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 96.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
+                contentPadding = PaddingValues(start = Space.l, end = Space.l, top = Space.s, bottom = 112.dp),
                 modifier = Modifier.padding(padding),
             ) {
                 item(key = "date") {
@@ -250,14 +274,14 @@ fun GoalListScreen(
                         today.format(todayHeading),
                         style = MaterialTheme.typography.labelLarge,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(start = 4.dp),
+                        modifier = Modifier.padding(start = Space.xs, bottom = Space.m),
                     )
                 }
                 if (goals.isNotEmpty() && prefs.homeSummary) {
                     item(key = "summary") { SummaryCard(goals, today) }
                     item(key = "week") {
                         val w = weekReview(goals, today)
-                        LedgerCard(onClick = {
+                        LedgerCard(modifier = Modifier.padding(top = Space.m), onClick = {
                             if (plus.has) onWeekly() else plus.offer("The weekly review is part of Plus.")
                         }) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -274,10 +298,11 @@ fun GoalListScreen(
                             }
                         }
                     }
-                    item(key = "goals-heading") { SectionHeading("Goals", Modifier.padding(top = 12.dp)) }
+                    item(key = "goals-heading") { SectionHeading("Goals", Modifier.padding(top = Space.xxl)) }
                 }
+                // The goals as a ledger: ruled lines, counts in a column on the right.
                 items(goals, key = { it.id }) { goal ->
-                    GoalCard(
+                    LedgerRow(
                         goal, today,
                         onClick = { onOpen(goal) },
                         onLongClick = { actionsFor = goal.id },
@@ -285,6 +310,7 @@ fun GoalListScreen(
                         modifier = Modifier.animateItem(),
                     )
                 }
+                if (goals.isNotEmpty()) item(key = "rule-end") { HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant) }
                 if (goals.isEmpty()) {
                     item {
                         Text(
@@ -296,22 +322,22 @@ fun GoalListScreen(
                     }
                 }
                 if (goals.isNotEmpty() && prefs.homeExtras) {
-                    item(key = "coming-heading") { SectionHeading("Coming up", Modifier.padding(top = 12.dp)) }
+                    item(key = "coming-heading") { SectionHeading("Coming up", Modifier.padding(top = Space.xxl)) }
                     item(key = "coming") { ComingUpCard(goals, today, onOpen) }
-                    item(key = "calendar-heading") { SectionHeading("All goals", Modifier.padding(top = 12.dp)) }
+                    item(key = "calendar-heading") { SectionHeading("All goals", Modifier.padding(top = Space.xxl)) }
                     item(key = "calendar") {
                         CombinedCalendarCard(goals, today)
                     }
                 }
                 if (archived.isNotEmpty()) {
                     item(key = "archived") {
-                        TextButton(onClick = { showArchived = !showArchived }) {
+                        TextButton(onClick = { showArchived = !showArchived }, modifier = Modifier.padding(top = Space.l)) {
                             Text(if (showArchived) "Hide archived" else "Archived (${archived.size})")
                         }
                     }
                     if (showArchived) {
                         items(archived, key = { it.id }) { goal ->
-                            LedgerCard(onClick = { onOpen(goal) }) {
+                            LedgerCard(modifier = Modifier.padding(bottom = Space.s), onClick = { onOpen(goal) }) {
                                 Row(verticalAlignment = Alignment.CenterVertically) {
                                     GoalIcon(goal.icon, tile = 36.dp)
                                     if (goal.icon.isNotEmpty()) Spacer(Modifier.width(12.dp))
@@ -320,7 +346,7 @@ fun GoalListScreen(
                                         Text(
                                             "Archived \u00B7 ${plural(goal.daysKept(today), "day")}",
                                             style = MaterialTheme.typography.bodySmall,
-                                            color = MaterialTheme.colorScheme.outline,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                                         )
                                     }
                                     TextButton(onClick = { onArchive(goal, false) }) { Text("Restore") }
@@ -362,6 +388,30 @@ fun GoalListScreen(
         }
     }
 
+    if (quickLog) {
+        QuickLogSheet(
+            goals = goals,
+            today = today,
+            onDismiss = { quickLog = false },
+            onNew = {
+                quickLog = false
+                newGoal()
+            },
+            onWeekly = {
+                quickLog = false
+                if (plus.has) onWeekly() else plus.offer("The weekly review is part of Plus.")
+            },
+            onSlip = {
+                quickLog = false
+                onQuickSlip(it)
+            },
+            onUrge = {
+                quickLog = false
+                onQuickUrge(it)
+            },
+        )
+    }
+
     if (adding) {
         GoalDialog(
             heading = "New goal",
@@ -399,58 +449,141 @@ private fun EmptyState(modifier: Modifier = Modifier) {
     }
 }
 
+/** One goal as a line in the ledger: icon and name on the left, the count on the right. */
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun GoalCard(goal: Goal, today: LocalDate, onClick: () -> Unit, onLongClick: () -> Unit, modifier: Modifier = Modifier) {
+private fun LedgerRow(goal: Goal, today: LocalDate, onClick: () -> Unit, onLongClick: () -> Unit, modifier: Modifier = Modifier) {
     val days = goal.daysKept(today)
     val next = Milestones.next(days)
     val milestoneToday = Milestones.isMilestone(days)
-    LedgerCard(modifier = modifier, onClick = onClick, onLongClick = onLongClick) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            if (goal.icon.isNotEmpty()) {
-                GoalIcon(goal.icon)
-                Spacer(Modifier.width(14.dp))
-            }
-            Column(Modifier.weight(1f)) {
-                val verdict = goal.progress(today).verdict.takeIf { it != Verdict.TooSoon }
-                val tags = listOfNotNull(
-                    goal.kind?.label,
-                    if (goal.hasSchedule) "${goal.schedule.size} days a week" else null,
-                    verdict?.label,
-                )
-                if (tags.isNotEmpty()) {
+    Column(modifier.fillMaxWidth()) {
+        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+        Column(
+            Modifier
+                .fillMaxWidth()
+                .combinedClickable(onClick = onClick, onLongClick = onLongClick, onLongClickLabel = "Quick actions")
+                .padding(horizontal = Space.xs, vertical = Space.l),
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                if (goal.icon.isNotEmpty()) {
+                    Box(Modifier.size(28.dp), contentAlignment = Alignment.CenterStart) { EmojiGlyph(goal.icon, 20.sp) }
+                    Spacer(Modifier.width(Space.m))
+                }
+                Column(Modifier.weight(1f)) {
+                    val verdict = goal.progress(today).verdict.takeIf { it != Verdict.TooSoon }
+                    val tags = listOfNotNull(
+                        goal.kind?.label,
+                        if (goal.hasSchedule) "${goal.schedule.size} days a week" else null,
+                        verdict?.label,
+                    )
+                    if (tags.isNotEmpty()) {
+                        Text(
+                            tags.joinToString(" \u00B7 ").uppercase(),
+                            style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 1.4.sp),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(bottom = 2.dp),
+                        )
+                    }
+                    Text(goal.title, style = MaterialTheme.typography.titleMedium, maxLines = 2, overflow = TextOverflow.Ellipsis)
                     Text(
-                        tags.joinToString(" \u00B7 ").uppercase(),
-                        style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 1.4.sp),
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(bottom = 2.dp),
+                        when {
+                            milestoneToday -> "Milestone today"
+                            goal.target != null && days >= goal.target -> "Target of ${plural(goal.target, "day")} reached"
+                            goal.target != null -> "$days of ${plural(goal.target, "day")}"
+                            else -> "${plural(next - days, "day")} to ${Milestones.name(next) ?: plural(next, "day")}"
+                        },
+                        style = MaterialTheme.typography.bodySmall,
+                        color = if (milestoneToday) MaterialTheme.colorScheme.onBackground
+                        else MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(top = 2.dp),
                     )
                 }
-                Text(goal.title, style = MaterialTheme.typography.titleMedium, maxLines = 2, overflow = TextOverflow.Ellipsis)
-                Spacer(Modifier.height(4.dp))
-                Text(
-                    when {
-                        milestoneToday -> "Milestone today"
-                        goal.target != null && days >= goal.target -> "Target of ${plural(goal.target, "day")} reached"
-                        goal.target != null -> "$days of ${plural(goal.target, "day")}"
-                        else -> "${plural(next - days, "day")} to ${plural(next, "day")}"
-                    },
-                    style = MaterialTheme.typography.bodySmall,
-                    color = if (milestoneToday) MaterialTheme.colorScheme.onBackground
-                    else MaterialTheme.colorScheme.onSurfaceVariant,
-                )
+                Spacer(Modifier.width(Space.l))
+                Column(horizontalAlignment = Alignment.End) {
+                    RollingNumber(days, LedgerType.count)
+                    Text(
+                        if (days == 1L) "day" else "days",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
             }
-            Spacer(Modifier.width(16.dp))
-            Column(horizontalAlignment = Alignment.End) {
-                Text("$days", style = MaterialTheme.typography.displaySmall)
-                Text(
-                    if (days == 1L) "day" else "days",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
+            Spacer(Modifier.height(Space.m))
+            ThinProgress(goal.targetProgress(today) ?: Milestones.progress(days))
+        }
+    }
+}
+
+/** Holding +: log for any goal without opening it, or start something new. */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun QuickLogSheet(
+    goals: List<Goal>,
+    today: LocalDate,
+    onDismiss: () -> Unit,
+    onNew: () -> Unit,
+    onWeekly: () -> Unit,
+    onSlip: (Goal) -> Unit,
+    onUrge: (Goal) -> Unit,
+) {
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+        containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+    ) {
+        Column(
+            Modifier
+                .padding(horizontal = Space.xl)
+                .navigationBarsPadding()
+                .verticalScroll(rememberScrollState())
+                .padding(bottom = Space.l),
+        ) {
+            Text("Quick log", style = MaterialTheme.typography.titleLarge)
+            Text(
+                "For today, ${today.format(mediumDate)}. Hold + to open this any time.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Spacer(Modifier.height(Space.m))
+            SlipOption("New goal", "Something to stop or to keep doing", enabled = true, onClick = onNew)
+            if (goals.isNotEmpty()) {
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                SlipOption("Weekly review", "How the last seven days went", enabled = true, onClick = onWeekly)
+            }
+            goals.forEach { goal ->
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                Column(Modifier.padding(vertical = Space.m)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        if (goal.icon.isNotEmpty()) {
+                            EmojiGlyph(goal.icon, 18.sp)
+                            Spacer(Modifier.width(Space.s))
+                        }
+                        Text(goal.title, style = MaterialTheme.typography.titleSmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    }
+                    Spacer(Modifier.height(Space.s))
+                    Row(horizontalArrangement = Arrangement.spacedBy(Space.s)) {
+                        OutlinedButton(
+                            onClick = { onUrge(goal) },
+                            modifier = Modifier.weight(1f),
+                            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+                        ) { Text(goal.urgeLabel, maxLines = 1, overflow = TextOverflow.Ellipsis) }
+                        val canSlip = !goal.isSlip(today) && goal.isScheduled(today)
+                        OutlinedButton(
+                            onClick = { onSlip(goal) },
+                            enabled = canSlip,
+                            modifier = Modifier.weight(1f),
+                            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = if (canSlip) 1f else 0.4f)),
+                        ) {
+                            Text(
+                                if (goal.isSlip(today)) "Logged today" else "Log a ${goal.slipWord}",
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                        }
+                    }
+                }
             }
         }
-        Spacer(Modifier.height(16.dp))
-        ThinProgress(goal.targetProgress(today) ?: Milestones.progress(days))
     }
 }
 
@@ -496,7 +629,7 @@ private fun QuickActionsSheet(
 
 // ---------------------------------------------------------------- Goal page
 
-private enum class GoalTab(val label: String) { Calendar("Calendar"), Stats("Stats"), Milestones("Milestones"), History("History") }
+private enum class GoalTab(val label: String) { Calendar("Calendar"), Insights("Insights"), History("History") }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -605,96 +738,92 @@ fun GoalDetailScreen(
                     }
                 }
             }
-            // The count
-            LedgerCard(padding = 24.dp) {
-                Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
-                    if (goal.icon.isNotEmpty() || goal.kind != null) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            GoalIcon(goal.icon, tile = 36.dp)
-                            if (goal.icon.isNotEmpty() && goal.kind != null) Spacer(Modifier.width(10.dp))
-                            KindLabel(goal.kind)
-                        }
-                        Spacer(Modifier.height(16.dp))
-                    }
-                    ProgressRing(
-                        goal.targetProgress(today) ?: Milestones.progress(days),
-                        Modifier.size(208.dp),
-                        description = plural(days, "day") + "; " +
-                            (goal.target?.let { "target ${plural(it, "day")}" } ?: "next milestone ${plural(next, "day")}"),
-                    ) {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            RollingNumber(days, MaterialTheme.typography.displayLarge.copy(fontSize = 80.sp))
-                            Text(
-                                if (days == 1L) "day" else "days",
-                                style = MaterialTheme.typography.labelLarge,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
-                        }
-                    }
-                    Spacer(Modifier.height(16.dp))
-                    Text(
-                        when {
-                            Milestones.isMilestone(days) -> "Milestone reached today"
-                            goal.target != null && days >= goal.target -> "Target of ${plural(goal.target, "day")} reached"
-                            goal.target != null -> "${plural(goal.target - days, "day")} to your target of ${goal.target}"
-                            else -> "${plural(next - days, "day")} to ${plural(next, "day")}"
-                        },
-                        style = MaterialTheme.typography.bodyMedium,
-                    )
-                    TextButton(onClick = { movingStart = true }) {
-                        Text(
-                            "${describeSpan(goal.currentStart, today)} · since ${goal.currentStart.format(mediumDate)}",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                        Icon(
-                            Icons.Filled.Edit,
-                            contentDescription = "Change start date",
-                            modifier = Modifier.padding(start = 6.dp).size(14.dp),
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
-                    Spacer(Modifier.height(8.dp))
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Button(
-                            onClick = {
-                                buzz()
-                                onUrge()
-                                val count = goal.urgesOn(today) + 1
-                                scope.launch {
-                                    val r = snackbar.showSnackbar(
-                                        "${goal.urgeLabel} \u00B7 ${if (count == 1) "first" else "${count}\u00D7"} today",
-                                        actionLabel = "Undo",
-                                    )
-                                    if (r == SnackbarResult.ActionPerformed) onUndoUrge()
-                                }
-                            },
-                            modifier = Modifier.weight(1f).height(48.dp),
-                        ) { Text(goal.urgeLabel, maxLines = 1, overflow = TextOverflow.Ellipsis) }
-                        OutlinedButton(
-                            onClick = { slipSheet = true },
-                            modifier = Modifier.weight(1f).height(48.dp),
-                            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
-                        ) { Text("Log a $slipWord", maxLines = 1, overflow = TextOverflow.Ellipsis) }
-                    }
-                    if (!goal.isScheduled(today)) {
-                        Spacer(Modifier.height(6.dp))
-                        Text(
-                            "Rest day today \u00B7 ${scheduleText(goal.schedule)}",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
-                    val urgesToday = goal.urgesOn(today)
-                    if (urgesToday > 0) {
-                        Spacer(Modifier.height(6.dp))
-                        Text(
-                            "${goal.urgesLabel} today: $urgesToday",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
+            // The count, set large on the open page, with what's next beneath it.
+            val canSlipToday = !goal.isSlip(today) && goal.isScheduled(today)
+            Column(
+                Modifier.fillMaxWidth().padding(top = Space.l),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                if (goal.icon.isNotEmpty() || goal.kind != null) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        if (goal.icon.isNotEmpty()) EmojiGlyph(goal.icon, 18.sp)
+                        if (goal.icon.isNotEmpty() && goal.kind != null) Spacer(Modifier.width(Space.s))
+                        KindLabel(goal.kind)
                     }
                 }
+                RollingNumber(
+                    days,
+                    LedgerType.hero,
+                    Modifier.semantics(mergeDescendants = true) {
+                        contentDescription = plural(days, "day") + "; " +
+                            (goal.target?.let { "target ${plural(it, "day")}" } ?: "next milestone ${plural(next, "day")}")
+                    },
+                )
+                Text(
+                    if (days == 1L) "day" else "days",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Spacer(Modifier.height(Space.xl))
+                Text(
+                    when {
+                        Milestones.isMilestone(days) -> "Milestone reached today"
+                        goal.target != null && days >= goal.target -> "Target of ${plural(goal.target, "day")} reached"
+                        goal.target != null -> "${plural(goal.target - days, "day")} to your target of ${goal.target}"
+                        else -> "${plural(next - days, "day")} to ${Milestones.name(next) ?: plural(next, "day")}"
+                    },
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+                Spacer(Modifier.height(Space.s))
+                ThinProgress(goal.targetProgress(today) ?: Milestones.progress(days), Modifier.width(160.dp))
+                TextButton(onClick = { movingStart = true }) {
+                    Text(
+                        "${describeSpan(goal.currentStart, today)} \u00B7 since ${goal.currentStart.format(mediumDate)}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    Icon(
+                        Icons.Filled.Edit,
+                        contentDescription = "Change start date",
+                        modifier = Modifier.padding(start = 6.dp).size(14.dp),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                Spacer(Modifier.height(Space.m))
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(Space.s)) {
+                    Button(
+                        onClick = {
+                            buzz()
+                            onUrge()
+                            val count = goal.urgesOn(today) + 1
+                            scope.launch {
+                                val r = snackbar.showSnackbar(
+                                    "${goal.urgeLabel} \u00B7 ${if (count == 1) "first" else "${count}\u00D7"} today",
+                                    actionLabel = "Undo",
+                                )
+                                if (r == SnackbarResult.ActionPerformed) onUndoUrge()
+                            }
+                        },
+                        modifier = Modifier.weight(1f).height(52.dp),
+                    ) { Text(goal.urgeLabel, maxLines = 1, overflow = TextOverflow.Ellipsis) }
+                    // Tap to choose the day; press and hold to log today without a dialog.
+                    HoldButton(
+                        text = "Log a $slipWord",
+                        onTap = { slipSheet = true },
+                        onHeld = if (canSlipToday) ({ logSlip(today) }) else null,
+                        modifier = Modifier.weight(1f).height(52.dp),
+                    )
+                }
+                Spacer(Modifier.height(Space.s))
+                val notes = listOfNotNull(
+                    if (canSlipToday) "Hold to log a $slipWord today" else null,
+                    if (!goal.isScheduled(today)) "Rest day today \u00B7 ${scheduleText(goal.schedule)}" else null,
+                    goal.urgesOn(today).takeIf { it > 0 }?.let { "${goal.urgesLabel} today: $it" },
+                )
+                notes.forEach {
+                    Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                Spacer(Modifier.height(Space.m))
             }
 
             if (beganAgainToday) {
@@ -718,25 +847,9 @@ fun GoalDetailScreen(
                 }
             }
 
-            Spacer(Modifier.height(4.dp))
-            val tabs = GoalTab.entries
-            SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
-                tabs.forEachIndexed { i, t ->
-                    SegmentedButton(
-                        selected = tab == t,
-                        onClick = { tab = t },
-                        shape = SegmentedButtonDefaults.itemShape(i, tabs.size),
-                        icon = {},
-                        colors = SegmentedButtonDefaults.colors(
-                            activeContainerColor = MaterialTheme.colorScheme.primary,
-                            activeContentColor = MaterialTheme.colorScheme.onPrimary,
-                            inactiveContainerColor = MaterialTheme.colorScheme.surfaceContainerLow,
-                        ),
-                    ) { Text(t.label, maxLines = 1, fontSize = 12.sp) }
-                }
-            }
+            TextTabs(GoalTab.entries.map { it.label }, tab.ordinal) { tab = GoalTab.entries[it] }
 
-            LedgerCard {
+            Column(Modifier.padding(horizontal = Space.xs)) {
                 when (tab) {
                     GoalTab.Calendar -> {
                         LedgerCalendar(
@@ -756,8 +869,12 @@ fun GoalDetailScreen(
                             modifier = Modifier.padding(top = 8.dp),
                         )
                     }
-                    GoalTab.Stats -> StatsPanel(goal, today)
-                    GoalTab.Milestones -> MilestonesPanel(goal, today)
+                    GoalTab.Insights -> {
+                        StatsPanel(goal, today)
+                        Spacer(Modifier.height(Space.xl))
+                        SectionHeading("Milestones", Modifier.padding(start = 0.dp))
+                        MilestonesPanel(goal, today)
+                    }
                     GoalTab.History -> HistoryPanel(goal, today, canNote) { notingDay = it.toEpochDay() }
                 }
             }
