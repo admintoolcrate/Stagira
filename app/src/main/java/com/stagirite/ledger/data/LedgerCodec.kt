@@ -26,6 +26,7 @@ object LedgerCodec {
                     .put("target", g.target ?: 0)
                     .put("archived", g.archived)
                     .put("notes", encodeNotes(g.notes))
+                    .put("urges", JSONObject().also { o -> g.urges.forEach { (d, n) -> o.put(d.toEpochDay().toString(), n) } })
                     .put("created", g.createdAt)
                     .put("updated", g.updatedAt)
                     .put("deleted", g.deleted)
@@ -61,6 +62,12 @@ object LedgerCodec {
                 target = o.optLong("target").takeIf { it > 0 },
                 archived = o.optBoolean("archived"),
                 notes = decodeNotes(o.optJSONObject("notes")),
+                urges = o.optJSONObject("urges")?.let { u ->
+                    u.keys().asSequence().mapNotNull { k ->
+                        val n = u.optInt(k)
+                        k.toLongOrNull()?.takeIf { n > 0 }?.let { LocalDate.ofEpochDay(it) to n }
+                    }.toMap()
+                } ?: emptyMap(),
                 createdAt = o.optLong("created"),
                 updatedAt = o.optLong("updated"),
                 deleted = o.optBoolean("deleted"),

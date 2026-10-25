@@ -96,14 +96,14 @@ fun ComingUpCard(goals: List<Goal>, today: LocalDate, onOpen: (Goal) -> Unit) {
 }
 
 @Composable
-fun CombinedCalendarCard(goals: List<Goal>, today: LocalDate, month: YearMonth, onMonth: (YearMonth) -> Unit) {
+fun CombinedCalendarCard(goals: List<Goal>, today: LocalDate) {
     LedgerCard {
-        MonthCalendar(
-            month = month,
+        LedgerCalendar(
             today = today,
-            earliest = YearMonth.from(goals.minOf { it.since }),
+            earliest = goals.minOf { it.since },
             stateOf = { overviewDayState(goals, it, today) },
-            onMonthChange = onMonth,
+            urgesOf = { d -> goals.sumOf { it.urgesOn(d) } },
+            showUrgeKey = goals.any { it.urges.isNotEmpty() },
         )
         Spacer(Modifier.height(8.dp))
         Text(

@@ -10,9 +10,24 @@ data class Streak(val start: LocalDate, val end: LocalDate) {
 }
 
 /** Optionally, whether a goal is a vice to do less of or a virtue to do more of. */
-enum class GoalKind(val label: String, val blurb: String, val slip: String, val slips: String) {
-    Vice("Vice", "A Vice is something you want to do less of, like drinking or late-night scrolling.", "slip", "slips"),
-    Virtue("Virtue", "A Virtue is something you want to do more of, like reading or running.", "missed day", "missed days"),
+enum class GoalKind(
+    val label: String,
+    val blurb: String,
+    val slip: String,
+    val slips: String,
+    /** The button for logging a moment of resolve. */
+    val urge: String,
+    /** What it's called in stats: "Urges resisted". */
+    val urges: String,
+) {
+    Vice(
+        "Vice", "A Vice is something you want to do less of, like drinking or late-night scrolling.",
+        "slip", "slips", "Resisted an urge", "Urges resisted",
+    ),
+    Virtue(
+        "Virtue", "A Virtue is something you want to do more of, like reading or running.",
+        "missed day", "missed days", "Did it anyway", "Times you did it anyway",
+    ),
 }
 
 /**
@@ -50,6 +65,8 @@ data class Goal(
      * notes are sealed along with its real title.
      */
     val notes: Map<LocalDate, String> = emptyMap(),
+    /** Urges resisted (or, for a Virtue, times done despite wanting to skip), counted per day. */
+    val urges: Map<LocalDate, Int> = emptyMap(),
     val createdAt: Long = 0,
     val updatedAt: Long = 0,
     val deleted: Boolean = false,
@@ -74,6 +91,23 @@ data class Goal(
 
     /** "slip" for a vice or an unlabelled goal, "missed day" for a virtue. */
     val slipWord: String get() = kind?.slip ?: "slip"
+
+    /** The urge button's wording for this goal. */
+    val urgeLabel: String get() = kind?.urge ?: GoalKind.Vice.urge
+    val urgesLabel: String get() = kind?.urges ?: GoalKind.Vice.urges
+
+    fun urgesOn(day: LocalDate): Int = urges[day] ?: 0
+
+    /** Logs one more urge resisted on [day]. */
+    fun resistUrge(day: LocalDate, now: Long): Goal =
+        if (day.isBefore(since)) this else copy(urges = urges + (day to urgesOn(day) + 1), updatedAt = now)
+
+    /** Takes one urge back off [day] (for Undo). */
+    fun unresistUrge(day: LocalDate, now: Long): Goal {
+        val n = urgesOn(day)
+        if (n == 0) return this
+        return copy(urges = if (n == 1) urges - day else urges + (day to n - 1), updatedAt = now)
+    }
 
     fun isSlip(day: LocalDate): Boolean = slips.binarySearch(day) >= 0
 
@@ -142,7 +176,7 @@ data class Goal(
 
     fun tombstone(now: Long): Goal = copy(
         title = "", slips = emptyList(), reason = "", icon = "", kind = null, sealed = null,
-        target = null, archived = false, notes = emptyMap(), deleted = true, updatedAt = now,
+        target = null, archived = false, notes = emptyMap(), urges = emptyMap(), deleted = true, updatedAt = now,
     )
 
     /** Progress towards [target], 0..1, or null with no target. */

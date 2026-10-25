@@ -36,7 +36,11 @@ A minimal Android app (**Stagirite** on your home screen) that does one thing: n
 - **Backdated entries** — change when a goal (or the current run) started by tapping its "since"
   date, and record a slip on any past day (or remove one), from the goal page or by
   tapping the day in its calendar. Runs, stats and the count all follow.
-- **Calendar** — a month view for each goal: filled discs for kept days, rings for slips.
+- **Calendar** — a month view for each goal (filled discs for kept days, rings for slips, a dot
+  where you resisted an urge) and a **year view** of twelve small months; tap a month to open it.
+- **Urges resisted** — one tap logs a moment you felt the urge and didn't (for a Virtue: "did it
+  anyway"), with Undo. Counted per day only; shown in stats and on the progress card, and never
+  counted against you.
 - **Progress** — measured by the gaps between slips: a verdict (Improving, Steady, Harder
   lately, or Unbroken), your typical run now against before (median of the last 3 runs vs the 3
   before), slips in the last 90 days against the 90 before, back-to-back slips (within 3 days),

@@ -154,6 +154,8 @@ fun LedgerApp(store: GoalStore, settings: Settings, sync: SyncManager, lock: App
                     store.edit(rawOpen.id, d.title, d.since, d.reason, d.icon, d.kind, sealedFor(d, rawOpen), d.target, unsealedNotes)
                 },
                 canNote = !rawOpen.isPrivate || vault.unlocked,
+            onUrge = { store.resistUrge(rawOpen.id, today) },
+            onUndoUrge = { store.unresistUrge(rawOpen.id, today) },
                 onNote = { day, text ->
                     if (rawOpen.isPrivate) {
                         val o = vault.open(rawOpen)
@@ -209,7 +211,15 @@ fun LedgerApp(store: GoalStore, settings: Settings, sync: SyncManager, lock: App
                         if (r == SnackbarResult.ActionPerformed) store.removeSlip(g.id, today)
                     }
                 },
-                onArchive = { g, archive ->
+                onQuickUrge = { g ->
+                buzz()
+                store.resistUrge(g.id, today)
+                scope.launch {
+                    val r = snackbar.showSnackbar("${g.urgeLabel} \u00B7 logged for today", actionLabel = "Undo")
+                    if (r == SnackbarResult.ActionPerformed) store.unresistUrge(g.id, today)
+                }
+            },
+            onArchive = { g, archive ->
                     store.setArchived(g.id, archive)
                     if (archive) scope.launch {
                         val r = snackbar.showSnackbar("Goal archived", actionLabel = "Undo")

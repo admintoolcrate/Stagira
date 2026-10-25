@@ -63,6 +63,12 @@ class GoalStore(context: Context) {
         if (any) changed()
     }
 
+    fun resistUrge(id: String, day: LocalDate) =
+        replace(id) { it.resistUrge(day, System.currentTimeMillis()) }
+
+    fun unresistUrge(id: String, day: LocalDate) =
+        replace(id) { it.unresistUrge(day, System.currentTimeMillis()) }
+
     fun setNote(id: String, day: LocalDate, text: String) =
         replace(id) { it.withNote(day, text, System.currentTimeMillis()) }
 

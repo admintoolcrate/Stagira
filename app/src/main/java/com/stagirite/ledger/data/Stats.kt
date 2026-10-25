@@ -16,6 +16,10 @@ data class GoalStats(
     val daysKept: Long,
     val slipsLast30: Int,
     val runs: List<Streak>,
+    val urgesTotal: Int,
+    val urgesLast30: Int,
+    /** Urges resisted since the current run began. */
+    val urgesThisRun: Int,
 ) {
     /** Share of tracked days kept, 0..1. */
     val keptRate: Double get() = if (daysTracked == 0L) 1.0 else daysKept.toDouble() / daysTracked
@@ -35,6 +39,9 @@ fun Goal.stats(today: LocalDate): GoalStats {
         daysKept = tracked - slipsSoFar,
         slipsLast30 = slips.count { !it.isBefore(monthAgo) && !it.isAfter(today) },
         runs = runs,
+        urgesTotal = urges.filterKeys { !it.isAfter(today) }.values.sum(),
+        urgesLast30 = urges.filterKeys { !it.isBefore(monthAgo) && !it.isAfter(today) }.values.sum(),
+        urgesThisRun = urges.filterKeys { !it.isBefore(currentStart) && !it.isAfter(today) }.values.sum(),
     )
 }
 

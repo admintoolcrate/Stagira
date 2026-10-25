@@ -146,12 +146,12 @@ fun GoalListScreen(
     onOpen: (Goal) -> Unit,
     onAdd: (GoalDraft) -> Unit,
     onQuickSlip: (Goal) -> Unit,
+    onQuickUrge: (Goal) -> Unit,
     onArchive: (Goal, Boolean) -> Unit,
     onTitleLongPress: () -> Unit,
     onSettings: () -> Unit,
 ) {
     var adding by rememberSaveable { mutableStateOf(false) }
-    var month by rememberSaveable { mutableStateOf(YearMonth.from(today).toString()) }
     val prefs = LocalUiPrefs.current
     // The title starts large and tucks into a slim bar as the list scrolls.
     val scroll = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
@@ -264,7 +264,7 @@ fun GoalListScreen(
                     item(key = "coming") { ComingUpCard(goals, today, onOpen) }
                     item(key = "calendar-heading") { SectionHeading("All goals", Modifier.padding(top = 12.dp)) }
                     item(key = "calendar") {
-                        CombinedCalendarCard(goals, today, YearMonth.parse(month)) { month = it.toString() }
+                        CombinedCalendarCard(goals, today)
                     }
                 }
                 if (archived.isNotEmpty()) {
@@ -317,6 +317,10 @@ fun GoalListScreen(
                 onArchive = {
                     actionsFor = null
                     onArchive(goal, true)
+                },
+                onUrge = {
+                    actionsFor = null
+                    onQuickUrge(goal)
                 },
             )
         }
@@ -420,6 +424,7 @@ private fun QuickActionsSheet(
     onSlip: () -> Unit,
     onOpen: () -> Unit,
     onArchive: () -> Unit,
+    onUrge: () -> Unit,
 ) {
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -438,6 +443,8 @@ private fun QuickActionsSheet(
                 Text(goal.title, style = MaterialTheme.typography.titleLarge, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
             Spacer(Modifier.height(12.dp))
+            SlipOption(goal.urgeLabel, "Log it for today", enabled = true, onClick = onUrge)
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
             SlipOption("Log a ${goal.slipWord} today", today.format(mediumDate), enabled = !goal.isSlip(today), onClick = onSlip)
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
             SlipOption("Open", "Calendar, stats and history", enabled = true, onClick = onOpen)
@@ -469,6 +476,8 @@ fun GoalDetailScreen(
     /** False for a private goal while its PIN hasn't been entered. */
     canNote: Boolean = true,
     onNote: (LocalDate, String) -> Unit = { _, _ -> },
+    onUrge: () -> Unit = {},
+    onUndoUrge: () -> Unit = {},
 ) {
     val buzz = rememberBuzz()
     var notingDay by rememberSaveable { mutableStateOf<Long?>(null) }
@@ -480,7 +489,6 @@ fun GoalDetailScreen(
     // Length of the run that just ended, while the "Day 0" screen is showing.
     var endedRun by rememberSaveable { mutableStateOf<Long?>(null) }
     var tab by rememberSaveable { mutableStateOf(GoalTab.Calendar) }
-    var month by rememberSaveable { mutableStateOf(YearMonth.from(today).toString()) }
     val snackbar = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
 
@@ -607,11 +615,37 @@ fun GoalDetailScreen(
                         )
                     }
                     Spacer(Modifier.height(8.dp))
-                    OutlinedButton(
-                        onClick = { slipSheet = true },
-                        modifier = Modifier.fillMaxWidth().height(48.dp),
-                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
-                    ) { Text("Log a $slipWord") }
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Button(
+                            onClick = {
+                                buzz()
+                                onUrge()
+                                val count = goal.urgesOn(today) + 1
+                                scope.launch {
+                                    val r = snackbar.showSnackbar(
+                                        "${goal.urgeLabel} \u00B7 ${if (count == 1) "first" else "${count}\u00D7"} today",
+                                        actionLabel = "Undo",
+                                    )
+                                    if (r == SnackbarResult.ActionPerformed) onUndoUrge()
+                                }
+                            },
+                            modifier = Modifier.weight(1f).height(48.dp),
+                        ) { Text(goal.urgeLabel, maxLines = 1, overflow = TextOverflow.Ellipsis) }
+                        OutlinedButton(
+                            onClick = { slipSheet = true },
+                            modifier = Modifier.weight(1f).height(48.dp),
+                            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+                        ) { Text("Log a $slipWord", maxLines = 1, overflow = TextOverflow.Ellipsis) }
+                    }
+                    val urgesToday = goal.urgesOn(today)
+                    if (urgesToday > 0) {
+                        Spacer(Modifier.height(6.dp))
+                        Text(
+                            "${goal.urgesLabel} today: $urgesToday",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
                 }
             }
 
@@ -657,14 +691,14 @@ fun GoalDetailScreen(
             LedgerCard {
                 when (tab) {
                     GoalTab.Calendar -> {
-                        MonthCalendar(
-                            month = YearMonth.parse(month),
+                        LedgerCalendar(
                             today = today,
-                            earliest = YearMonth.from(goal.since),
+                            earliest = goal.since,
                             stateOf = { goal.dayState(it, today) },
-                            onMonthChange = { month = it.toString() },
                             onDayClick = { tappedDay = it.toEpochDay() },
                             slipLabel = slipWord.capitalised(),
+                            urgesOf = { goal.urgesOn(it) },
+                            showUrgeKey = goal.urges.isNotEmpty(),
                         )
                         Text(
                             "Tap a day to log or remove a $slipWord.",
@@ -921,6 +955,13 @@ private fun StatsPanel(goal: Goal, today: LocalDate) {
         Figure("${(stats.keptRate * 100).roundToInt()}%", "Days kept", Modifier.weight(1f))
         Figure("${stats.freshStarts}", "Fresh starts", Modifier.weight(1f))
         Figure("${stats.slipsLast30}", "${(goal.kind?.slips ?: "slips").capitalised()}, 30 days", Modifier.weight(1f))
+    }
+    if (stats.urgesTotal > 0) {
+        Row(Modifier.fillMaxWidth()) {
+            Figure("${stats.urgesTotal}", goal.urgesLabel, Modifier.weight(1f))
+            Figure("${stats.urgesThisRun}", "This run", Modifier.weight(1f))
+            Figure("${stats.urgesLast30}", "Last 30 days", Modifier.weight(1f))
+        }
     }
     Text(
         "${plural(stats.daysKept, "day")} kept of ${plural(stats.daysTracked, "day")} since ${goal.since.format(mediumDate)}.",

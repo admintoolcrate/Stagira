@@ -119,6 +119,16 @@ fun ProgressPanel(goal: Goal, p: Progress) {
                 )
             )
         }
+        if (p.urgesRecent != null && p.urgesBefore != null && p.urgesRecent + p.urgesBefore > 0) {
+            add(
+                Triple(
+                    "${goal.urgesLabel}, last ${p.windowDays} days",
+                    "${p.urgesRecent} \u00B7 was ${p.urgesBefore}",
+                    // More resolve shown is good either way; no arrow, it never counts against you.
+                    "",
+                )
+            )
+        }
         add(Triple("New personal bests", "${p.newBests}", ""))
     }
     rows.forEachIndexed { i, (label, value, mark) ->

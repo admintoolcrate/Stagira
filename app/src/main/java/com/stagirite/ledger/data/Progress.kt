@@ -43,6 +43,9 @@ data class Progress(
     /** Of those, slips within [CLOSE_DAYS] days of the slip before. */
     val closeRecent: Int?,
     val closeBefore: Int?,
+    /** Urges resisted in the recent window and the one before; never counts against the verdict. */
+    val urgesRecent: Int? = null,
+    val urgesBefore: Int? = null,
     /** Runs that beat every run before them (the first run doesn't count). */
     val newBests: Int,
     val medianRun: Double?,
@@ -103,6 +106,8 @@ fun Goal.progress(today: LocalDate, monthsBack: Int = 6): Progress {
     val slipsBefore = if (haveWindows) past.count { inRange(it, beforeFrom, recentFrom) } else null
     val closeRecent = if (haveWindows) close.count { inRange(it, recentFrom, today.plusDays(1)) } else null
     val closeBefore = if (haveWindows) close.count { inRange(it, beforeFrom, recentFrom) } else null
+    val urgesRecent = if (haveWindows) urges.filterKeys { inRange(it, recentFrom, today.plusDays(1)) }.values.sum() else null
+    val urgesBefore = if (haveWindows) urges.filterKeys { inRange(it, beforeFrom, recentFrom) }.values.sum() else null
 
     // 4. New personal bests, counting the current run if it has already set one.
     val all = runs(today).map { it.days }
@@ -149,6 +154,8 @@ fun Goal.progress(today: LocalDate, monthsBack: Int = 6): Progress {
         slipsBefore = slipsBefore,
         closeRecent = closeRecent,
         closeBefore = closeBefore,
+        urgesRecent = urgesRecent,
+        urgesBefore = urgesBefore,
         newBests = newBests,
         medianRun = median(finished.map { it.days }),
         trend = linearTrend(finished.map { it.days }),
