@@ -32,6 +32,9 @@ class GoalStore(context: Context) {
     fun edit(id: String, title: String, since: LocalDate, reason: String) =
         replace(id) { it.edit(title, since, reason, System.currentTimeMillis()) }
 
+    fun moveCurrentStart(id: String, day: LocalDate) =
+        replace(id) { it.moveCurrentStart(day, System.currentTimeMillis()) }
+
     fun recordSlip(id: String, day: LocalDate) =
         replace(id) { it.recordSlip(day, System.currentTimeMillis()) }
 

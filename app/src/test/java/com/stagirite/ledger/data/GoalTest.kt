@@ -67,6 +67,29 @@ class GoalTest {
     }
 
     @Test
+    fun movingTheStartWithNoSlipsChangesTheStartDate() {
+        val g = goal.moveCurrentStart(start.minusDays(30), now = 7)
+        assertEquals(start.minusDays(30), g.since)
+        assertEquals(30, g.daysKept(start))
+        assertEquals(7, g.updatedAt)
+        assertEquals(null, g.currentStartEarliest)
+    }
+
+    @Test
+    fun movingTheStartAfterASlipMovesTheLatestSlip() {
+        val g = goal.recordSlip(start.plusDays(10), 1).recordSlip(start.plusDays(20), 2)
+        assertEquals(start.plusDays(11), g.currentStartEarliest)
+
+        val moved = g.moveCurrentStart(start.plusDays(15), now = 3)
+        assertEquals(listOf(start.plusDays(10), start.plusDays(15)), moved.slips)
+        assertEquals(start, moved.since)
+        assertEquals(15, moved.daysKept(start.plusDays(30)))
+
+        // Can't go back past the slip before it.
+        assertEquals(listOf(start.plusDays(10), start.plusDays(11)), g.moveCurrentStart(start, 4).slips)
+    }
+
+    @Test
     fun tombstoneDropsContent() {
         val t = goal.copy(reason = "health").recordSlip(start.plusDays(3), 1).tombstone(now = 9)
         assertTrue(t.deleted)

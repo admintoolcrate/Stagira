@@ -70,6 +70,7 @@ fun LedgerApp(store: GoalStore, settings: Settings, sync: SyncManager, lock: App
             onEdit = { title, since, reason -> store.edit(openGoal.id, title, since, reason) },
             onSlip = { store.recordSlip(openGoal.id, it) },
             onRemoveSlip = { store.removeSlip(openGoal.id, it) },
+            onMoveStart = { store.moveCurrentStart(openGoal.id, it) },
             onDelete = {
                 val removed = store.delete(openGoal.id)
                 openId = null

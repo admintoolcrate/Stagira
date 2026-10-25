@@ -12,7 +12,8 @@ A minimal Android app that does one thing: name a habit you're keeping —
   one matters. The count ticks over at midnight.
 - **Begin again** when you slip: the count restarts, the run is kept, and you get a short passage
   from Aristotle for the day (see *Quotations*).
-- **Backdated entries** — record a slip on any past day (or remove one), from the goal page or by
+- **Backdated entries** — change when a goal (or the current run) started by tapping its "since"
+  date, and record a slip on any past day (or remove one), from the goal page or by
   tapping the day in its calendar. Runs, stats and the count all follow.
 - **Calendar** — a month view for each goal: filled discs for kept days, rings for slips.
 - **Stats** — current, longest and average run; share of days kept; fresh starts; slips in the

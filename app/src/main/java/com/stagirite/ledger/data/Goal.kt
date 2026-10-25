@@ -58,6 +58,25 @@ data class Goal(
     fun removeSlip(day: LocalDate, now: Long): Goal =
         if (!isSlip(day)) this else copy(slips = slips - day, updatedAt = now)
 
+    /**
+     * The earliest day the current run could be moved back to: unlimited with no
+     * slips, otherwise the day after the slip (or start) before the latest one.
+     */
+    val currentStartEarliest: LocalDate?
+        get() = if (slips.isEmpty()) null else (slips.dropLast(1).lastOrNull() ?: since).plusDays(1)
+
+    /**
+     * Changes when the current run began. With no slips that's the goal's start
+     * date; otherwise the latest slip moves to [day].
+     */
+    fun moveCurrentStart(day: LocalDate, now: Long): Goal {
+        if (slips.isEmpty()) return if (day == since) this else copy(since = day, updatedAt = now)
+        val earliest = currentStartEarliest!!
+        val moved = maxOf(day, earliest)
+        if (moved == slips.last()) return this
+        return copy(slips = slips.dropLast(1) + moved, updatedAt = now)
+    }
+
     /** [since] can't move past the first slip. */
     fun edit(title: String, since: LocalDate, reason: String, now: Long): Goal = copy(
         title = title.trim(),

@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
@@ -180,8 +181,10 @@ fun GoalDetailScreen(
     onEdit: (String, LocalDate, String) -> Unit,
     onSlip: (LocalDate) -> Unit,
     onRemoveSlip: (LocalDate) -> Unit,
+    onMoveStart: (LocalDate) -> Unit,
     onDelete: () -> Unit,
 ) {
+    var movingStart by rememberSaveable { mutableStateOf(false) }
     var editing by rememberSaveable { mutableStateOf(false) }
     var confirmReset by rememberSaveable { mutableStateOf(false) }
     var confirmDelete by rememberSaveable { mutableStateOf(false) }
@@ -237,11 +240,19 @@ fun GoalDetailScreen(
                 )
                 Spacer(Modifier.height(16.dp))
                 Text(describeSpan(goal.currentStart, today), style = MaterialTheme.typography.bodyMedium)
-                Text(
-                    "since ${goal.currentStart.format(longDate)}",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
+                TextButton(onClick = { movingStart = true }) {
+                    Text(
+                        "since ${goal.currentStart.format(longDate)}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    Icon(
+                        Icons.Filled.Edit,
+                        contentDescription = "Change start date",
+                        modifier = Modifier.padding(start = 6.dp).size(14.dp),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
                 Spacer(Modifier.height(32.dp))
                 ThinProgress(Milestones.progress(days))
                 Spacer(Modifier.height(8.dp))
@@ -377,6 +388,19 @@ fun GoalDetailScreen(
         )
     }
 
+    if (movingStart) {
+        DayPickerDialog(
+            initial = goal.currentStart,
+            earliest = goal.currentStartEarliest,
+            latest = today,
+            onDismiss = { movingStart = false },
+            onPick = {
+                movingStart = false
+                onMoveStart(it)
+            },
+        )
+    }
+
     if (pickingPastSlip) {
         DayPickerDialog(
             initial = today,
@@ -495,11 +519,16 @@ private fun GoalDialog(
                 )
                 Spacer(Modifier.height(8.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text("Counting from", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
+                    Text("Started", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
                     TextButton(onClick = { picking = true }) {
                         Text(if (since == today) "Today" else since.format(mediumDate))
                     }
                 }
+                Text(
+                    "Started earlier? Pick the day you began and the count goes back to it.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
             }
         },
         confirmButton = {
