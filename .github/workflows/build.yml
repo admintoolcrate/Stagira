@@ -58,7 +58,7 @@ jobs:
           VERSION=$(sed -n 's/.*versionName = "\(.*\)".*/\1/p' app/build.gradle.kts)
           APK="stagira-${VERSION}-beta${GITHUB_RUN_NUMBER}.apk"
           cp app/build/outputs/apk/debug/app-debug.apk "$APK"
-          git log -1 --pretty=%B | sed '/^Co-Authored-By:/d;/^Claude-Session:/d' > notes.md
+          git log -1 --pretty=%B | sed '/^Co-Authored-By:/d;/^Claude-Session:/d;s/ \[skip ci\]//' > notes.md
           printf '\nInstall it over your current copy; your goals stay.\n' >> notes.md
           gh release create "beta-${GITHUB_RUN_NUMBER}" "$APK" --prerelease --target "$GITHUB_SHA" \
             --title "Stagira ${VERSION} · beta ${GITHUB_RUN_NUMBER}" --notes-file notes.md
