@@ -33,8 +33,8 @@ android {
         applicationId = "com.stagirite.ledger"
         minSdk = 26
         targetSdk = 36
-        versionCode = 10
-        versionName = "3.1"
+        versionCode = 11
+        versionName = "3.1.1"
 
         // AdMob IDs for "Watch an ad to support us". Set admobAppId and
         // admobRewardedId in gradle.properties (or ~/.gradle/gradle.properties)
@@ -120,7 +120,7 @@ dependencies {
     implementation("androidx.datastore:datastore-preferences-core:1.1.1")
     implementation("com.google.android.gms:play-services-auth:21.3.0")
     // Plus and the tip jar.
-    implementation("com.android.billingclient:billing-ktx:7.1.1")
+    implementation("com.android.billingclient:billing-ktx:8.0.0")
     // "Watch an ad to support us": only started when the user taps it.
     implementation("com.google.android.gms:play-services-ads:23.6.0")
     // Google's consent form for ads, required in the EEA and UK.

@@ -18,11 +18,12 @@ import com.android.billingclient.api.QueryProductDetailsParams
 import com.android.billingclient.api.QueryPurchasesParams
 import com.android.billingclient.api.acknowledgePurchase
 import com.android.billingclient.api.consumePurchase
-import com.android.billingclient.api.queryProductDetails
 import com.android.billingclient.api.queryPurchasesAsync
 import com.stagirite.ledger.BuildConfig
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlin.coroutines.resume
 
 /** Product ids. Create these as one-time products in Play Console → Monetize → In-app products. */
 object Products {
@@ -91,8 +92,13 @@ class Billing(context: Context, private val scope: CoroutineScope) {
                     .build()
             }
         ).build()
-        val result = client.queryProductDetails(params)
-        result.productDetailsList.orEmpty().forEach { details[it.productId] = it }
+        // Billing 8 reports found and unfound products separately; only found ones have prices.
+        val found = suspendCancellableCoroutine<List<ProductDetails>> { cont ->
+            client.queryProductDetailsAsync(params) { result, products ->
+                cont.resume(if (result.ok) products.productDetailsList else emptyList())
+            }
+        }
+        found.forEach { details[it.productId] = it }
         prices = details.mapValues { it.value.oneTimePurchaseOfferDetails?.formattedPrice.orEmpty() }
     }
 
