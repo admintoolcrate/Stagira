@@ -124,8 +124,8 @@ Play needs a public web page. The repo has a small site in `docs/` for this:
 
 1. On GitHub: **Settings → Pages → Build and deployment**, Source **Deploy from a branch**,
    Branch `ccr-a04772e5-ln9fxb` (or `main`, once work is merged there), folder **/docs** → **Save**.
-2. A minute later the site is at `https://admintoolcrate.github.io/The-Stagirite-s-Ledger/`, and the
-   policy at `https://admintoolcrate.github.io/The-Stagirite-s-Ledger/play-store/privacy-policy.html`.
+2. A minute later the site is at `https://admintoolcrate.github.io/Stagira/`, and the
+   policy at `https://admintoolcrate.github.io/Stagira/play-store/privacy-policy.html`.
    That second link goes in Play Console → App content → Privacy policy.
 
 (Or paste `privacy-policy.md` into a free Google Sites page.)

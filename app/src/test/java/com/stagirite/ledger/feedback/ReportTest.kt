@@ -29,7 +29,7 @@ class ReportTest {
     fun githubLinkCarriesTemplateLabelTitleAndBody() {
         val r = Report(ReportKind.Feature, "Year view & more", "A 12-month grid, please?")
         val url = r.githubUrl()
-        assertTrue(url.startsWith("https://github.com/admintoolcrate/The-Stagirite-s-Ledger/issues/new?"))
+        assertTrue(url.startsWith("https://github.com/admintoolcrate/Stagira/issues/new?"))
         assertEquals("feature_request.md", param(url, "template"))
         assertEquals("enhancement", param(url, "labels"))
         assertEquals("Year view & more", param(url, "title"))

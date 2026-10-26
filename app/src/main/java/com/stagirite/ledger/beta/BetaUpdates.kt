@@ -69,7 +69,7 @@ class BetaUpdates(context: Context) {
                     val n = r.optString("tag_name").removePrefix("beta-").toIntOrNull() ?: return@mapNotNull null
                     val url = r.optString("html_url")
                     // Only ever send people to this repository's own release pages.
-                    if (!url.startsWith("https://github.com/${FeedbackDestinations.GITHUB_REPO}/releases/")) return@mapNotNull null
+                    if (!url.startsWith("https://github.com/${FeedbackDestinations.GITHUB_REPO}/releases/", ignoreCase = true)) return@mapNotNull null
                     Release(n, r.optString("name").ifBlank { "beta $n" }, url)
                 }
                 .maxByOrNull { it.build }

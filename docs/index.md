@@ -13,6 +13,6 @@ character is built by habit, one day at a time.
 - Free to use, with an optional one-time Plus.
 
 **[Privacy policy](play-store/privacy-policy.html)** ·
-[Source code](https://github.com/admintoolcrate/The-Stagirite-s-Ledger) ·
-[Beta downloads](https://github.com/admintoolcrate/The-Stagirite-s-Ledger/releases) ·
+[Source code](https://github.com/admintoolcrate/Stagira) ·
+[Beta downloads](https://github.com/admintoolcrate/Stagira/releases) ·
 Contact: admin.toolcrate@gmail.com

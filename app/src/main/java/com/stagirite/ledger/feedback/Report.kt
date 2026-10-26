@@ -5,7 +5,7 @@ import java.net.URLEncoder
 /** Where reports go. The app has no server; these open in the reporter's own browser or email app. */
 object FeedbackDestinations {
     const val EMAIL = "admin.toolcrate@gmail.com"
-    const val GITHUB_REPO = "admintoolcrate/The-Stagirite-s-Ledger"
+    const val GITHUB_REPO = "admintoolcrate/Stagira"
 }
 
 enum class ReportKind(val label: String, val template: String, val githubLabel: String, val subjectPrefix: String) {
