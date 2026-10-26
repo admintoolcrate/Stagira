@@ -139,14 +139,14 @@ object Reminder {
     private fun dailyText(context: Context): String {
         val app = context.applicationContext as LedgerApplication
         val today = LocalDate.now()
-        val reached = app.store.goals.filter { Milestones.isMilestone(it.daysKept(today)) }
+        val reached = app.store.goals.filter { Milestones.isMilestone(it.daysKept(today), it.currentStart) }
         return when {
             reached.isEmpty() -> "Anything to log? If not, today counts as kept."
             reached.size > 1 -> "${reached.size} of your goals reach a milestone today."
             app.settings.appLock || reached[0].isPrivate -> "One of your goals reaches a milestone today."
             else -> {
                 val days = reached[0].daysKept(today)
-                "${reached[0].title} reaches ${Milestones.name(days) ?: "$days days"} today."
+                "${reached[0].title} reaches ${Milestones.name(days, reached[0].currentStart) ?: "$days days"} today."
             }
         }
     }

@@ -153,10 +153,10 @@ internal fun emojiBitmap(context: Context, emoji: String): Bitmap {
 internal fun days(n: Long) = if (n == 1L) "1 day" else "$n days"
 
 /** "Next: 1 week, in 2 days", or how the first day reads. */
-internal fun nextLine(days: Long): String {
+internal fun nextLine(days: Long, start: LocalDate): String {
     if (days == 0L) return "Next: 1 day, tomorrow"
-    val next = Milestones.next(days)
-    return "Next: ${Milestones.name(next) ?: days(next)}, in ${days(next - days)}"
+    val next = Milestones.next(days, start)
+    return "Next: ${Milestones.name(next, start) ?: days(next)}, in ${days(next - days)}"
 }
 
 @Composable
@@ -259,9 +259,9 @@ internal fun Hero(goal: Goal, icons: Map<String, Bitmap>, today: LocalDate, c: P
             )
         }
         Spacer(GlanceModifier.height(6.dp))
-        Text(nextLine(days), style = TextStyle(color = c.muted, fontSize = 11.sp), maxLines = 1)
+        Text(nextLine(days, goal.currentStart), style = TextStyle(color = c.muted, fontSize = 11.sp), maxLines = 1)
         Spacer(GlanceModifier.height(6.dp))
-        Progress(days, c)
+        Progress(days, goal.currentStart, c)
     }
 }
 
@@ -276,20 +276,20 @@ private fun GoalRow(goal: Goal, icons: Map<String, Bitmap>, today: LocalDate, c:
             }
             Column(GlanceModifier.defaultWeight()) {
                 Text(goal.title, style = TextStyle(color = c.ink, fontSize = 14.sp, fontWeight = FontWeight.Medium), maxLines = 1)
-                Text(nextLine(days), style = TextStyle(color = c.muted, fontSize = 11.sp), maxLines = 1)
+                Text(nextLine(days, goal.currentStart), style = TextStyle(color = c.muted, fontSize = 11.sp), maxLines = 1)
             }
             Spacer(GlanceModifier.width(10.dp))
             Text("$days", style = TextStyle(color = c.ink, fontSize = 26.sp, fontWeight = FontWeight.Medium), maxLines = 1)
         }
         Spacer(GlanceModifier.height(6.dp))
-        Progress(days, c)
+        Progress(days, goal.currentStart, c)
     }
 }
 
 @Composable
-internal fun Progress(days: Long, c: Palette) {
+internal fun Progress(days: Long, start: LocalDate, c: Palette) {
     LinearProgressIndicator(
-        progress = Milestones.progress(days),
+        progress = Milestones.progress(days, start),
         modifier = GlanceModifier.fillMaxWidth().height(3.dp).cornerRadius(2.dp),
         color = c.ink,
         backgroundColor = c.track,

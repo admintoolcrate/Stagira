@@ -126,7 +126,8 @@ class GoalTest {
         assertEquals(30, Milestones.next(21))
         assertEquals(100, Milestones.next(90))
         assertEquals(500, Milestones.next(365))
-        assertEquals(730, Milestones.next(500))
+        assertEquals(547, Milestones.next(500))
+        assertEquals(730, Milestones.next(547))
         assertEquals(1000, Milestones.next(800))
         assertEquals(1095, Milestones.next(1000))
         assertEquals(0f, Milestones.progress(0), 0f)
@@ -146,6 +147,8 @@ class GoalTest {
         assertEquals("1 year", Milestones.name(365))
         assertEquals("2 years", Milestones.name(730))
         assertEquals(null, Milestones.name(100))
+        assertEquals("18 months", Milestones.name(547))
+        assertEquals("10 years", Milestones.name(3650))
     }
 
     @Test
@@ -201,5 +204,22 @@ class GoalTest {
         assertEquals(listOf(start.plusDays(10), start.plusDays(20)), g.slips)
         assertEquals(start.plusDays(20), g.currentStart)
         assertEquals("", g.reason)
+    }
+
+    @Test
+    fun yearsFallOnTheRealAnniversary() {
+        // 1 March 2023 to 1 March 2025 crosses 29 February 2024: two years is 731 days.
+        val start = LocalDate.of(2023, 3, 1)
+        assertEquals(731, Milestones.next(700, start))
+        assertTrue(Milestones.isMilestone(731, start))
+        assertFalse(Milestones.isMilestone(730, start))
+        assertEquals("2 years", Milestones.name(731, start))
+        assertEquals("1 year", Milestones.name(366, LocalDate.of(2024, 1, 1)))
+    }
+
+    @Test
+    fun theLadderLooksYearsAhead() {
+        val ladder = Milestones.upTo(4000)
+        listOf(365L, 500, 547, 730, 1000, 1095, 1460, 1825, 2000, 3000, 3650).forEach { assertTrue("$it", it in ladder) }
     }
 }

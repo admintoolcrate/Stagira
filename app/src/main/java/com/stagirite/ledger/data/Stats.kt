@@ -88,7 +88,7 @@ data class UpcomingMilestone(val goal: Goal, val milestone: Long, val inDays: Lo
 fun upcomingMilestones(goals: List<Goal>, today: LocalDate): List<UpcomingMilestone> =
     goals.map {
         val days = it.daysKept(today)
-        val next = Milestones.next(days)
+        val next = Milestones.next(days, it.currentStart)
         UpcomingMilestone(it, next, next - days)
     }.sortedBy { it.inDays }
 
@@ -96,6 +96,6 @@ fun upcomingMilestones(goals: List<Goal>, today: LocalDate): List<UpcomingMilest
 fun sortGoals(goals: List<Goal>, order: SortOrder, today: LocalDate): List<Goal> = when (order) {
     SortOrder.Added -> goals
     SortOrder.LongestRun -> goals.sortedByDescending { it.daysKept(today) }
-    SortOrder.NextMilestone -> goals.sortedBy { Milestones.next(it.daysKept(today)) - it.daysKept(today) }
+    SortOrder.NextMilestone -> goals.sortedBy { Milestones.next(it.daysKept(today), it.currentStart) - it.daysKept(today) }
     SortOrder.Name -> goals.sortedBy { it.title.lowercase() }
 }

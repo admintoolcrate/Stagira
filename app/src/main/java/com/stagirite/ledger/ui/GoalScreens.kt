@@ -460,8 +460,8 @@ private fun EmptyState(modifier: Modifier = Modifier) {
 @Composable
 private fun LedgerRow(goal: Goal, today: LocalDate, onClick: () -> Unit, onLongClick: () -> Unit, modifier: Modifier = Modifier) {
     val days = goal.daysKept(today)
-    val next = Milestones.next(days)
-    val milestoneToday = Milestones.isMilestone(days)
+    val next = Milestones.next(days, goal.currentStart)
+    val milestoneToday = Milestones.isMilestone(days, goal.currentStart)
     Column(modifier.fillMaxWidth()) {
         HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
         Column(
@@ -491,7 +491,7 @@ private fun LedgerRow(goal: Goal, today: LocalDate, onClick: () -> Unit, onLongC
                             milestoneToday -> "Milestone today"
                             goal.target != null && days >= goal.target -> "Target of ${plural(goal.target, "day")} reached"
                             goal.target != null -> "$days of ${plural(goal.target, "day")}"
-                            else -> "${plural(next - days, "day")} to ${Milestones.name(next) ?: plural(next, "day")}"
+                            else -> "${plural(next - days, "day")} to ${Milestones.name(next, goal.currentStart) ?: plural(next, "day")}"
                         },
                         style = MaterialTheme.typography.bodySmall,
                         color = if (milestoneToday) MaterialTheme.colorScheme.onBackground
@@ -519,7 +519,7 @@ private fun LedgerRow(goal: Goal, today: LocalDate, onClick: () -> Unit, onLongC
                 }
             }
             Spacer(Modifier.height(Space.m))
-            ThinProgress(goal.targetProgress(today) ?: Milestones.progress(days))
+            ThinProgress(goal.targetProgress(today) ?: Milestones.progress(days, goal.currentStart))
         }
     }
 }
@@ -690,7 +690,7 @@ fun GoalDetailScreen(
     val scope = rememberCoroutineScope()
 
     val days = goal.daysKept(today)
-    val next = Milestones.next(days)
+    val next = Milestones.next(days, goal.currentStart)
     val beganAgainToday = goal.slips.lastOrNull() == today
     val slipWord = goal.slipWord
 
@@ -797,15 +797,15 @@ fun GoalDetailScreen(
                 Spacer(Modifier.height(Space.xl))
                 Text(
                     when {
-                        Milestones.isMilestone(days) -> "Milestone reached today"
+                        Milestones.isMilestone(days, goal.currentStart) -> "Milestone reached today"
                         goal.target != null && days >= goal.target -> "Target of ${plural(goal.target, "day")} reached"
                         goal.target != null -> "${plural(goal.target - days, "day")} to your target of ${goal.target}"
-                        else -> "${plural(next - days, "day")} to ${Milestones.name(next) ?: plural(next, "day")}"
+                        else -> "${plural(next - days, "day")} to ${Milestones.name(next, goal.currentStart) ?: plural(next, "day")}"
                     },
                     style = MaterialTheme.typography.bodyMedium,
                 )
                 Spacer(Modifier.height(Space.s))
-                ThinProgress(goal.targetProgress(today) ?: Milestones.progress(days), Modifier.width(160.dp))
+                ThinProgress(goal.targetProgress(today) ?: Milestones.progress(days, goal.currentStart), Modifier.width(160.dp))
                 TextButton(onClick = { movingStart = true }) {
                     Text(
                         "${describeSpan(goal.currentStart, today)} \u00B7 since ${goal.currentStart.format(mediumDate)}",
@@ -1198,8 +1198,13 @@ private fun StatsPanel(goal: Goal, today: LocalDate) {
 private fun MilestonesPanel(goal: Goal, today: LocalDate) {
     val days = goal.daysKept(today)
     val best = goal.longestStreak(today)
-    val upcoming = generateSequence(Milestones.next(days)) { Milestones.next(it) }.take(3).toList()
-    val rows = Milestones.upTo(days) + upcoming
+    val start = goal.currentStart
+    // Looks a good way ahead: the next few, and at least the next yearly anniversary.
+    val soon = generateSequence(Milestones.next(days, start)) { Milestones.next(it, start) }.take(4).toList()
+    val nextAnniversary = Milestones.upTo(days + 400, start)
+        .firstOrNull { it > days && Milestones.name(it, start)?.contains("year") == true }
+    val upcoming = (soon + listOfNotNull(nextAnniversary)).distinct().sorted()
+    val rows = Milestones.upTo(days, start) + upcoming
     rows.forEachIndexed { i, m ->
         val reached = m <= days
         val isNext = m == upcoming.first()
@@ -1222,7 +1227,7 @@ private fun MilestonesPanel(goal: Goal, today: LocalDate) {
             Spacer(Modifier.width(14.dp))
             Column(Modifier.weight(1f)) {
                 Text(
-                    plural(m, "day") + (Milestones.name(m)?.let { " · $it" } ?: ""),
+                    plural(m, "day") + (Milestones.name(m, start)?.let { " \u00B7 $it" } ?: ""),
                     style = MaterialTheme.typography.bodyLarge,
                     color = if (reached || isNext) MaterialTheme.colorScheme.onBackground else MaterialTheme.colorScheme.onSurfaceVariant,
                 )

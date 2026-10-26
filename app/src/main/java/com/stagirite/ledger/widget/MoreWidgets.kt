@@ -156,13 +156,13 @@ private fun OverviewContent(goals: List<Goal>, today: LocalDate, c: Palette, roo
         if (next != null) {
             Spacer(GlanceModifier.height(10.dp))
             Text(
-                "Next: ${next.goal.title}, ${Milestones.name(next.milestone) ?: days(next.milestone)} " +
+                "Next: ${next.goal.title}, ${Milestones.name(next.milestone, next.goal.currentStart) ?: days(next.milestone)} " +
                     if (next.inDays == 1L) "tomorrow" else "in ${days(next.inDays)}",
                 style = TextStyle(color = c.muted, fontSize = 11.sp),
                 maxLines = 1,
             )
             Spacer(GlanceModifier.height(6.dp))
-            Progress(next.goal.daysKept(today), c)
+            Progress(next.goal.daysKept(today), next.goal.currentStart, c)
         }
     }
 }

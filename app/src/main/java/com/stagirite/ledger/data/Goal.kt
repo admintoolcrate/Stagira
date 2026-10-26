@@ -219,37 +219,52 @@ fun mergeGoals(a: List<Goal>, b: List<Goal>): List<Goal> =
         .map { (_, versions) -> versions.maxWith(compareBy<Goal>({ it.updatedAt }, { it.deleted })) }
         .sortedWith(compareBy({ it.createdAt }, { it.id }))
 
+/**
+ * Milestones: a ladder of early days, then the long view: a year, 500 days,
+ * 18 months, two years, 1,000 days, and every year and every 1,000 days after.
+ *
+ * Given the run's [start], years and months fall on the real anniversary, so
+ * "2 years" is the same date two years on, leap days included. Without one,
+ * a year is taken as 365 days.
+ */
 object Milestones {
-    private val fixed = listOf(1L, 3, 7, 14, 21, 30, 60, 90, 100, 180, 270, 365)
+    private val fixed = listOf(1L, 3, 7, 14, 21, 30, 60, 90, 100, 180, 270)
 
-    /** Every milestone up to [limit]: the fixed ladder, then each year, 500 days and every 1,000. */
-    fun upTo(limit: Long): List<Long> {
-        val years = (2..(limit / 365 + 1)).map { it * 365L }
+    private fun span(start: LocalDate?, years: Long = 0, months: Long = 0): Long =
+        if (start == null) years * 365 + months * 365 / 12
+        else ChronoUnit.DAYS.between(start, start.plusYears(years).plusMonths(months))
+
+    /** Every milestone up to [limit]. */
+    fun upTo(limit: Long, start: LocalDate? = null): List<Long> {
+        val years = (1..(limit / 365 + 1)).map { span(start, years = it) }
         val thousands = (1..(limit / 1000 + 1)).map { it * 1000L }
-        return (fixed + years + 500L + thousands).filter { it <= limit }.distinct().sorted()
+        return (fixed + years + 500L + span(start, months = 18) + thousands)
+            .filter { it <= limit }.distinct().sorted()
     }
 
     /** The next milestone strictly greater than [days]. */
-    fun next(days: Long): Long = upTo(days + 1000).first { it > days }
+    fun next(days: Long, start: LocalDate? = null): Long = upTo(days + 1000, start).first { it > days }
 
     /** The most recent milestone reached, or 0 if none yet. */
-    fun previous(days: Long): Long = upTo(days).lastOrNull { it <= days } ?: 0
+    fun previous(days: Long, start: LocalDate? = null): Long = upTo(days, start).lastOrNull { it <= days } ?: 0
 
-    fun isMilestone(days: Long): Boolean = days > 0 && previous(days) == days
+    fun isMilestone(days: Long, start: LocalDate? = null): Boolean = days > 0 && previous(days, start) == days
 
     /** Fraction of the way from the previous milestone to the next one, 0..1. */
-    fun progress(days: Long): Float {
-        val prev = previous(days)
-        val next = next(days)
+    fun progress(days: Long, start: LocalDate? = null): Float {
+        val prev = previous(days, start)
+        val next = next(days, start)
         return ((days - prev).toFloat() / (next - prev).toFloat()).coerceIn(0f, 1f)
     }
 
-    /** A friendlier name where there is one: "1 week", "2 years". */
-    fun name(days: Long): String? = when {
-        days == 7L -> "1 week"
-        days == 14L || days == 21L -> "${days / 7} weeks"
-        days % 365 == 0L -> plural(days / 365, "year")
-        else -> null
+    /** A friendlier name where there is one: "1 week", "18 months", "2 years". */
+    fun name(days: Long, start: LocalDate? = null): String? {
+        if (days == 7L) return "1 week"
+        if (days == 14L || days == 21L) return "${days / 7} weeks"
+        if (days == span(start, months = 18)) return "18 months"
+        val years = Math.round(days / 365.25)
+        if (years >= 1 && days == span(start, years = years)) return plural(years, "year")
+        return null
     }
 }
 

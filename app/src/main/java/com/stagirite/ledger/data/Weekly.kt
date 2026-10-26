@@ -47,7 +47,7 @@ fun weekReview(goals: List<Goal>, end: LocalDate): WeekReview {
             slips = slips,
             urges = g.urges.filterKeys(inWeek).values.sum(),
             milestones = g.runs(end).flatMap { run ->
-                Milestones.upTo(run.days).filter { m -> inWeek(run.start.plusDays(m)) }
+                Milestones.upTo(run.days, run.start).filter { m -> inWeek(run.start.plusDays(m)) }
             },
             runAtEnd = g.daysKept(end),
         )

@@ -451,7 +451,7 @@ private fun LedgerAppContent(
     // Celebrate a milestone reached today, once per goal and run.
     val milestoneGoal = shown.firstOrNull { g ->
         val d = g.daysKept(today)
-        Milestones.isMilestone(d) && !settings.isCelebrated(celebrationKey(g, d))
+        Milestones.isMilestone(d, g.currentStart) && !settings.isCelebrated(celebrationKey(g, d))
     }
     if (milestoneGoal != null && openGoal == null && settings.celebrations) {
         val d = milestoneGoal.daysKept(today)
@@ -573,7 +573,7 @@ private fun MilestoneDialog(goal: Goal, days: Long, onDismiss: () -> Unit) {
         title = {
             Column {
                 Text(plural(days, "day"), style = MaterialTheme.typography.displaySmall)
-                Milestones.name(days)?.let {
+                Milestones.name(days, goal.currentStart)?.let {
                     Text(it, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
