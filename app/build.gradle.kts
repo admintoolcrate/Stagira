@@ -15,11 +15,12 @@ val releaseSigning: Map<String, String>?
             return listOf("storeFile", "storePassword", "keyAlias", "keyPassword")
                 .associateWith { p.getProperty(it) ?: error("keystore.properties is missing $it") }
         }
+        // Trimmed: values pasted into GitHub secrets easily pick up a stray space or line break.
         val env = mapOf(
-            "storeFile" to System.getenv("RELEASE_STORE_FILE"),
-            "storePassword" to System.getenv("RELEASE_STORE_PASSWORD"),
-            "keyAlias" to System.getenv("RELEASE_KEY_ALIAS"),
-            "keyPassword" to System.getenv("RELEASE_KEY_PASSWORD"),
+            "storeFile" to System.getenv("RELEASE_STORE_FILE")?.trim(),
+            "storePassword" to System.getenv("RELEASE_STORE_PASSWORD")?.trim(),
+            "keyAlias" to System.getenv("RELEASE_KEY_ALIAS")?.trim(),
+            "keyPassword" to System.getenv("RELEASE_KEY_PASSWORD")?.trim(),
         )
         return if (env.values.all { !it.isNullOrEmpty() }) env.mapValues { it.value!! } else null
     }
