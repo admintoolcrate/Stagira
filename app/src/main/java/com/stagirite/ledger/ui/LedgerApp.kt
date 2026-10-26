@@ -173,7 +173,7 @@ private fun LedgerAppContent(
 
     // Keep the home-screen widget in step with the lock and sort order.
     val hasPlus = LocalPlus.current.has
-    LaunchedEffect(settings.appLock, settings.sortOrder, settings.widgetStyle, hasPlus) { runCatching { LedgerWidget.refresh(context) } }
+    LaunchedEffect(settings.widgetsLocked, settings.sortOrder, settings.widgetStyle, hasPlus) { runCatching { LedgerWidget.refresh(context) } }
     val rawOpen = openId?.let(store::find)
     val openGoal = rawOpen?.let(vault::reveal)
     val anySealed = store.goals.any { it.isPrivate }
@@ -314,7 +314,15 @@ private fun LedgerAppContent(
                 sortOrder = settings.sortOrder,
                 onSort = settings::updateSortOrder,
                 onOpen = { openId = it.id },
-                onAdd = { d -> store.add(d.title, d.since, d.reason, d.icon, d.kind, sealedFor(d, null), d.target, d.schedule) },
+                onAdd = { d ->
+                    store.add(d.title, d.since, d.reason, d.icon, d.kind, sealedFor(d, null), d.target, d.schedule)
+                    // A new private goal shows its cover name straight away: entering the PIN to
+                    // write the real name shouldn't leave every real name showing afterwards.
+                    if (d.private && vault.unlocked) {
+                        vault.lock()
+                        scope.launch { snackbar.showSnackbar("Saved under its cover name. Long-press the app\u2019s name to show real names.") }
+                    }
+                },
                 onQuickSlip = { g, day ->
                     buzz()
                     store.recordSlip(g.id, day)

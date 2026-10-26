@@ -1,5 +1,6 @@
 package com.stagirite.ledger.ui
 
+import com.stagirite.ledger.widget.LedgerWidget
 import com.stagirite.ledger.backup.AutoBackup
 import android.Manifest
 import android.app.Activity
@@ -128,11 +129,17 @@ fun SettingsScreen(
                 Text("Widget background", style = MaterialTheme.typography.bodyLarge)
                 Spacer(Modifier.height(8.dp))
                 val styles = WidgetStyle.entries
+                val widgetScope = rememberCoroutineScope()
+                val widgetContext = LocalContext.current
                 SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
                     styles.forEachIndexed { i, style ->
                         SegmentedButton(
                             selected = settings.widgetStyle == style,
-                            onClick = { settings.updateWidgetStyle(style) },
+                            onClick = {
+                                settings.updateWidgetStyle(style)
+                                // Redraw placed widgets now rather than at their next update.
+                                widgetScope.launch { runCatching { LedgerWidget.refresh(widgetContext) } }
+                            },
                             shape = SegmentedButtonDefaults.itemShape(i, styles.size),
                             icon = {},
                             colors = SegmentedButtonDefaults.colors(
@@ -163,6 +170,15 @@ fun SettingsScreen(
                     onChange = settings::updateHideInRecents,
                     enabled = !settings.appLock,
                 )
+                if (settings.appLock) {
+                    Spacer(Modifier.height(12.dp))
+                    SwitchRow(
+                        title = "Hide widgets while locked",
+                        detail = "Show only \u201CLocked\u201D on your widgets. Otherwise they keep counting; private goals show their cover names.",
+                        checked = settings.hideWidgetsWhenLocked,
+                        onChange = settings::updateHideWidgetsWhenLocked,
+                    )
+                }
                 Spacer(Modifier.height(12.dp))
                 Note(
                     "No analytics, no accounts or servers of ours, and no ads unless you choose to watch one " +

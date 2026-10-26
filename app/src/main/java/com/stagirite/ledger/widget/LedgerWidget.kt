@@ -107,7 +107,7 @@ class LedgerWidget : GlanceAppWidget() {
         // the widget is live) shows the current state rather than what was true when it started.
         provideContent {
             val today = LocalDate.now()
-            val locked = app.settings.appLock
+            val locked = app.settings.widgetsLocked
             val plus = app.billing.plus
             val goals = if (locked || !plus) emptyList() else sortGoals(app.store.goals, app.settings.sortOrder, today).take(6)
             WidgetContent(goals, iconsFor(context, goals), locked, plus, today, palette(app.settings.widgetStyle))
@@ -190,12 +190,17 @@ private fun WidgetContent(
     }
 }
 
-/** The card (or none, for Clear) every widget sits on. */
+/** The card (or none, for Clear) every widget sits on; tighter at one row high. */
+@Composable
 internal fun widgetRoot(c: Palette): GlanceModifier {
+    val short = LocalSize.current.height < SHORT
     var root = GlanceModifier.fillMaxSize()
-    if (c.background != null) root = root.background(c.background).cornerRadius(24.dp)
-    return root.padding(horizontal = 18.dp, vertical = 16.dp)
+    if (c.background != null) root = root.background(c.background).cornerRadius(if (short) 18.dp else 24.dp)
+    return if (short) root.padding(horizontal = 12.dp, vertical = 8.dp) else root.padding(horizontal = 18.dp, vertical = 16.dp)
 }
+
+/** Below this height a widget is one row of the home screen, and lays out in a line. */
+internal val SHORT = 100.dp
 
 @Composable
 internal fun Header(c: Palette) {
@@ -226,10 +231,16 @@ internal fun Icon(goal: Goal, icons: Map<String, Bitmap>, c: Palette, dp: Int) {
 @Composable
 internal fun Hero(goal: Goal, icons: Map<String, Bitmap>, today: LocalDate, c: Palette, roomy: Boolean) {
     val days = goal.daysKept(today)
+    val size = LocalSize.current
+    // One row high: a single line. One cell: just the icon and the count.
+    if (size.height < SHORT) {
+        if (size.width < 100.dp) TinyGoal(goal, icons, days, c) else StripGoal(goal, icons, days, c, wide = size.width >= 200.dp)
+        return
+    }
     Column(GlanceModifier.fillMaxSize().clickable(openGoal(goal))) {
         Row(GlanceModifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             if (icons[goal.icon] != null) {
-                Icon(goal, icons, c, 16)
+                Icon(goal, icons, c, 22)
                 Spacer(GlanceModifier.width(8.dp))
             }
             Text(
@@ -244,7 +255,7 @@ internal fun Hero(goal: Goal, icons: Map<String, Bitmap>, today: LocalDate, c: P
         Row(verticalAlignment = Alignment.Bottom) {
             Text(
                 if (days == 0L) "Today" else "$days",
-                style = TextStyle(color = c.ink, fontSize = if (days == 0L) 30.sp else if (roomy) 52.sp else 40.sp, fontWeight = FontWeight.Medium),
+                style = TextStyle(color = c.ink, fontSize = if (days == 0L) 32.sp else if (roomy) 56.sp else 48.sp, fontWeight = FontWeight.Medium),
                 maxLines = 1,
             )
             Spacer(GlanceModifier.width(6.dp))
@@ -262,6 +273,44 @@ internal fun Hero(goal: Goal, icons: Map<String, Bitmap>, today: LocalDate, c: P
         Text(nextLine(days, goal.currentStart), style = TextStyle(color = c.muted, fontSize = 11.sp), maxLines = 1)
         Spacer(GlanceModifier.height(6.dp))
         Progress(days, goal.currentStart, c)
+    }
+}
+
+/** One cell: the icon over the count. */
+@Composable
+private fun TinyGoal(goal: Goal, icons: Map<String, Bitmap>, days: Long, c: Palette) {
+    Column(
+        GlanceModifier.fillMaxSize().clickable(openGoal(goal)),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(goal, icons, c, 18)
+        Text(
+            if (days == 0L) "Today" else "$days",
+            style = TextStyle(color = c.ink, fontSize = if (days == 0L) 14.sp else 24.sp, fontWeight = FontWeight.Medium),
+            maxLines = 1,
+        )
+    }
+}
+
+/** One row high: icon, name (and next milestone when there's room), then the count. */
+@Composable
+private fun StripGoal(goal: Goal, icons: Map<String, Bitmap>, days: Long, c: Palette, wide: Boolean) {
+    Row(GlanceModifier.fillMaxSize().clickable(openGoal(goal)), verticalAlignment = Alignment.CenterVertically) {
+        if (icons[goal.icon] != null) {
+            Icon(goal, icons, c, 22)
+            Spacer(GlanceModifier.width(10.dp))
+        }
+        Column(GlanceModifier.defaultWeight()) {
+            Text(goal.title, style = TextStyle(color = c.ink, fontSize = 13.sp, fontWeight = FontWeight.Medium), maxLines = 1)
+            if (wide) Text(nextLine(days, goal.currentStart), style = TextStyle(color = c.muted, fontSize = 11.sp), maxLines = 1)
+        }
+        Spacer(GlanceModifier.width(8.dp))
+        Text(
+            if (days == 0L) "Today" else "$days",
+            style = TextStyle(color = c.ink, fontSize = if (days == 0L) 16.sp else 28.sp, fontWeight = FontWeight.Medium),
+            maxLines = 1,
+        )
     }
 }
 

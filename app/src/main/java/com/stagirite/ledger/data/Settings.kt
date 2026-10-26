@@ -172,6 +172,21 @@ class Settings(context: Context) {
         prefs.edit().putBoolean("holdHintSeen", true).apply()
     }
 
+    /**
+     * Whether widgets hide everything while the app lock is on. Off by default:
+     * widgets are for glancing, and private goals only ever show their cover names.
+     */
+    var hideWidgetsWhenLocked by mutableStateOf(prefs.getBoolean("hideWidgetsWhenLocked", false))
+        private set
+
+    fun updateHideWidgetsWhenLocked(hide: Boolean) {
+        hideWidgetsWhenLocked = hide
+        prefs.edit().putBoolean("hideWidgetsWhenLocked", hide).apply()
+    }
+
+    /** What the widgets go by: blank only when the app lock is on and they're set to hide. */
+    val widgetsLocked: Boolean get() = appLock && hideWidgetsWhenLocked
+
     var widgetStyle by mutableStateOf(enumOr(prefs.getString("widgetStyle", null), WidgetStyle.Solid))
         private set
 
