@@ -82,9 +82,9 @@ Create these *one-time products* with exactly these ids:
 | Product id | What | Suggested price |
 |---|---|---|
 | `plus` | Stagira Plus | 4.99 |
-| `tip_small` | Small tip | 1.99 |
+| `tip_small_2` | Small tip | 1.99 |
 | `tip_medium` | Tip | 4.99 |
-| `tip_large` | Big tip | 9.99 |
+| `tip_large_2` | Large tip | 9.99 |
 
 Then add your Google account as a **licence tester** (Settings → License testing) so you can buy
 them free while testing. Debug builds from GitHub have Plus unlocked anyway; only the Play

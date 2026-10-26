@@ -25,12 +25,15 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.coroutines.resume
 
-/** Product ids. Create these as one-time products in Play Console → Monetize → In-app products. */
+/**
+ * Product ids. Create these as one-time products in Play Console → Monetize → Products.
+ * Play never lets a deleted id be used again, hence the "_2" on two of the tips.
+ */
 object Products {
     const val PLUS = "plus"
-    const val TIP_SMALL = "tip_small"
+    const val TIP_SMALL = "tip_small_2"
     const val TIP_MEDIUM = "tip_medium"
-    const val TIP_LARGE = "tip_large"
+    const val TIP_LARGE = "tip_large_2"
     val tips = listOf(TIP_SMALL, TIP_MEDIUM, TIP_LARGE)
 }
 
