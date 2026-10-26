@@ -1,0 +1,9 @@
+# GitHub Pages (Settings → Pages → Deploy from a branch → /docs).
+title: Stagira
+description: A quiet ledger of the days you keep.
+theme: jekyll-theme-minimal
+# The drafting notes for the Play Console aren't pages anyone needs to visit.
+exclude:
+  - play-store/RELEASE.md
+  - play-store/data-safety.md
+  - play-store/store-listing.md

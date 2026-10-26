@@ -20,10 +20,17 @@ concurrency:
   group: build-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  # Builds of this branch are published as beta releases (GitHub → Releases), which test
+  # copies of the app check for. Change it when development moves to another branch.
+  BETA_BRANCH: ccr-a04772e5-ln9fxb
+
 jobs:
   build:
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    permissions:
+      contents: write   # to publish the beta release
     env:
       RELEASE: ${{ startsWith(github.ref, 'refs/tags/v') || inputs.release == true }}
     steps:
@@ -41,6 +48,23 @@ jobs:
         with:
           name: stagirites-ledger-debug
           path: app/build/outputs/apk/debug/app-debug.apk
+      # Each build of the beta branch becomes a pre-release with the APK attached, so testers
+      # can install it over their copy (goals stay) without digging through Actions.
+      - name: Publish beta release
+        if: github.ref == format('refs/heads/{0}', env.BETA_BRANCH)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VERSION=$(sed -n 's/.*versionName = "\(.*\)".*/\1/p' app/build.gradle.kts)
+          APK="stagira-${VERSION}-beta${GITHUB_RUN_NUMBER}.apk"
+          cp app/build/outputs/apk/debug/app-debug.apk "$APK"
+          git log -1 --pretty=%B | sed '/^Co-Authored-By:/d;/^Claude-Session:/d' > notes.md
+          printf '\nInstall it over your current copy; your goals stay.\n' >> notes.md
+          gh release create "beta-${GITHUB_RUN_NUMBER}" "$APK" --prerelease --target "$GITHUB_SHA" \
+            --title "Stagira ${VERSION} · beta ${GITHUB_RUN_NUMBER}" --notes-file notes.md
+          # Keep the ten newest betas.
+          gh release list --limit 100 --json tagName --jq '.[].tagName' | grep '^beta-' | sort -t- -k2 -n -r \
+            | tail -n +11 | xargs -r -I{} gh release delete {} --yes --cleanup-tag
       # The optimised (R8) build a store release would use; unsigned, so it isn't uploaded.
       - name: Check release build
         if: env.RELEASE == 'true'

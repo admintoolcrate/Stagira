@@ -45,6 +45,8 @@ android {
             ?: "ca-app-pub-3940256099942544/5224354917"
         manifestPlaceholders["admobAppId"] = admobAppId
         buildConfigField("String", "ADMOB_REWARDED_ID", "\"$admobRewardedId\"")
+        // The CI run number, which names each beta release ("beta-57"); 0 for builds made elsewhere.
+        buildConfigField("int", "BUILD_NUMBER", (System.getenv("GITHUB_RUN_NUMBER")?.toIntOrNull() ?: 0).toString())
     }
 
     signingConfigs {
@@ -72,9 +74,12 @@ android {
         debug {
             // Test builds have Plus unlocked, so every feature can be tried.
             buildConfigField("boolean", "PLUS_FOR_TESTING", "true")
+            // Test builds look for a newer beta on GitHub; Play builds never do.
+            buildConfigField("boolean", "BETA_UPDATES", "true")
         }
         release {
             buildConfigField("boolean", "PLUS_FOR_TESTING", "false")
+            buildConfigField("boolean", "BETA_UPDATES", "false")
             signingConfigs.findByName("release")?.let { signingConfig = it }
             isMinifyEnabled = true
             isShrinkResources = true

@@ -1,5 +1,6 @@
 package com.stagirite.ledger.ui
 
+import com.stagirite.ledger.beta.BetaUpdates
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.lazy.LazyColumn
@@ -61,6 +62,9 @@ fun OverviewDashboard(
     showBackupPrompt: Boolean,
     onSetUpBackup: () -> Unit,
     onDismissBackup: () -> Unit,
+    /** A newer beta, for test copies installed from GitHub. */
+    update: BetaUpdates.Release? = null,
+    onUpdate: () -> Unit = {},
 ) {
     val plus = LocalPlus.current
     Scaffold(
@@ -80,6 +84,20 @@ fun OverviewDashboard(
             verticalArrangement = Arrangement.spacedBy(Space.m),
             modifier = Modifier.padding(padding),
         ) {
+            if (update != null) {
+                item(key = "update") {
+                    LedgerCard(onClick = onUpdate) {
+                        Text("A new beta is ready", style = MaterialTheme.typography.titleSmall)
+                        Spacer(Modifier.height(Space.xs))
+                        Text(
+                            "${update.title}. Download it and install it over this copy; your goals stay.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                        TextButton(onClick = onUpdate) { Text("Download") }
+                    }
+                }
+            }
             if (showBackupPrompt) {
                 item(key = "backup") {
                     LedgerCard {

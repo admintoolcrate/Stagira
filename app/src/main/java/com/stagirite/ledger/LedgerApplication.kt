@@ -1,5 +1,6 @@
 package com.stagirite.ledger
 
+import com.stagirite.ledger.beta.BetaUpdates
 import android.app.Application
 import com.stagirite.ledger.data.GoalStore
 import com.stagirite.ledger.data.Settings
@@ -26,6 +27,7 @@ class LedgerApplication : Application() {
     lateinit var billing: Billing
         private set
     val supportAd = SupportAd()
+    lateinit var beta: BetaUpdates
 
     override fun onCreate() {
         super.onCreate()
@@ -36,6 +38,7 @@ class LedgerApplication : Application() {
         privateTitles = PrivateTitles(this)
         val scope = MainScope()
         billing = Billing(this, scope)
+        beta = BetaUpdates(this)
         store.onChange = {
             sync.requestSync(delayMs = 2_000)
             scope.launch { runCatching { LedgerWidget.refresh(this@LedgerApplication) } }

@@ -57,6 +57,13 @@ your goals. We use reports only to fix problems and improve the app, and reply f
 admin.toolcrate@gmail.com. Messages sent by email or GitHub are also subject to those services'
 policies.
 
+## Test versions from GitHub
+
+Test versions downloaded from the project's GitHub page (not from Google Play) check GitHub's
+public release list about twice a day, to tell you when a newer test version is out. That request
+carries nothing about you or your ledger; GitHub sees only that a request was made. The version
+from Google Play doesn't do this: Play updates it.
+
 ## Sharing
 
 We don't sell your data, and we never receive your goals. The only data that reaches a third

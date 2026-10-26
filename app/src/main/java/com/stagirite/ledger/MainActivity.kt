@@ -1,5 +1,7 @@
 package com.stagirite.ledger
 
+import kotlinx.coroutines.launch
+import androidx.lifecycle.lifecycleScope
 import com.stagirite.ledger.backup.AutoBackup
 import kotlin.concurrent.thread
 import android.content.Intent
@@ -108,6 +110,8 @@ class MainActivity : FragmentActivity() {
         app.sync.requestSync()
         // Picks up a Plus bought on another phone, or a refund.
         app.billing.refresh()
+        // Test copies from GitHub: is there a newer beta? (At most twice a day; never in Play builds.)
+        lifecycleScope.launch { app.beta.check() }
     }
 
     override fun onStop() {

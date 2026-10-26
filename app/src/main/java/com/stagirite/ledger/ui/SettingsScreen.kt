@@ -1,5 +1,8 @@
 package com.stagirite.ledger.ui
 
+import com.stagirite.ledger.LedgerApplication
+import android.net.Uri
+import android.content.Intent
 import com.stagirite.ledger.widget.LedgerWidget
 import com.stagirite.ledger.backup.AutoBackup
 import android.Manifest
@@ -756,6 +759,39 @@ private fun java.io.InputStream.readNBytesCompat(limit: Int): ByteArray {
 @Composable
 private fun FeedbackSection(lock: AppLock) {
     var writing by rememberSaveable { mutableStateOf<ReportKind?>(null) }
+    val context = LocalContext.current
+    val beta = (context.applicationContext as LedgerApplication).beta
+    if (beta.enabled) {
+        val scope = rememberCoroutineScope()
+        SettingRow(
+            title = "Beta updates",
+            detail = beta.available?.let { "${it.title} is ready. Install it over this copy; your goals stay." }
+                ?: "You\u2019re on beta ${beta.build}. New betas show up on Overview; the app checks GitHub twice a day.",
+            action = if (beta.available != null) "Download" else "Check now",
+            enabled = !beta.checking,
+            onClick = {
+                val ready = beta.available
+                if (ready != null) {
+                    lock.expectReturn()
+                    runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(ready.url))) }
+                } else {
+                    scope.launch {
+                        val reached = beta.check(force = true)
+                        Toast.makeText(
+                            context,
+                            when {
+                                !reached -> "Couldn\u2019t reach GitHub"
+                                beta.available != null -> "A new beta is ready"
+                                else -> "You\u2019re on the latest beta"
+                            },
+                            Toast.LENGTH_SHORT,
+                        ).show()
+                    }
+                }
+            },
+        )
+        Spacer(Modifier.height(12.dp))
+    }
     SettingRow(
         title = "Report a bug",
         detail = "Something broken or behaving oddly.",

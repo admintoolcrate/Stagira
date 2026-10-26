@@ -1,5 +1,8 @@
 package com.stagirite.ledger.ui
 
+import com.stagirite.ledger.LedgerApplication
+import android.net.Uri
+import android.content.Intent
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.tween
@@ -225,6 +228,7 @@ private fun LedgerAppContent(
         }
     }
     val homeNav = @Composable { HomeNav(onOverview) { onOverview = it } }
+    val beta = (context.applicationContext as LedgerApplication).beta
     val setUpBackup = rememberBackupSetup(store, settings, lock)
     // Nudge only people with no copy anywhere, after their first week, and not more than monthly.
     val now = System.currentTimeMillis()
@@ -377,6 +381,13 @@ private fun LedgerAppContent(
                 showBackupPrompt = showBackupPrompt,
                 onSetUpBackup = setUpBackup,
                 onDismissBackup = { settings.snoozeBackupNudge() },
+                update = beta.available,
+                onUpdate = {
+                    beta.available?.let { r ->
+                        lock.expectReturn()
+                        runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(r.url))) }
+                    }
+                },
             )
         }
         target == "weekly" -> {
