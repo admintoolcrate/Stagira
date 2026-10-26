@@ -112,6 +112,22 @@ class SyncManager(
         }
     }
 
+    /**
+     * The account picker came back without granting access. Google puts the reason in the
+     * result when it refuses (an unregistered app, say); a plain cancel carries nothing. Either
+     * way say so, rather than leaving the button looking as if it did nothing.
+     */
+    fun onAuthorizationDeclined(activity: Activity, data: Intent?) {
+        val error = data?.let {
+            runCatching { Identity.getAuthorizationClient(activity).getAuthorizationResultFromIntent(it) }.exceptionOrNull()
+        }
+        connectError = when {
+            error is ApiException && error.statusCode != CommonStatusCodes.CANCELED -> describe(error)
+            else -> "Google didn\u2019t finish connecting. If you chose an account and it came straight back here, " +
+                "Google sign-in isn\u2019t set up for this copy of the app yet."
+        }
+    }
+
     /** Syncs after [delayMs], replacing any sync already waiting. */
     fun requestSync(delayMs: Long = 0) {
         if (!connected) return

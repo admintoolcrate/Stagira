@@ -225,6 +225,7 @@ private fun SyncSection(sync: SyncManager, lock: AppLock) {
     val scope = rememberCoroutineScope()
     val launcher = rememberLauncherForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) { result ->
         if (result.resultCode == Activity.RESULT_OK) sync.onAuthorizationResult(activity, result.data)
+        else sync.onAuthorizationDeclined(activity, result.data)
     }
     val connect: () -> Unit = {
         scope.launch {
