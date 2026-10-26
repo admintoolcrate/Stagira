@@ -1,5 +1,6 @@
 package com.stagirite.ledger.ui
 
+import com.stagirite.ledger.BuildConfig
 import android.app.Activity
 import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
@@ -155,7 +156,7 @@ fun SupportSection(support: SupportUi) {
         Column(Modifier.weight(1f)) {
             Text("Stagira Plus", style = MaterialTheme.typography.bodyLarge)
             Text(
-                if (billing.plus) "Unlocked. Thank you." else "Unlimited goals, sync, the Goals widget and insights. One payment.",
+                if (BuildConfig.PLUS_FOR_TESTING) "Unlocked for testing." else if (billing.plus) "Unlocked. Thank you." else "Unlimited goals, sync, the Goals widget and insights. One payment.",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )

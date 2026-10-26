@@ -33,8 +33,8 @@ android {
         applicationId = "com.stagirite.ledger"
         minSdk = 26
         targetSdk = 36
-        versionCode = 11
-        versionName = "3.1.1"
+        versionCode = 12
+        versionName = "3.1.2"
 
         // AdMob IDs for "Watch an ad to support us". Set admobAppId and
         // admobRewardedId in gradle.properties (or ~/.gradle/gradle.properties)
@@ -79,7 +79,10 @@ android {
             buildConfigField("boolean", "BETA_UPDATES", "true")
         }
         release {
-            buildConfigField("boolean", "PLUS_FOR_TESTING", "false")
+            // Off for real releases. On for Play testing tracks while purchases aren't set up yet,
+            // so testers can try everything: build with -PplusForTesting=true (CI: "unlock_plus").
+            val plusForTesting = (project.findProperty("plusForTesting") as String?) == "true"
+            buildConfigField("boolean", "PLUS_FOR_TESTING", plusForTesting.toString())
             buildConfigField("boolean", "BETA_UPDATES", "false")
             signingConfigs.findByName("release")?.let { signingConfig = it }
             isMinifyEnabled = true

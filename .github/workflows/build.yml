@@ -15,6 +15,10 @@ on:
         description: Also build the optimised release, and the signed Play bundle if the upload key is set up
         type: boolean
         default: false
+      unlock_plus:
+        description: Unlock Plus in the Play bundle, for testing tracks before in-app products exist
+        type: boolean
+        default: false
 
 concurrency:
   group: build-${{ github.ref }}
@@ -97,7 +101,7 @@ jobs:
           RELEASE_KEY_PASSWORD: ${{ secrets.UPLOAD_KEY_PASSWORD }}
         run: |
           printf '%s' "$UPLOAD_KEYSTORE_BASE64" | tr -d ' \r\n\t' | base64 -d > "$RUNNER_TEMP/upload.jks"
-          RELEASE_STORE_FILE="$RUNNER_TEMP/upload.jks" ./gradlew bundleRelease
+          RELEASE_STORE_FILE="$RUNNER_TEMP/upload.jks" ./gradlew bundleRelease -PplusForTesting=${{ inputs.unlock_plus == true }}
           rm -f "$RUNNER_TEMP/upload.jks"
       - uses: actions/upload-artifact@v4
         if: env.UPLOAD_KEYSTORE_BASE64 != ''
