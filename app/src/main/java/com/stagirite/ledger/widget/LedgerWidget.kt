@@ -103,13 +103,15 @@ class LedgerWidget : GlanceAppWidget() {
 
     override suspend fun provideGlance(context: Context, id: GlanceId) {
         val app = context.applicationContext as LedgerApplication
-        val locked = app.settings.appLock
-        val today = LocalDate.now()
-        val plus = app.billing.plus
-        val colours = palette(app.settings.widgetStyle)
-        val goals = if (locked || !plus) emptyList() else sortGoals(app.store.goals, app.settings.sortOrder, today).take(6)
-        val icons = goals.map { it.icon }.filter { it.isNotEmpty() }.distinct().associateWith { emojiBitmap(context, it) }
-        provideContent { WidgetContent(goals, icons, locked, plus, today, colours) }
+        // Everything is read inside the content, so a redraw (or any change to the ledger while
+        // the widget is live) shows the current state rather than what was true when it started.
+        provideContent {
+            val today = LocalDate.now()
+            val locked = app.settings.appLock
+            val plus = app.billing.plus
+            val goals = if (locked || !plus) emptyList() else sortGoals(app.store.goals, app.settings.sortOrder, today).take(6)
+            WidgetContent(goals, iconsFor(context, goals), locked, plus, today, palette(app.settings.widgetStyle))
+        }
     }
 
     companion object {
@@ -120,6 +122,14 @@ class LedgerWidget : GlanceAppWidget() {
             OverviewWidget().updateAll(context)
         }
     }
+}
+
+private val iconCache = HashMap<String, Bitmap>()
+
+/** Icon bitmaps for [goals], drawn once per emoji and reused across redraws. */
+internal fun iconsFor(context: Context, goals: List<Goal>): Map<String, Bitmap> = synchronized(iconCache) {
+    goals.map { it.icon }.filter { it.isNotEmpty() }.distinct()
+        .associateWith { iconCache.getOrPut(it) { emojiBitmap(context, it) } }
 }
 
 /**

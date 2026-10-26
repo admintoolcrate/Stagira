@@ -110,6 +110,8 @@ dependencies {
     implementation("androidx.fragment:fragment-ktx:1.8.5")
     implementation("androidx.biometric:biometric:1.1.0")
     implementation("androidx.glance:glance-appwidget:1.1.1")
+    // The Goal widget keeps its chosen goal in Glance's Preferences state.
+    implementation("androidx.datastore:datastore-preferences-core:1.1.1")
     implementation("com.google.android.gms:play-services-auth:21.3.0")
     // Plus and the tip jar.
     implementation("com.android.billingclient:billing-ktx:7.1.1")

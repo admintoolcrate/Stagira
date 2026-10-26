@@ -1,5 +1,13 @@
 package com.stagirite.ledger.widget
 
+import androidx.datastore.preferences.core.stringPreferencesKey
+import androidx.glance.currentState
+import androidx.glance.state.PreferencesGlanceStateDefinition
+import androidx.glance.layout.Alignment
+import androidx.glance.layout.fillMaxSize
+import androidx.glance.layout.padding
+import com.stagirite.ledger.data.DayState
+import com.stagirite.ledger.data.overviewDayState
 import android.appwidget.AppWidgetManager
 import android.content.Context
 import android.content.Intent
@@ -57,28 +65,34 @@ object WidgetGoals {
 class GoalWidget : GlanceAppWidget() {
     override val sizeMode = SizeMode.Responsive(setOf(DpSize(110.dp, 110.dp), DpSize(250.dp, 110.dp)))
 
+    // The chosen goal lives in the widget's own state, so choosing one redraws it straight away.
+    override val stateDefinition = PreferencesGlanceStateDefinition
+
     override suspend fun provideGlance(context: Context, id: GlanceId) {
         val app = context.applicationContext as LedgerApplication
         val appWidgetId = GlanceAppWidgetManager(context).getAppWidgetId(id)
-        val locked = app.settings.appLock
-        val colours = palette(app.settings.widgetStyle)
-        val goal = WidgetGoals.goalFor(context, appWidgetId)?.let(app.store::find)?.takeIf { !it.archived }
-        val icons = goal?.icon?.takeIf { it.isNotEmpty() }?.let { mapOf(it to emojiBitmap(context, it)) } ?: emptyMap()
         val choose = Intent(context, GoalWidgetSetup::class.java)
             .putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
             .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         provideContent {
+            val colours = palette(app.settings.widgetStyle)
+            val goalId = currentState(ChosenGoal) ?: WidgetGoals.goalFor(context, appWidgetId)
+            val goal = goalId?.let(app.store::find)?.takeIf { !it.archived }
             val roomy = LocalSize.current.width >= 250.dp
             Column(widgetRoot(colours).clickable(actionStartActivity<MainActivity>())) {
                 when {
-                    locked -> Message("Locked", "Tap to open", colours)
+                    app.settings.appLock -> Message("Locked", "Tap to open", colours)
                     goal == null -> Column(GlanceModifier.clickable(actionStartActivity(choose))) {
                         Message("Choose a goal", "Tap to pick the goal to show here.", colours)
                     }
-                    else -> Hero(goal, icons, LocalDate.now(), colours, roomy)
+                    else -> Hero(goal, iconsFor(context, listOf(goal)), LocalDate.now(), colours, roomy)
                 }
             }
         }
+    }
+
+    companion object {
+        val ChosenGoal = stringPreferencesKey("goal")
     }
 }
 
@@ -100,44 +114,74 @@ class OverviewWidget : GlanceAppWidget() {
 
     override suspend fun provideGlance(context: Context, id: GlanceId) {
         val app = context.applicationContext as LedgerApplication
-        val locked = app.settings.appLock
-        val colours = palette(app.settings.widgetStyle)
-        val goals = if (locked) emptyList() else app.store.goals
-        val today = LocalDate.now()
         provideContent {
+            val colours = palette(app.settings.widgetStyle)
+            val locked = app.settings.appLock
+            val goals = if (locked) emptyList() else app.store.goals
             Column(widgetRoot(colours).clickable(actionStartActivity<MainActivity>())) {
                 when {
                     locked -> Message("Locked", "Tap to open", colours)
                     goals.isEmpty() -> Message("No goals yet", "Tap to add your first.", colours)
-                    else -> OverviewContent(goals, today, colours, roomy = LocalSize.current.width >= 250.dp)
+                    else -> OverviewContent(goals, LocalDate.now(), colours, roomy = LocalSize.current.width >= 250.dp)
                 }
             }
         }
     }
 }
 
+/**
+ * Header, then the week as seven marks, the figures, and the next milestone
+ * with its progress line along the bottom: the same rhythm as the Goal widget.
+ */
 @Composable
 private fun OverviewContent(goals: List<Goal>, today: LocalDate, c: Palette, roomy: Boolean) {
     val week = weekReview(goals, today)
     val kept = goals.sumOf { it.stats(today).daysKept }
+    val best = goals.maxOf { it.daysKept(today) }
     val next = upcomingMilestones(goals, today).firstOrNull()
-    Column {
-        Header(c)
+    Column(GlanceModifier.fillMaxSize()) {
+        Row(GlanceModifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            Header(c)
+            Spacer(GlanceModifier.defaultWeight())
+            if (roomy) WeekMarks(goals, today, c)
+        }
         Spacer(GlanceModifier.defaultWeight())
-        Row(GlanceModifier.fillMaxWidth()) {
-            Figure("${week.cleanDays}/${week.activeDays}", "this week", c, GlanceModifier.defaultWeight())
+        Row(GlanceModifier.fillMaxWidth(), verticalAlignment = Alignment.Bottom) {
+            Figure("${week.cleanDays}/${week.activeDays}", "kept this week", c, GlanceModifier.defaultWeight())
             if (roomy) {
-                Figure("$kept", "days kept", c, GlanceModifier.defaultWeight())
-                Figure("${goals.size}", if (goals.size == 1) "goal" else "goals", c, GlanceModifier.defaultWeight())
+                Figure("$best", "best run now", c, GlanceModifier.defaultWeight())
+                Figure("$kept", "days kept in all", c, GlanceModifier.defaultWeight())
             }
         }
-        Spacer(GlanceModifier.height(8.dp))
         if (next != null) {
+            Spacer(GlanceModifier.height(10.dp))
             Text(
                 "Next: ${next.goal.title}, ${Milestones.name(next.milestone) ?: days(next.milestone)} " +
                     if (next.inDays == 1L) "tomorrow" else "in ${days(next.inDays)}",
                 style = TextStyle(color = c.muted, fontSize = 11.sp),
-                maxLines = 2,
+                maxLines = 1,
+            )
+            Spacer(GlanceModifier.height(6.dp))
+            Progress(next.goal.daysKept(today), c)
+        }
+    }
+}
+
+/** The last seven days, oldest first: a filled mark for a kept day, an open one for a slip. */
+@Composable
+private fun WeekMarks(goals: List<Goal>, today: LocalDate, c: Palette) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        (6 downTo 0).forEach { back ->
+            val day = today.minusDays(back.toLong())
+            val mark = when (overviewDayState(goals, day, today)) {
+                DayState.Kept -> "\u25CF"
+                DayState.Slip -> "\u25CB"
+                else -> "\u00B7"
+            }
+            Text(
+                mark,
+                style = TextStyle(color = if (back == 0) c.ink else c.muted, fontSize = 10.sp),
+                modifier = GlanceModifier.padding(start = 4.dp),
             )
         }
     }

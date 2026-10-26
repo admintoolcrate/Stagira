@@ -29,6 +29,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.sp
 import androidx.fragment.app.FragmentActivity
 import androidx.glance.appwidget.GlanceAppWidgetManager
+import androidx.glance.appwidget.state.updateAppWidgetState
 import androidx.lifecycle.lifecycleScope
 import com.stagirite.ledger.LedgerApplication
 import com.stagirite.ledger.data.ThemeMode
@@ -107,6 +108,8 @@ class GoalWidgetSetup : FragmentActivity() {
         lifecycleScope.launch {
             runCatching {
                 val glanceId = GlanceAppWidgetManager(this@GoalWidgetSetup).getGlanceIdBy(appWidgetId)
+                // Writing the widget's own state is what makes a running widget redraw with the new goal.
+                updateAppWidgetState(this@GoalWidgetSetup, glanceId) { it[GoalWidget.ChosenGoal] = goalId }
                 GoalWidget().update(this@GoalWidgetSetup, glanceId)
             }
             setResult(Activity.RESULT_OK, Intent().putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId))
