@@ -65,7 +65,7 @@ object WidgetGoals {
  */
 class GoalWidget : GlanceAppWidget() {
     // From one cell up: one cell and one row get their own compact layouts.
-    override val sizeMode = SizeMode.Responsive(setOf(DpSize(57.dp, 57.dp), DpSize(180.dp, 57.dp), DpSize(110.dp, 110.dp), DpSize(250.dp, 110.dp)))
+    override val sizeMode = SizeMode.Responsive(setOf(DpSize(57.dp, 57.dp), DpSize(180.dp, 57.dp), DpSize(110.dp, 110.dp), DpSize(250.dp, 110.dp), DpSize(110.dp, 180.dp), DpSize(250.dp, 210.dp)))
 
     // The chosen goal lives in the widget's own state, so choosing one redraws it straight away.
     override val stateDefinition = PreferencesGlanceStateDefinition
@@ -113,7 +113,7 @@ class GoalWidgetReceiver : GlanceAppWidgetReceiver() {
  */
 class OverviewWidget : GlanceAppWidget() {
     // From one cell up: one cell and one row get their own compact layouts.
-    override val sizeMode = SizeMode.Responsive(setOf(DpSize(57.dp, 57.dp), DpSize(180.dp, 57.dp), DpSize(110.dp, 110.dp), DpSize(250.dp, 110.dp)))
+    override val sizeMode = SizeMode.Responsive(setOf(DpSize(57.dp, 57.dp), DpSize(180.dp, 57.dp), DpSize(110.dp, 110.dp), DpSize(250.dp, 110.dp), DpSize(110.dp, 180.dp), DpSize(250.dp, 210.dp)))
 
     override suspend fun provideGlance(context: Context, id: GlanceId) {
         val app = context.applicationContext as LedgerApplication
@@ -154,7 +154,7 @@ private fun OverviewContent(goals: List<Goal>, today: LocalDate, c: Palette, roo
         Row(GlanceModifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             Header(c)
             Spacer(GlanceModifier.defaultWeight())
-            if (roomy) WeekMarks(goals, today, c)
+            if (roomy) WeekLetters(today, c) { overviewDayState(goals, it, today) }
         }
         Spacer(GlanceModifier.defaultWeight())
         Row(GlanceModifier.fillMaxWidth(), verticalAlignment = Alignment.Bottom) {
@@ -166,39 +166,19 @@ private fun OverviewContent(goals: List<Goal>, today: LocalDate, c: Palette, roo
         }
         if (next != null) {
             Spacer(GlanceModifier.height(10.dp))
-            Text(
-                "Next: ${next.goal.title}, ${Milestones.name(next.milestone, next.goal.currentStart) ?: days(next.milestone)} " +
-                    if (next.inDays == 1L) "tomorrow" else "in ${days(next.inDays)}",
-                style = TextStyle(color = c.muted, fontSize = 11.sp),
-                maxLines = 1,
-            )
+            // Tall enough: the next three milestones across all goals; otherwise just the next.
+            val coming = upcomingMilestones(goals, today).take(if (LocalSize.current.height >= 200.dp) 3 else 1)
+            coming.forEach { up ->
+                Text(
+                    "${if (up == coming.first()) "Next" else "Then"}: ${up.goal.title}, " +
+                        "${Milestones.name(up.milestone, up.goal.currentStart) ?: days(up.milestone)} " +
+                        if (up.inDays == 1L) "tomorrow" else "in ${days(up.inDays)}",
+                    style = TextStyle(color = if (up == coming.first()) c.ink else c.muted, fontSize = 11.sp),
+                    maxLines = 1,
+                )
+            }
             Spacer(GlanceModifier.height(6.dp))
             Progress(next.goal.daysKept(today), next.goal.currentStart, c)
-        }
-    }
-}
-
-/**
- * The last seven days as weekday letters, oldest first: a kept day in ink, a
- * day with a slip struck through, a day before any goal faint. (Dots read as
- * page markers, as if there were more widgets to swipe through.)
- */
-@Composable
-private fun WeekMarks(goals: List<Goal>, today: LocalDate, c: Palette) {
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        (6 downTo 0).forEach { back ->
-            val day = today.minusDays(back.toLong())
-            val state = overviewDayState(goals, day, today)
-            Text(
-                day.dayOfWeek.getDisplayName(java.time.format.TextStyle.NARROW, java.util.Locale.getDefault()),
-                style = TextStyle(
-                    color = if (state == DayState.Kept || state == DayState.Slip) c.ink else c.muted,
-                    fontSize = 11.sp,
-                    fontWeight = if (back == 0) FontWeight.Bold else FontWeight.Normal,
-                    textDecoration = if (state == DayState.Slip) TextDecoration.LineThrough else null,
-                ),
-                modifier = GlanceModifier.padding(start = 5.dp),
-            )
         }
     }
 }

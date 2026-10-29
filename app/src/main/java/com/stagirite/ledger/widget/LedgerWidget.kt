@@ -1,5 +1,13 @@
 package com.stagirite.ledger.widget
 
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.Dispatchers
+import com.stagirite.ledger.data.dayState
+import com.stagirite.ledger.data.GoalKind
+import com.stagirite.ledger.data.DayState
+import androidx.glance.text.TextDecoration
+import androidx.glance.appwidget.action.actionRunCallback
+import androidx.glance.appwidget.action.ActionCallback
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Canvas
@@ -249,7 +257,8 @@ internal fun Hero(goal: Goal, icons: Map<String, Bitmap>, today: LocalDate, c: P
                 maxLines = 1,
                 modifier = GlanceModifier.defaultWeight(),
             )
-            if (roomy) Header(c)
+            // A Vice's moment of resolve, logged from the home screen; a Virtue has nothing to log on a good day.
+            if (roomy && goal.kind != GoalKind.Virtue) ResistButton(goal, c) else if (roomy) Header(c)
         }
         Spacer(GlanceModifier.defaultWeight())
         Row(verticalAlignment = Alignment.Bottom) {
@@ -270,9 +279,84 @@ internal fun Hero(goal: Goal, icons: Map<String, Bitmap>, today: LocalDate, c: P
             )
         }
         Spacer(GlanceModifier.height(6.dp))
-        Text(nextLine(days, goal.currentStart), style = TextStyle(color = c.muted, fontSize = 11.sp), maxLines = 1)
+        val urges = goal.urgesOn(today)
+        Text(
+            buildString {
+                append(statusLine(goal, days))
+                if (roomy && urges > 0) append(" \u00B7 resisted ${if (urges == 1) "once" else "${urges}\u00D7"} today")
+            },
+            style = TextStyle(
+                color = if (Milestones.isMilestone(days, goal.currentStart)) c.ink else c.muted,
+                fontSize = 11.sp,
+                fontWeight = if (Milestones.isMilestone(days, goal.currentStart)) FontWeight.Bold else FontWeight.Normal,
+            ),
+            maxLines = 1,
+        )
+        // With height to spare, the goal's own week, as on the Overview widget.
+        if (size.height >= 170.dp) {
+            Spacer(GlanceModifier.height(8.dp))
+            WeekLetters(today, c) { goal.dayState(it, today) }
+        }
         Spacer(GlanceModifier.height(6.dp))
         Progress(days, goal.currentStart, c)
+    }
+}
+
+/** "Milestone today: 1 week" on the day, otherwise the next one coming. */
+internal fun statusLine(goal: Goal, days: Long): String =
+    if (Milestones.isMilestone(days, goal.currentStart)) {
+        "Milestone today: ${Milestones.name(days, goal.currentStart) ?: days(days)}"
+    } else {
+        nextLine(days, goal.currentStart)
+    }
+
+/** "Resisted +1": logs an urge resisted today for this goal, without opening the app. */
+@Composable
+private fun ResistButton(goal: Goal, c: Palette) {
+    Text(
+        "Resisted +1",
+        style = TextStyle(color = c.ink, fontSize = 12.sp, fontWeight = FontWeight.Medium),
+        modifier = GlanceModifier
+            .cornerRadius(12.dp)
+            .background(c.track)
+            .padding(horizontal = 10.dp, vertical = 5.dp)
+            .clickable(actionRunCallback<ResistUrgeAction>(actionParametersOf(UrgeGoal to goal.id))),
+    )
+}
+
+private val UrgeGoal = ActionParameters.Key<String>("urge_goal")
+
+/** Runs the "Resisted +1" tap: logs it, which redraws every widget, and the app shows it too. */
+class ResistUrgeAction : ActionCallback {
+    override suspend fun onAction(context: Context, glanceId: GlanceId, parameters: ActionParameters) {
+        val id = parameters[UrgeGoal] ?: return
+        val app = context.applicationContext as LedgerApplication
+        withContext(Dispatchers.Main) { app.store.resistUrge(id, LocalDate.now()) }
+    }
+}
+
+/**
+ * The last seven days as weekday letters, oldest first: a kept day in ink, a
+ * day with a slip struck through, a day before tracking (or a rest day) faint.
+ * (Dots read as page markers, as if there were more widgets to swipe through.)
+ */
+@Composable
+internal fun WeekLetters(today: LocalDate, c: Palette, stateOf: (LocalDate) -> DayState) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        (6 downTo 0).forEach { back ->
+            val day = today.minusDays(back.toLong())
+            val state = stateOf(day)
+            Text(
+                day.dayOfWeek.getDisplayName(java.time.format.TextStyle.NARROW, java.util.Locale.getDefault()),
+                style = TextStyle(
+                    color = if (state == DayState.Kept || state == DayState.Slip) c.ink else c.muted,
+                    fontSize = 11.sp,
+                    fontWeight = if (back == 0) FontWeight.Bold else FontWeight.Normal,
+                    textDecoration = if (state == DayState.Slip) TextDecoration.LineThrough else null,
+                ),
+                modifier = GlanceModifier.padding(end = 5.dp),
+            )
+        }
     }
 }
 
@@ -325,7 +409,7 @@ private fun GoalRow(goal: Goal, icons: Map<String, Bitmap>, today: LocalDate, c:
             }
             Column(GlanceModifier.defaultWeight()) {
                 Text(goal.title, style = TextStyle(color = c.ink, fontSize = 14.sp, fontWeight = FontWeight.Medium), maxLines = 1)
-                Text(nextLine(days, goal.currentStart), style = TextStyle(color = c.muted, fontSize = 11.sp), maxLines = 1)
+                Text(statusLine(goal, days), style = TextStyle(color = c.muted, fontSize = 11.sp), maxLines = 1)
             }
             Spacer(GlanceModifier.width(10.dp))
             Text("$days", style = TextStyle(color = c.ink, fontSize = 26.sp, fontWeight = FontWeight.Medium), maxLines = 1)
