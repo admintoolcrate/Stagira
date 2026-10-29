@@ -57,6 +57,11 @@ your goals. We use reports only to fix problems and improve the app, and reply f
 admin.toolcrate@gmail.com. Messages sent by email or GitHub are also subject to those services'
 policies.
 
+If the app crashes, the technical details (the error and where in the app's code it happened,
+never your goals or notes) are saved on your phone. Next time you open Stagira it offers to send
+them as a bug report, which you see in full and send yourself, or you can dismiss it. Nothing is
+sent automatically.
+
 ## Test versions from GitHub
 
 Test versions downloaded from the project's GitHub page (not from Google Play) check GitHub's

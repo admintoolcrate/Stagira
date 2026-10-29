@@ -40,11 +40,18 @@ import com.stagirite.ledger.security.AppLock
  * reporter's email app. Nothing about their goals is ever included.
  */
 @Composable
-fun FeedbackDialog(kind: ReportKind, lock: AppLock, onDismiss: () -> Unit) {
+fun FeedbackDialog(
+    kind: ReportKind,
+    lock: AppLock,
+    onDismiss: () -> Unit,
+    /** Filled in already, e.g. after a crash; the person can still edit or remove it. */
+    initialTitle: String = "",
+    initialDetails: String = "",
+) {
     val context = LocalContext.current
     val device = remember { Feedback.deviceSummary(context) }
-    var title by rememberSaveable { mutableStateOf("") }
-    var details by rememberSaveable { mutableStateOf("") }
+    var title by rememberSaveable { mutableStateOf(initialTitle) }
+    var details by rememberSaveable { mutableStateOf(initialDetails) }
     var steps by rememberSaveable { mutableStateOf("") }
     var expected by rememberSaveable { mutableStateOf("") }
     var includeDevice by rememberSaveable { mutableStateOf(kind == ReportKind.Bug) }

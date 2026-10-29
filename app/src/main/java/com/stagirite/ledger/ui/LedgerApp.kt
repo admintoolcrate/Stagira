@@ -1,5 +1,7 @@
 package com.stagirite.ledger.ui
 
+import com.stagirite.ledger.feedback.ReportKind
+import com.stagirite.ledger.feedback.CrashLog
 import android.app.Activity
 import com.stagirite.ledger.LedgerApplication
 import android.net.Uri
@@ -167,6 +169,39 @@ private fun LedgerAppContent(
     val buzz = rememberBuzz()
 
     val play = (context.applicationContext as LedgerApplication).play
+    // The app crashed last time: offer to send what happened (never goal data).
+    var crash by remember { mutableStateOf(CrashLog.pending(context)) }
+    var sendingCrash by rememberSaveable { mutableStateOf<String?>(null) }
+    crash?.let { trace ->
+        AlertDialog(
+            onDismissRequest = { CrashLog.clear(context); crash = null },
+            title = { Text("Stagira closed unexpectedly") },
+            text = {
+                Text(
+                    "Last time, Stagira ran into a problem and had to close. You can send the technical " +
+                        "details to the developer to help fix it. You'll see exactly what's sent first; it " +
+                        "contains no goals or notes.",
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    sendingCrash = trace
+                    CrashLog.clear(context)
+                    crash = null
+                }) { Text("Send report") }
+            },
+            dismissButton = { TextButton(onClick = { CrashLog.clear(context); crash = null }) { Text("Not now") } },
+        )
+    }
+    sendingCrash?.let { trace ->
+        FeedbackDialog(
+            ReportKind.Bug,
+            lock,
+            onDismiss = { sendingCrash = null },
+            initialTitle = "The app closed unexpectedly",
+            initialDetails = "Stagira closed by itself. Technical details:\n\n```\n$trace\n```",
+        )
+    }
     LaunchedEffect(play.updateReady) {
         if (play.updateReady) {
             val r = snackbar.showSnackbar("A new version of Stagira is ready.", actionLabel = "Restart", duration = SnackbarDuration.Indefinite)

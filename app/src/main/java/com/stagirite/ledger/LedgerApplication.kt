@@ -1,5 +1,6 @@
 package com.stagirite.ledger
 
+import com.stagirite.ledger.feedback.CrashLog
 import com.stagirite.ledger.support.PlayServices
 import com.stagirite.ledger.beta.BetaUpdates
 import android.app.Application
@@ -33,6 +34,7 @@ class LedgerApplication : Application() {
 
     override fun onCreate() {
         super.onCreate()
+        CrashLog.install(this)
         store = GoalStore(this)
         settings = Settings(this)
         sync = SyncManager(this, store, MainScope())
