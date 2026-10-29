@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Long-press the app icon: Quick log, or a new goal. -->
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <shortcut
+        android:shortcutId="quick_log"
+        android:enabled="true"
+        android:icon="@drawable/ic_shortcut_log"
+        android:shortcutShortLabel="@string/shortcut_log_short"
+        android:shortcutLongLabel="@string/shortcut_log_long">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetPackage="com.stagirite.ledger"
+            android:targetClass="com.stagirite.ledger.MainActivity">
+            <extra android:name="quick" android:value="log" />
+        </intent>
+    </shortcut>
+    <shortcut
+        android:shortcutId="new_goal"
+        android:enabled="true"
+        android:icon="@drawable/ic_shortcut_add"
+        android:shortcutShortLabel="@string/shortcut_new_short"
+        android:shortcutLongLabel="@string/shortcut_new_long">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetPackage="com.stagirite.ledger"
+            android:targetClass="com.stagirite.ledger.MainActivity">
+            <extra android:name="quick" android:value="new" />
+        </intent>
+    </shortcut>
+</shortcuts>

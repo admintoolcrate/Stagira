@@ -1,0 +1,125 @@
+name: Build APK
+
+# Kept lean on Actions minutes:
+# - a newer push cancels the build still running for the same branch;
+# - tests and the debug APK share one Gradle run;
+# - the slower release (R8) build and the signed Play bundle only run when asked for:
+#   "Run workflow" with "release" ticked, or a pushed tag like v2.1.
+on:
+  push:
+    branches: ["**"]
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      release:
+        description: Also build the optimised release, and the signed Play bundle if the upload key is set up
+        type: boolean
+        default: false
+      unlock_plus:
+        description: Unlock Plus in the Play bundle, for testing tracks before in-app products exist
+        type: boolean
+        default: false
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # Builds of this branch are published as beta releases (GitHub → Releases), which test
+  # copies of the app check for. Change it when development moves to another branch.
+  BETA_BRANCH: main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: write   # to publish the beta release
+    env:
+      RELEASE: ${{ startsWith(github.ref, 'refs/tags/v') || inputs.release == true }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Verify Aristotle quotations against the source text
+        run: python3 tools/verify_quotes.py
+      - name: Unit tests and debug APK
+        run: ./gradlew testDebugUnitTest assembleDebug
+      - uses: actions/upload-artifact@v4
+        with:
+          name: stagirites-ledger-debug
+          path: app/build/outputs/apk/debug/app-debug.apk
+      # Each build of the beta branch becomes a pre-release with the APK attached, so testers
+      # can install it over their copy (goals stay) without digging through Actions.
+      - name: Publish beta release
+        if: github.ref == format('refs/heads/{0}', env.BETA_BRANCH)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VERSION=$(sed -n 's/.*versionName = "\(.*\)".*/\1/p' app/build.gradle.kts)
+          APK="stagira-${VERSION}-beta${GITHUB_RUN_NUMBER}.apk"
+          cp app/build/outputs/apk/debug/app-debug.apk "$APK"
+          git log -1 --pretty=%B | sed '/^Co-Authored-By:/d;/^Claude-Session:/d;s/ \[skip ci\]//' > notes.md
+          printf '\nInstall it over your current copy; your goals stay.\n' >> notes.md
+          gh release create "beta-${GITHUB_RUN_NUMBER}" "$APK" --prerelease --target "$GITHUB_SHA" \
+            --title "Stagira ${VERSION} · beta ${GITHUB_RUN_NUMBER}" --notes-file notes.md
+          # Keep the ten newest betas.
+          gh release list --limit 100 --json tagName --jq '.[].tagName' | grep '^beta-' | sort -t- -k2 -n -r \
+            | tail -n +11 | xargs -r -I{} gh release delete {} --yes --cleanup-tag
+      # The optimised (R8) build a store release would use; unsigned, so it isn't uploaded.
+      - name: Check release build
+        if: env.RELEASE == 'true'
+        run: ./gradlew assembleRelease
+
+  # The signed bundle for Google Play, once the upload key is added as repository
+  # secrets (see docs/play-store/RELEASE.md). Only for release runs.
+  play-bundle:
+    runs-on: ubuntu-latest
+    needs: build
+    timeout-minutes: 20
+    if: startsWith(github.ref, 'refs/tags/v') || inputs.release == true
+    env:
+      UPLOAD_KEYSTORE_BASE64: ${{ secrets.UPLOAD_KEYSTORE_BASE64 }}
+      PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+    steps:
+      - uses: actions/checkout@v4
+        if: env.UPLOAD_KEYSTORE_BASE64 != ''
+      - uses: actions/setup-java@v4
+        if: env.UPLOAD_KEYSTORE_BASE64 != ''
+        with:
+          distribution: temurin
+          java-version: 17
+      - uses: gradle/actions/setup-gradle@v4
+        if: env.UPLOAD_KEYSTORE_BASE64 != ''
+      - name: Build signed release bundle
+        if: env.UPLOAD_KEYSTORE_BASE64 != ''
+        env:
+          RELEASE_STORE_PASSWORD: ${{ secrets.UPLOAD_STORE_PASSWORD }}
+          RELEASE_KEY_ALIAS: ${{ secrets.UPLOAD_KEY_ALIAS }}
+          RELEASE_KEY_PASSWORD: ${{ secrets.UPLOAD_KEY_PASSWORD }}
+        run: |
+          printf '%s' "$UPLOAD_KEYSTORE_BASE64" | tr -d ' \r\n\t' | base64 -d > "$RUNNER_TEMP/upload.jks"
+          RELEASE_STORE_FILE="$RUNNER_TEMP/upload.jks" ./gradlew bundleRelease -PplusForTesting=${{ inputs.unlock_plus == true }}
+          rm -f "$RUNNER_TEMP/upload.jks"
+      - uses: actions/upload-artifact@v4
+        if: env.UPLOAD_KEYSTORE_BASE64 != ''
+        with:
+          name: stagirite-play-bundle
+          path: app/build/outputs/bundle/release/app-release.aab
+      # Straight to Play's Internal testing track (no review), once the Play service account is
+      # added as a secret (docs/play-store/RELEASE.md, "Uploads from GitHub"). Closed testing and
+      # production stay a "Promote release" click in Play Console, so nothing reaches testers or
+      # users unseen.
+      - name: Upload to Google Play (Internal testing)
+        if: env.UPLOAD_KEYSTORE_BASE64 != '' && env.PLAY_SERVICE_ACCOUNT_JSON != ''
+        uses: r0adkll/upload-google-play@v1
+        with:
+          serviceAccountJsonPlainText: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+          packageName: com.stagirite.ledger
+          releaseFiles: app/build/outputs/bundle/release/app-release.aab
+          mappingFile: app/build/outputs/mapping/release/mapping.txt
+          track: internal
+          status: completed
