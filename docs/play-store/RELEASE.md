@@ -94,19 +94,16 @@ version charges.
 
 1. Create an account at [admob.google.com](https://admob.google.com), add the app, and create
    a **Rewarded** ad unit.
-2. Put the two ids in `gradle.properties` (or as CI secrets you pass on), replacing Google's
-   test ids:
-   ```
-   admobAppId=ca-app-pub-XXXXXXXXXXXXXXXX~YYYYYYYYYY
-   admobRewardedId=ca-app-pub-XXXXXXXXXXXXXXXX/ZZZZZZZZZZ
-   ```
+2. The ids are in `app/build.gradle.kts`: app `ca-app-pub-8879201576445737~6754347629` in every
+   build, and the rewarded unit `ca-app-pub-8879201576445737/2133626084` in release (Play) builds
+   only. Test builds use Google's sample ad unit, so nobody taps a real ad on a test copy.
 3. **Blocking controls → Sensitive categories:** block *Alcohol*, *Gambling & betting* and
    *Dating*, and consider *Drugs & supplements*. For a recovery app this matters.
 4. **Privacy & messaging:** create a **European regulations (GDPR)** message for the app; the
    app shows it automatically to EEA/UK users before an ad.
 5. Link the AdMob app to the Play listing once it's live.
 
-Until step 2, the app uses Google's official test ids: ads show "Test Ad" and pay nothing.
+A brand-new AdMob account usually serves few or no ads for its first days while Google reviews it.
 
 ## 5. Store listing (Grow → Store presence → Main store listing) (you)
 

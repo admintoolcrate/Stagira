@@ -36,16 +36,12 @@ android {
         versionCode = 12
         versionName = "3.1.2"
 
-        // AdMob IDs for "Watch an ad to support us". Set admobAppId and
-        // admobRewardedId in gradle.properties (or ~/.gradle/gradle.properties)
-        // once you have an AdMob account; until then Google's official test IDs
-        // are used, which only ever show "Test Ad" and never pay out.
-        val admobAppId = (project.findProperty("admobAppId") as String?)
-            ?: "ca-app-pub-3940256099942544~3347511713"
-        val admobRewardedId = (project.findProperty("admobRewardedId") as String?)
-            ?: "ca-app-pub-3940256099942544/5224354917"
+        // AdMob for "Watch an ad to support us". The app ID is the real one in every build, as
+        // Google recommends: it ties the app to its consent message, which EU users must see
+        // before any ad, test or real. Test builds use Google's sample ad unit (below, in
+        // buildTypes) so nobody taps a real ad on a test copy, which AdMob counts against you.
+        val admobAppId = (project.findProperty("admobAppId") as String?) ?: "ca-app-pub-8879201576445737~6754347629"
         manifestPlaceholders["admobAppId"] = admobAppId
-        buildConfigField("String", "ADMOB_REWARDED_ID", "\"$admobRewardedId\"")
         // The CI run number, which names each beta release ("beta-57"); 0 for builds made elsewhere.
         buildConfigField("int", "BUILD_NUMBER", (System.getenv("GITHUB_RUN_NUMBER")?.toIntOrNull() ?: 0).toString())
     }
@@ -73,12 +69,17 @@ android {
 
     buildTypes {
         debug {
+            // Google's sample rewarded ad unit: always "Test Ad", never paid, safe to tap.
+            buildConfigField("String", "ADMOB_REWARDED_ID", "\"ca-app-pub-3940256099942544/5224354917\"")
             // Test builds have Plus unlocked, so every feature can be tried.
             buildConfigField("boolean", "PLUS_FOR_TESTING", "true")
             // Test builds look for a newer beta on GitHub; Play builds never do.
             buildConfigField("boolean", "BETA_UPDATES", "true")
         }
         release {
+            // The real "Support Stagira" rewarded ad unit.
+            val admobRewardedId = (project.findProperty("admobRewardedId") as String?) ?: "ca-app-pub-8879201576445737/2133626084"
+            buildConfigField("String", "ADMOB_REWARDED_ID", "\"$admobRewardedId\"")
             // Off for real releases. On for Play testing tracks while purchases aren't set up yet,
             // so testers can try everything: build with -PplusForTesting=true (CI: "unlock_plus").
             val plusForTesting = (project.findProperty("plusForTesting") as String?) == "true"
