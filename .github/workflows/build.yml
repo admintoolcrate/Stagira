@@ -27,7 +27,7 @@ concurrency:
 env:
   # Builds of this branch are published as beta releases (GitHub → Releases), which test
   # copies of the app check for. Change it when development moves to another branch.
-  BETA_BRANCH: ccr-a04772e5-ln9fxb
+  BETA_BRANCH: main
 
 jobs:
   build:
