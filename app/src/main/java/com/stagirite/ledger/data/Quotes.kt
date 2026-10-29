@@ -77,6 +77,59 @@ object Quotes {
             "This is why it is a hard task to be good, for it is hard to find the middle point in anything…",
             "II.9, 1109a",
         ),
+        Quote(
+            "However, we do not blame one who diverges a little from the right course, whether on the side of " +
+                "the too much or of the too little, but one who diverges more widely…",
+            "II.9, 1109b",
+        ),
+        Quote(
+            "It is not surprising that a man should be overcome by violent and excessive pleasures or pains: " +
+                "indeed it is excusable if he succumbs after a struggle…",
+            "VII.7, 1150b",
+            "Aristotle on giving in after a real struggle.",
+        ),
+        Quote(
+            "…the truly good and wise man will bear all kinds of fortune in a seemly way, and will always act in " +
+                "the noblest manner that the circumstances allow; even as a good general makes the most effective " +
+                "use of the forces at his disposal, and a good shoemaker makes the finest shoe possible out of the " +
+                "leather supplied him…",
+            "I.10, 1101a",
+        ),
+        Quote(
+            "The second rule is to notice what are the errors to which we are ourselves most prone (as different " +
+                "men are inclined by nature to different faults)—and we shall discover what these are by observing " +
+                "the pleasure or pain that we experience…",
+            "II.9, 1109b",
+        ),
+        Quote(
+            "Thirdly, we must in everything be most of all on our guard against what is pleasant and against " +
+                "pleasure; for when pleasure is on her trial we are not impartial judges.",
+            "II.9, 1109b",
+            "Aristotle on why the pull of pleasure is hard to judge in the moment.",
+        ),
+        Quote(
+            "Hence our indulgences should be moderate and few, and never opposed to principle…",
+            "III.12, 1119b",
+            "\u201CPrinciple\u201D is Rackham\u2019s word for reason, the plan you\u2019ve chosen.",
+        ),
+        Quote(
+            "This is the unrestrained man: he is better than the profligate, and not absolutely bad, for in him the " +
+                "highest part of man, the fundamental principle, is still preserved.",
+            "VII.8, 1151a",
+            AKRASIA,
+        ),
+        Quote(
+            "…it is easier to train oneself to resist the temptations of pleasure, because these occur frequently " +
+                "in life, and to practise resistance to them involves no danger…",
+            "III.12, 1119a",
+            "Aristotle on why temptation, met often, can be trained against.",
+        ),
+        Quote(
+            "Thus much then is clear, that it is the middle disposition in each department of conduct that is to be " +
+                "praised, but that one should lean sometimes to the side of excess and sometimes to that of " +
+                "deficiency, since this is the easiest way of hitting the mean and the right course.",
+            "II.9, 1109b",
+        ),
     )
 
     /** Words for reaching a milestone. */
@@ -117,10 +170,76 @@ object Quotes {
             "…to do these things properly is rare, praiseworthy, and noble.",
             "II.9, 1109a",
         ),
+        Quote(
+            "They acquire a particular quality by constantly acting in a particular way.",
+            "III.5, 1114a",
+        ),
+        Quote(
+            "…so it is those who act rightly who carry off the prizes and good things of life.",
+            "I.8, 1099a",
+        ),
+        Quote(
+            "…Restraint implies mastery, which is a different matter: victory is more glorious than the mere " +
+                "avoidance of defeat.",
+            "VII.7, 1150a",
+        ),
+        Quote(
+            "And he will bear changes of fortunes most nobly, and with perfect propriety in every way, being as he " +
+                "is good in very truth and four-square without reproach.",
+            "I.10, 1100b",
+        ),
+        Quote(
+            "…virtue results from the repeated performance of just and temperate actions.",
+            "II.4, 1105b",
+        ),
+        Quote(
+            "…to do noble and virtuous deeds is a thing desirable for its own sake.",
+            "X.6, 1176b",
+        ),
+        Quote(
+            "…those who work with pleasure always work with more discernment and with greater accuracy…",
+            "X.5, 1175a",
+        ),
+        Quote(
+            "…the self-restrained man stands by principle and does not change from either cause.",
+            "VII.9, 1151b",
+        ),
+        Quote(
+            "Again, everybody loves a thing more if it has cost him trouble…",
+            "IX.7, 1168a",
+        ),
+        Quote(
+            "The doer\u2019s achievement therefore remains, for nobility or beauty is long-lived…",
+            "IX.7, 1168a",
+        ),
+        Quote(
+            "Hence Courage itself is painful; and it is justly praised, because it is harder to endure pain than to " +
+                "abstain from pleasure.",
+            "III.9, 1117a",
+        ),
+        Quote(
+            "…he will endure them as principle dictates, for the sake of what is noble; for that is the end at which " +
+                "virtue aims.",
+            "III.7, 1115b",
+        ),
+        Quote(
+            "Acts of virtue are noble, and are performed for the sake of their nobility…",
+            "IV.1, 1120a",
+        ),
+        Quote(
+            "…in this working out of details Time seems to be a good inventor or at all events coadjutor.",
+            "I.7, 1098a",
+        ),
     )
 
-    fun forMilestone(goal: Goal, days: Long): Quote =
-        milestone[(goal.id.hashCode() + days.toInt()).absoluteValue % milestone.size]
+    /**
+     * A passage for reaching [days]. Each milestone of a run takes the next passage in turn
+     * (from a starting point that differs per goal), so none repeats until all have been seen.
+     */
+    fun forMilestone(goal: Goal, days: Long): Quote {
+        val nth = Milestones.upTo(days, goal.currentStart).size
+        return milestone[(goal.id.hashCode().absoluteValue + nth) % milestone.size]
+    }
 
     /** For the empty page: about starting, and about doing rather than talking. */
     val starting = listOf(
@@ -137,6 +256,29 @@ object Quotes {
                 "to carry out his prescriptions.",
             "II.4, 1105b",
             "On people who talk about virtue instead of practising it.",
+        ),
+        Quote(
+            "And just as at the Olympic games the wreaths of victory are not bestowed upon the handsomest and " +
+                "strongest persons present, but on men who enter for the competitions…",
+            "I.8, 1099a",
+        ),
+        Quote(
+            "…in the practical sciences the end is not to attain a theoretic knowledge of the various subjects, " +
+                "but rather to carry out our theories in action.",
+            "X.9, 1179b",
+        ),
+        Quote(
+            "…for no doubt the proper procedure is to begin by making a rough sketch, and to fill it in afterwards.",
+            "I.7, 1098a",
+        ),
+        Quote(
+            "…as you will become a good builder from building well, so you will become a bad one from building badly.",
+            "II.1, 1103b",
+        ),
+        Quote(
+            "…moral or ethical virtue is the product of habit (ethos), and has indeed derived its name, with a slight " +
+                "variation of form, from that word.",
+            "II.1, 1103a",
         ),
     )
 

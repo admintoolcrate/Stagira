@@ -122,22 +122,24 @@ class GoalTest {
     @Test
     fun milestones() {
         assertEquals(1, Milestones.next(0))
-        assertEquals(3, Milestones.next(1))
+        assertEquals(2, Milestones.next(1))
+        assertEquals(10, Milestones.next(7))
         assertEquals(30, Milestones.next(21))
         assertEquals(100, Milestones.next(90))
-        assertEquals(500, Milestones.next(365))
+        assertEquals(400, Milestones.next(365))
+        assertEquals(500, Milestones.next(400))
         assertEquals(547, Milestones.next(500))
         assertEquals(730, Milestones.next(547))
         assertEquals(1000, Milestones.next(800))
         assertEquals(1095, Milestones.next(1000))
         assertEquals(0f, Milestones.progress(0), 0f)
-        assertEquals(0.5f, Milestones.progress(45), 0.001f)
+        assertEquals(0.5f, Milestones.progress(110), 0.001f)
         assertTrue(Milestones.isMilestone(30))
         assertTrue(Milestones.isMilestone(730))
         assertTrue(Milestones.isMilestone(1000))
         assertFalse(Milestones.isMilestone(31))
         assertFalse(Milestones.isMilestone(0))
-        assertEquals(listOf(1L, 3, 7, 14, 21, 30, 60, 90, 100), Milestones.upTo(100))
+        assertEquals(listOf(1L, 2, 3, 5, 7, 10, 14, 21, 30, 45, 60, 75, 90, 100), Milestones.upTo(100))
     }
 
     @Test
@@ -220,6 +222,13 @@ class GoalTest {
     @Test
     fun theLadderLooksYearsAhead() {
         val ladder = Milestones.upTo(4000)
-        listOf(365L, 500, 547, 730, 1000, 1095, 1460, 1825, 2000, 3000, 3650).forEach { assertTrue("$it", it in ladder) }
+        listOf(365L, 400, 500, 547, 730, 750, 1000, 1095, 1460, 1500, 1825, 2000, 2500, 3650).forEach { assertTrue("$it", it in ladder) }
+    }
+
+    @Test
+    fun milestonePassagesDontRepeatUntilAllHaveBeenSeen() {
+        val goal = Goal("g", "Drink less", LocalDate.of(2026, 1, 1))
+        val seen = Milestones.upTo(3650, goal.currentStart).take(Quotes.milestone.size).map { Quotes.forMilestone(goal, it) }
+        assertEquals(seen.size, seen.toSet().size)
     }
 }

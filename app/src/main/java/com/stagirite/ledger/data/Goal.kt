@@ -220,15 +220,17 @@ fun mergeGoals(a: List<Goal>, b: List<Goal>): List<Goal> =
         .sortedWith(compareBy({ it.createdAt }, { it.id }))
 
 /**
- * Milestones: a ladder of early days, then the long view: a year, 500 days,
- * 18 months, two years, 1,000 days, and every year and every 1,000 days after.
+ * Milestones: close together at first, when each day is hardest (1, 2, 3, 5, 7,
+ * 10 …), spreading out through the first year, then the long view: a year,
+ * 400 and 500 days, 18 months, two years, 750 and 1,000 days, and from there
+ * every year and every 500 days.
  *
  * Given the run's [start], years and months fall on the real anniversary, so
  * "2 years" is the same date two years on, leap days included. Without one,
  * a year is taken as 365 days.
  */
 object Milestones {
-    private val fixed = listOf(1L, 3, 7, 14, 21, 30, 60, 90, 100, 180, 270)
+    private val fixed = listOf(1L, 2, 3, 5, 7, 10, 14, 21, 30, 45, 60, 75, 90, 100, 120, 150, 180, 200, 250, 300, 400, 750)
 
     private fun span(start: LocalDate?, years: Long = 0, months: Long = 0): Long =
         if (start == null) years * 365 + months * 365 / 12
@@ -237,8 +239,8 @@ object Milestones {
     /** Every milestone up to [limit]. */
     fun upTo(limit: Long, start: LocalDate? = null): List<Long> {
         val years = (1..(limit / 365 + 1)).map { span(start, years = it) }
-        val thousands = (1..(limit / 1000 + 1)).map { it * 1000L }
-        return (fixed + years + 500L + span(start, months = 18) + thousands)
+        val halfThousands = (1..(limit / 500 + 1)).map { it * 500L }
+        return (fixed + years + halfThousands + span(start, months = 18))
             .filter { it <= limit }.distinct().sorted()
     }
 

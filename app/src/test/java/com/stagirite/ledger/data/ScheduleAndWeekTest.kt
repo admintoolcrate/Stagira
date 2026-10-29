@@ -80,7 +80,7 @@ class ScheduleAndWeekTest {
         val e = w.goals.first { it.goal.id == "g" }
         assertEquals(3, e.due) // Mon, Wed, Fri
         assertEquals(3, e.kept)
-        // The exercise goal began this Monday: 1 and 3 days fall this week.
-        assertEquals(listOf(1L, 3L), e.milestones)
+        // The exercise goal began this Monday: 1, 2, 3 and 5 days fall this week.
+        assertEquals(listOf(1L, 2L, 3L, 5L), e.milestones)
     }
 }

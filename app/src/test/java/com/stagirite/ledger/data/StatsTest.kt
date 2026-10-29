@@ -51,10 +51,10 @@ class StatsTest {
     @Test
     fun upcomingMilestonesSoonestFirst() {
         val a = Goal("a", "A", today.minusDays(29)) // 29 days: 30 is 1 away
-        val b = Goal("b", "B", today.minusDays(4)) // 4 days: 7 is 3 away
+        val b = Goal("b", "B", today.minusDays(8)) // 8 days: 10 is 2 away
         val up = upcomingMilestones(listOf(b, a), today)
         assertEquals(listOf("a", "b"), up.map { it.goal.id })
-        assertEquals(listOf(1L, 3L), up.map { it.inDays })
-        assertEquals(listOf(30L, 7L), up.map { it.milestone })
+        assertEquals(listOf(1L, 2L), up.map { it.inDays })
+        assertEquals(listOf(30L, 10L), up.map { it.milestone })
     }
 }
