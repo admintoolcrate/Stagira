@@ -248,6 +248,7 @@ private fun LedgerAppContent(
 
     AnimatedContent(
         targetState = screen,
+        modifier = Modifier.readableWidth(),
         transitionSpec = {
             // Deeper screens come in from the right; going back reverses it. The two tabs just cross-fade.
             val tabs = setOf("home", "overview")

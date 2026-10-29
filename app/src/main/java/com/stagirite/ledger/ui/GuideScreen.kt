@@ -101,7 +101,7 @@ fun GuideScreen(onDone: () -> Unit, onCreate: ((GoalDraft) -> Unit)? = null) {
         onDone()
     }
 
-    Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+    Surface(Modifier.readableWidth(), color = MaterialTheme.colorScheme.background) {
         Column(
             Modifier
                 .fillMaxSize()

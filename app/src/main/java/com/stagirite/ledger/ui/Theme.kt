@@ -1,5 +1,11 @@
 package com.stagirite.ledger.ui
 
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.wrapContentWidth
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.background
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Typography
 import androidx.compose.material3.darkColorScheme
@@ -130,6 +136,20 @@ fun TextStyle.capped(max: Float = 1.25f): TextStyle {
         lineHeight = if (lineHeight.isSp) lineHeight * k else lineHeight,
     )
 }
+
+/**
+ * On tablets, foldables and phones turned sideways, screens keep a readable
+ * width in the middle instead of stretching edge to edge.
+ */
+val MAX_CONTENT_WIDTH = 640.dp
+
+/** Centres a screen and caps its width at [MAX_CONTENT_WIDTH], over the page colour. */
+@Composable
+fun Modifier.readableWidth(): Modifier = this
+    .fillMaxSize()
+    .background(MaterialTheme.colorScheme.background)
+    .wrapContentWidth(Alignment.CenterHorizontally)
+    .widthIn(max = MAX_CONTENT_WIDTH)
 
 /** Spacing in steps of 4dp; layouts use these rather than one-off values. */
 object Space {
