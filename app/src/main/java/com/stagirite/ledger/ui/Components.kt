@@ -225,10 +225,17 @@ val EmojiFont = FontFamily(Font(R.font.noto_emoji))
 
 /** Draws [icon] in the monochrome emoji font, in the current ink colour. */
 @Composable
-fun EmojiGlyph(icon: String, size: TextUnit, modifier: Modifier = Modifier, color: Color = MaterialTheme.colorScheme.onBackground) {
+fun EmojiGlyph(
+    icon: String,
+    size: TextUnit,
+    modifier: Modifier = Modifier,
+    color: Color = MaterialTheme.colorScheme.onBackground,
+    /** Beside a goal's name the icon is decoration; TalkBack would otherwise read "beer mug". */
+    decorative: Boolean = true,
+) {
     Text(
         icon,
-        modifier = modifier,
+        modifier = if (decorative) modifier.clearAndSetSemantics {} else modifier,
         color = color,
         style = TextStyle(
             fontFamily = EmojiFont,

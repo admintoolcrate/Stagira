@@ -1,5 +1,6 @@
 package com.stagirite.ledger.ui
 
+import androidx.compose.ui.semantics.Role
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -151,7 +152,13 @@ private fun DayCell(
         modifier = Modifier
             .fillMaxSize()
             .padding(3.dp)
-            .then(if (clickable) Modifier.clickable { onClick?.invoke(day) } else Modifier)
+            .then(
+                if (clickable) {
+                    Modifier.clickable(onClickLabel = if (state == DayState.Slip) "Remove ${slipLabel.lowercase()}" else "Log a ${slipLabel.lowercase()}", role = Role.Button) { onClick?.invoke(day) }
+                } else {
+                    Modifier
+                },
+            )
             .semantics { contentDescription = label },
         verticalArrangement = Arrangement.Center,
     ) {

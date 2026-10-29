@@ -1,5 +1,6 @@
 package com.stagirite.ledger.ui
 
+import androidx.compose.ui.semantics.onLongClick
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.ui.draw.clip
@@ -216,7 +217,10 @@ fun GoalListScreen(
                     Wordmark(
                         large = open > 0.5f,
                         subtitleAlpha = ((open - 0.5f) * 2f).coerceIn(0f, 1f),
-                        modifier = Modifier.pointerInput(Unit) { detectTapGestures(onLongPress = { onTitleLongPress() }) },
+                        modifier = Modifier
+                            .pointerInput(Unit) { detectTapGestures(onLongPress = { onTitleLongPress() }) }
+                            // Screen readers can't long-press a title, so offer it as an action.
+                            .semantics { onLongClick(label = "Show or hide private titles") { onTitleLongPress(); true } },
                     )
                 },
                 scrollBehavior = scroll,
@@ -1661,7 +1665,7 @@ private fun IconPickerDialog(current: String, onDismiss: () -> Unit, onPick: (St
                                     )
                                     .clickable { onPick(e) },
                                 contentAlignment = Alignment.Center,
-                            ) { EmojiGlyph(e, 24.sp) }
+                            ) { EmojiGlyph(e, 24.sp, decorative = false) }
                         }
                     }
                 }
