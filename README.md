@@ -19,10 +19,16 @@ A minimal Android app (**Stagira** on your home screen) that does one thing: nam
 - **Private titles** — show a cover name ("No more corn") while the real name and note stay
   encrypted behind a PIN. Long-press the app's name on the Goals screen to reveal them; they hide
   again when you leave the app.
-- **Home-screen widgets** — Goal (free): one goal you choose, its count large. Overview (free): this
-  week, days kept and the next milestone. Goals (Plus): several goals with progress. All three: Solid,
-  See-through or Clear background. Tap a goal to open it. Private goals show their cover names, and
-  while the app lock is on it shows only "Locked".
+- **Home-screen widgets** — Goal (free): one goal you choose, its count large; wide, a "Resisted +1"
+  button for Vices; tall, the goal's week. Overview (free): this week, days kept and what's coming
+  up. Goals (Plus): several goals with progress. All: from one cell up, Solid, See-through or Clear,
+  "Milestone today" on the day. Private goals show their cover names; optionally hidden while locked.
+- **Tablets and landscape** — screens keep a readable width in the middle.
+- **Accessibility** — TalkBack labels throughout (including the private-titles action), large text
+  capped for the big numbers only.
+- **Crash reports without tracking** — saved on the phone, offered as a bug report next time.
+- **From Google Play** — in-app updates download in the background; Play's review card is shown
+  once, after a milestone of a week or more.
 - **Targets** — an optional aim per goal (30, 90, 180 or 365 days); the ring fills towards it.
 - **Archive** — hide finished or paused goals without losing them; restore any time.
 - **Quick actions** — long-press a goal on the list to log a slip or archive it, with Undo. Hold +
@@ -69,10 +75,11 @@ A minimal Android app (**Stagira** on your home screen) that does one thing: nam
   Overview suggests one once a month after the first week.
 - **Slip notes** — jot down what happened when you log a slip, or later from History. Notes on
   private goals are sealed with the real title.
-- **Milestones** at 1, 3, 7, 14, 21, 30, 60, 90, 100, 180, 270 and 365 days, then 500, every
-  1,000 and every year. Each goal has a Milestones tab (reached ones with their dates, the next few
-  with the dates they'll fall on), and reaching one shows a short celebration with an Aristotle
-  passage.
+- **Milestones** close together at first (1, 2, 3, 5, 7, 10, 14, 21, 30, 45, 60, 75, 90, 100 days),
+  spreading out through the first year (120, 150, 180, 200, 250, 300), then a year, 400 and 500 days,
+  18 months, two years, 750 and 1,000 days, and every year and every 500 days after. Years fall on
+  the real anniversary. Reaching one shows a short celebration with an Aristotle passage; each
+  milestone of a run gets a different one, from 50 passages verified word for word.
 - **Log a slip** in two taps: Today, Yesterday, or another day from a calendar, with Undo.
 - **App lock** with fingerprint, face or screen lock, locking immediately or after 1 or 5 minutes.
 - **Daily reminder** (optional) at a time you choose, with a Quick log button. It mentions a
