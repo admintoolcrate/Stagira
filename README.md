@@ -1,1 +1,1 @@
-# The-Stagirite-s-Ledger
+# Stagira
