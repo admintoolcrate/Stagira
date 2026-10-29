@@ -33,7 +33,9 @@ android {
         applicationId = "com.stagirite.ledger"
         minSdk = 26
         targetSdk = 36
-        versionCode = 12
+        // CI builds number themselves from the run (beta 57 is version 1057), so every upload to
+        // Play has a new, higher code. Builds made elsewhere use the fixed fallback.
+        versionCode = System.getenv("GITHUB_RUN_NUMBER")?.toIntOrNull()?.let { 1000 + it } ?: 12
         versionName = "3.1.2"
 
         // AdMob for "Watch an ad to support us". The app ID is the real one in every build, as

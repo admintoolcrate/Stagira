@@ -163,3 +163,22 @@ Until this is done, sync only works for the test users you've added.
 - Raise `versionCode` (and `versionName`) in `app/build.gradle.kts`; Play rejects a repeated
   `versionCode`.
 - Build the signed bundle (locally or the CI artifact), upload to a track, promote to production.
+
+## Uploads from GitHub (one-time setup)
+
+Release builds (Actions → Build APK → Run workflow → tick "release") upload the signed bundle
+straight to **Internal testing**. To switch that on:
+
+1. **Google Cloud** (the project used for sign-in): *APIs & Services → Library* → enable
+   **Google Play Android Developer API**.
+2. *IAM & Admin → Service accounts → Create service account*, e.g. `github-uploader`. Skip the
+   optional role and user steps. Open it → *Keys → Add key → Create new key → JSON*; a file
+   downloads. Treat it like a password: it can publish to your Play account.
+3. **Play Console → Users and permissions → Invite new users**: the service account's email
+   (ends in `iam.gserviceaccount.com`). Under *App permissions* add Stagira with **Release to
+   testing tracks** (and *View app information*). Invite.
+4. **GitHub → Settings → Secrets and variables → Actions → New repository secret**:
+   `PLAY_SERVICE_ACCOUNT_JSON`, the whole contents of the JSON file. Then delete the file.
+
+Version codes come from the build number (1000 + run number), so they always go up. To get a
+build to testers or users, promote it in Play Console: *Internal testing → Promote release*.
