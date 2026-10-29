@@ -1,4 +1,4 @@
-# Stagira — A Ledger
+# Stagira
 
 A minimal Android app (**Stagira** on your home screen) that does one thing: name a habit you're keeping —
 *no more alcohol*, *no smoking*, *daily run* — and it counts the days.
