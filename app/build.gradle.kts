@@ -127,6 +127,9 @@ dependencies {
     implementation("com.google.android.gms:play-services-auth:21.3.0")
     // Plus and the tip jar.
     implementation("com.android.billingclient:billing-ktx:8.0.0")
+    // Play's review prompt and in-app updates (Play builds only; see support/PlayServices.kt).
+    implementation("com.google.android.play:review:2.0.2")
+    implementation("com.google.android.play:app-update:2.1.0")
     // "Watch an ad to support us": only started when the user taps it.
     implementation("com.google.android.gms:play-services-ads:23.6.0")
     // Google's consent form for ads, required in the EEA and UK.

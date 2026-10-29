@@ -1,5 +1,6 @@
 package com.stagirite.ledger.ui
 
+import android.app.Activity
 import com.stagirite.ledger.LedgerApplication
 import android.net.Uri
 import android.content.Intent
@@ -165,6 +166,13 @@ private fun LedgerAppContent(
     val context = LocalContext.current
     val buzz = rememberBuzz()
 
+    val play = (context.applicationContext as LedgerApplication).play
+    LaunchedEffect(play.updateReady) {
+        if (play.updateReady) {
+            val r = snackbar.showSnackbar("A new version of Stagira is ready.", actionLabel = "Restart", duration = SnackbarDuration.Indefinite)
+            if (r == SnackbarResult.ActionPerformed) play.installUpdate()
+        }
+    }
     LaunchedEffect(Unit) {
         if (store.recoveredFromDamage) {
             snackbar.showSnackbar(
@@ -475,7 +483,11 @@ private fun LedgerAppContent(
     if (milestoneGoal != null && openGoal == null && settings.celebrations) {
         val d = milestoneGoal.daysKept(today)
         LaunchedEffect(milestoneGoal.id, d) { buzz() }
-        MilestoneDialog(milestoneGoal, d, onDismiss = { settings.markCelebrated(celebrationKey(milestoneGoal, d)) })
+        MilestoneDialog(milestoneGoal, d, onDismiss = {
+            settings.markCelebrated(celebrationKey(milestoneGoal, d))
+            // A good moment, once ever, for Play's review card (Play decides whether to show it).
+            (context as? Activity)?.let { (context.applicationContext as LedgerApplication).play.maybeAskForReview(it, d) }
+        })
     }
 
     when (val state = sync.state) {

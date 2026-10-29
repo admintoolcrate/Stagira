@@ -1,5 +1,6 @@
 package com.stagirite.ledger
 
+import androidx.activity.result.contract.ActivityResultContracts
 import kotlinx.coroutines.launch
 import androidx.lifecycle.lifecycleScope
 import com.stagirite.ledger.backup.AutoBackup
@@ -33,6 +34,9 @@ import com.stagirite.ledger.widget.EXTRA_OPEN_GOAL
 // A FragmentActivity because the fingerprint prompt needs one.
 class MainActivity : FragmentActivity() {
     private val app get() = application as LedgerApplication
+
+    /** Play's update screen; a "not now" there is fine, and asked again tomorrow at most. */
+    private val updateFlow = registerForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) {}
 
     /** Set when opened from the weekly-review notification. */
     private var openWeekly by mutableStateOf(false)
@@ -112,6 +116,8 @@ class MainActivity : FragmentActivity() {
         app.billing.refresh()
         // Test copies from GitHub: is there a newer beta? (At most twice a day; never in Play builds.)
         lifecycleScope.launch { app.beta.check() }
+        // Copies from Google Play: offer a newer version as a background download.
+        app.play.checkForUpdate(updateFlow) { app.lock.expectReturn() }
     }
 
     override fun onStop() {
