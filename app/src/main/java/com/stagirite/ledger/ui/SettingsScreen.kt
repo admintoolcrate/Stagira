@@ -690,7 +690,13 @@ private fun AboutSection(onShowGuide: () -> Unit) {
             "you add one. Milestones mark the way, with a passage from Aristotle at each.",
     )
     Spacer(Modifier.height(12.dp))
-    OutlinedButton(onClick = onShowGuide) { Text("Show the guide") }
+    Row(horizontalArrangement = Arrangement.spacedBy(Space.s)) {
+        OutlinedButton(onClick = onShowGuide) { Text("Show the guide") }
+        // Google Play asks that the policy can be read from inside the app, not only the store.
+        OutlinedButton(onClick = {
+            runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(PRIVACY_POLICY_URL))) }
+        }) { Text("Privacy policy") }
+    }
 
     Spacer(Modifier.height(20.dp))
     Text("Sources and licences", style = MaterialTheme.typography.titleSmall)
@@ -741,6 +747,8 @@ private fun PersonaliseSection(settings: Settings) {
         if (i < rows.lastIndex) Spacer(Modifier.height(12.dp))
     }
 }
+
+private const val PRIVACY_POLICY_URL = "https://admintoolcrate.github.io/Stagira/play-store/privacy-policy.html"
 
 private const val MAX_IMPORT_BYTES = 5 * 1024 * 1024
 
