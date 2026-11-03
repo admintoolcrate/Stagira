@@ -162,7 +162,7 @@ internal fun days(n: Long) = if (n == 1L) "1 day" else "$n days"
 
 /** "Next: 1 week, in 2 days", or how the first day reads. */
 internal fun nextLine(days: Long, start: LocalDate): String {
-    if (days == 0L) return "Next: 1 day, tomorrow"
+    if (days == 0L) return "Day one is tomorrow"
     val next = Milestones.next(days, start)
     return "Next: ${Milestones.name(next, start) ?: days(next)}, in ${days(next - days)}"
 }
@@ -263,14 +263,14 @@ internal fun Hero(goal: Goal, icons: Map<String, Bitmap>, today: LocalDate, c: P
         Spacer(GlanceModifier.defaultWeight())
         Row(verticalAlignment = Alignment.Bottom) {
             Text(
-                if (days == 0L) "Today" else "$days",
-                style = TextStyle(color = c.ink, fontSize = if (days == 0L) 32.sp else if (roomy) 56.sp else 48.sp, fontWeight = FontWeight.Medium),
+                if (days == 0L && goal.slips.isEmpty()) "Today" else "$days",
+                style = TextStyle(color = c.ink, fontSize = if (days == 0L && goal.slips.isEmpty()) 32.sp else if (roomy) 56.sp else 48.sp, fontWeight = FontWeight.Medium),
                 maxLines = 1,
             )
             Spacer(GlanceModifier.width(6.dp))
             Text(
                 when (days) {
-                    0L -> if (goal.slips.isEmpty()) "started" else "begun again"
+                    0L -> if (goal.slips.isEmpty()) "started" else "day one tomorrow"
                     1L -> "day"
                     else -> "days"
                 },
@@ -370,8 +370,8 @@ private fun TinyGoal(goal: Goal, icons: Map<String, Bitmap>, days: Long, c: Pale
     ) {
         Icon(goal, icons, c, 18)
         Text(
-            if (days == 0L) "Today" else "$days",
-            style = TextStyle(color = c.ink, fontSize = if (days == 0L) 14.sp else 24.sp, fontWeight = FontWeight.Medium),
+            if (days == 0L && goal.slips.isEmpty()) "Today" else "$days",
+            style = TextStyle(color = c.ink, fontSize = if (days == 0L && goal.slips.isEmpty()) 14.sp else 24.sp, fontWeight = FontWeight.Medium),
             maxLines = 1,
         )
     }
@@ -391,8 +391,8 @@ private fun StripGoal(goal: Goal, icons: Map<String, Bitmap>, days: Long, c: Pal
         }
         Spacer(GlanceModifier.width(8.dp))
         Text(
-            if (days == 0L) "Today" else "$days",
-            style = TextStyle(color = c.ink, fontSize = if (days == 0L) 16.sp else 28.sp, fontWeight = FontWeight.Medium),
+            if (days == 0L && goal.slips.isEmpty()) "Today" else "$days",
+            style = TextStyle(color = c.ink, fontSize = if (days == 0L && goal.slips.isEmpty()) 16.sp else 28.sp, fontWeight = FontWeight.Medium),
             maxLines = 1,
         )
     }

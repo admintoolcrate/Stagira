@@ -155,7 +155,7 @@ class GoalTest {
 
     @Test
     fun describesSpan() {
-        assertEquals("Day one", describeSpan(start, start))
+        assertEquals("Today", describeSpan(start, start))
         assertEquals("1 day", describeSpan(start, start.plusDays(1)))
         assertEquals("1 year, 2 months, 3 days", describeSpan(start, LocalDate.of(2027, 3, 4)))
     }

@@ -495,6 +495,7 @@ private fun LedgerRow(goal: Goal, today: LocalDate, onClick: () -> Unit, onLongC
                             milestoneToday -> "Milestone today"
                             goal.target != null && days >= goal.target -> "Target of ${plural(goal.target, "day")} reached"
                             goal.target != null -> "$days of ${plural(goal.target, "day")}"
+                            days == 0L -> "Day one is tomorrow"
                             else -> "${plural(next - days, "day")} to ${Milestones.name(next, goal.currentStart) ?: plural(next, "day")}"
                         },
                         style = MaterialTheme.typography.bodySmall,
@@ -505,8 +506,9 @@ private fun LedgerRow(goal: Goal, today: LocalDate, onClick: () -> Unit, onLongC
                 }
                 Spacer(Modifier.width(Space.l))
                 Column(horizontalAlignment = Alignment.End) {
-                    // Day zero reads as a start, not as nothing.
-                    if (days == 0L) {
+                    // A new goal's day zero reads as a start. After a slip it's an honest 0: the slip day
+                    // isn't kept, and day one is tomorrow.
+                    if (days == 0L && goal.slips.isEmpty()) {
                         Text("Today", style = LedgerType.count.copy(fontSize = 26.sp, lineHeight = 40.sp).capped())
                     } else {
                         RollingNumber(days, LedgerType.count.capped())
@@ -780,18 +782,24 @@ fun GoalDetailScreen(
                     }
                 }
                 val countDescription = Modifier.semantics(mergeDescendants = true) {
-                    contentDescription = (if (days == 0L) "Started today" else plural(days, "day")) + "; " +
+                    contentDescription = (
+                        when {
+                            days == 0L && goal.slips.isEmpty() -> "Started today, day one is tomorrow"
+                            days == 0L -> "0 days, began again today, day one is tomorrow"
+                            else -> plural(days, "day")
+                        }
+                    ) + "; " +
                         (goal.target?.let { "target ${plural(it, "day")}" } ?: "next milestone ${plural(next, "day")}")
                 }
-                if (days == 0L) {
-                    // The first day reads as a beginning rather than a zero.
+                if (days == 0L && goal.slips.isEmpty()) {
+                    // A new goal's first day reads as a beginning rather than a zero.
                     Text("Today", style = LedgerType.hero.copy(fontSize = 64.sp, lineHeight = 96.sp).capped(), modifier = countDescription)
                 } else {
                     RollingNumber(days, LedgerType.hero.capped(), countDescription)
                 }
                 Text(
                     when (days) {
-                        0L -> if (goal.slips.isEmpty()) "you started" else "you began again"
+                        0L -> if (goal.slips.isEmpty()) "you started" else "day one is tomorrow"
                         1L -> "day"
                         else -> "days"
                     },
@@ -804,6 +812,8 @@ fun GoalDetailScreen(
                         Milestones.isMilestone(days, goal.currentStart) -> "Milestone reached today"
                         goal.target != null && days >= goal.target -> "Target of ${plural(goal.target, "day")} reached"
                         goal.target != null -> "${plural(goal.target - days, "day")} to your target of ${goal.target}"
+                        days == 0L && goal.slips.isEmpty() -> "Day one is tomorrow"
+                        days == 0L -> "Begin again: day one is tomorrow"
                         else -> "${plural(next - days, "day")} to ${Milestones.name(next, goal.currentStart) ?: plural(next, "day")}"
                     },
                     style = MaterialTheme.typography.bodyMedium,
@@ -812,7 +822,11 @@ fun GoalDetailScreen(
                 ThinProgress(goal.targetProgress(today) ?: Milestones.progress(days, goal.currentStart), Modifier.width(160.dp))
                 TextButton(onClick = { movingStart = true }) {
                     Text(
-                        "${describeSpan(goal.currentStart, today)} \u00B7 since ${goal.currentStart.format(mediumDate)}",
+                        when {
+                            days > 0L -> "${describeSpan(goal.currentStart, today)} \u00B7 since ${goal.currentStart.format(mediumDate)}"
+                            goal.slips.isEmpty() -> "Started today"
+                            else -> "Began again today"
+                        },
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )

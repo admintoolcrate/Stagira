@@ -272,7 +272,7 @@ object Milestones {
 
 /** "1 year, 2 months, 3 days"; empty parts are left out. */
 fun describeSpan(start: LocalDate, today: LocalDate): String {
-    if (!today.isAfter(start)) return "Day one"
+    if (!today.isAfter(start)) return "Today"
     val p = Period.between(start, today)
     val parts = buildList {
         if (p.years > 0) add(plural(p.years.toLong(), "year"))
