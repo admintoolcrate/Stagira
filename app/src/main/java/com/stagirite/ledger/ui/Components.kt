@@ -1,5 +1,7 @@
 package com.stagirite.ledger.ui
 
+import androidx.compose.foundation.BorderStroke
+
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.foundation.border
@@ -121,7 +123,7 @@ fun ThinProgress(progress: Float, modifier: Modifier = Modifier) {
 fun SectionHeading(title: String, modifier: Modifier = Modifier) {
     Text(
         title.uppercase(),
-        style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 1.4.sp),
+        style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 1.8.sp),
         color = MaterialTheme.colorScheme.onSurfaceVariant,
         modifier = modifier
             .padding(start = 4.dp, bottom = 8.dp)
@@ -144,7 +146,7 @@ fun RollingNumber(value: Long, style: TextStyle, modifier: Modifier = Modifier) 
     ) { n -> Text("$n", style = style) }
 }
 
-/** A flat, rounded panel that groups related content. */
+/** A soft panel with a hairline edge, like the website's cards, that groups related content. */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun LedgerCard(
@@ -154,10 +156,11 @@ fun LedgerCard(
     padding: Dp = 20.dp,
     content: @Composable ColumnScope.() -> Unit,
 ) {
-    val shape = RoundedCornerShape(20.dp)
+    val shape = RoundedCornerShape(24.dp)
     val color = MaterialTheme.colorScheme.surfaceContainerLow
+    val edge = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
     if (onClick != null && onLongClick != null) {
-        Surface(modifier = modifier.fillMaxWidth(), shape = shape, color = color) {
+        Surface(modifier = modifier.fillMaxWidth(), shape = shape, color = color, border = edge) {
             Column(
                 Modifier
                     .combinedClickable(onClick = onClick, onLongClick = onLongClick)
@@ -166,11 +169,11 @@ fun LedgerCard(
             )
         }
     } else if (onClick != null) {
-        Surface(onClick = onClick, modifier = modifier.fillMaxWidth(), shape = shape, color = color) {
+        Surface(onClick = onClick, modifier = modifier.fillMaxWidth(), shape = shape, color = color, border = edge) {
             Column(Modifier.padding(padding), content = content)
         }
     } else {
-        Surface(modifier = modifier.fillMaxWidth(), shape = shape, color = color) {
+        Surface(modifier = modifier.fillMaxWidth(), shape = shape, color = color, border = edge) {
             Column(Modifier.padding(padding), content = content)
         }
     }

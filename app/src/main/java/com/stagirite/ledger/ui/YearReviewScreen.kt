@@ -39,6 +39,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.graphics.layer.drawLayer
 import androidx.compose.ui.graphics.rememberGraphicsLayer
@@ -151,12 +154,13 @@ fun YearReviewDialog(goals: List<Goal>, today: LocalDate, onDismiss: () -> Unit)
 
 @Composable
 private fun YearCard(review: YearReview, showNames: Boolean, inProgress: Boolean) {
-    val ink = MaterialTheme.colorScheme.onSurface
-    val faint = MaterialTheme.colorScheme.onSurfaceVariant
+    // The website's dusk panel: the same card in light and dark, so a shared image always looks right.
+    val ink = OnDusk
+    val faint = OnDusk.copy(alpha = 0.7f)
     Column(
         Modifier
             .fillMaxWidth()
-            .background(MaterialTheme.colorScheme.surfaceContainerLow)
+            .background(Brush.linearGradient(DuskGradient), RoundedCornerShape(28.dp))
             .padding(horizontal = 28.dp, vertical = 32.dp),
     ) {
         Text(
@@ -178,15 +182,15 @@ private fun YearCard(review: YearReview, showNames: Boolean, inProgress: Boolean
         )
         Spacer(Modifier.height(Space.l))
         Row(horizontalArrangement = Arrangement.spacedBy(Space.xl)) {
-            review.best?.let { Figure(plural(it.bestRun, "day"), "longest run") }
-            Figure("${review.milestones}", if (review.milestones == 1) "milestone" else "milestones")
-            if (review.urges > 0) Figure("${review.urges}", "urges resisted")
+            review.best?.let { DuskFigure(plural(it.bestRun, "day"), "longest run") }
+            DuskFigure("${review.milestones}", if (review.milestones == 1) "milestone" else "milestones", gold = true)
+            if (review.urges > 0) DuskFigure("${review.urges}", "urges resisted")
         }
         Spacer(Modifier.height(Space.m))
-        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+        HorizontalDivider(color = OnDusk.copy(alpha = 0.22f))
         Spacer(Modifier.height(Space.m))
         review.lines.take(CARD_GOALS).forEachIndexed { i, line ->
-            CardGoalRow(line, i, showNames)
+            CardGoalRow(line, i, showNames, ink, faint)
         }
         if (review.lines.size > CARD_GOALS) {
             Text(
@@ -205,13 +209,22 @@ private fun YearCard(review: YearReview, showNames: Boolean, inProgress: Boolean
     }
 }
 
+/** A figure on the dusk card, with its label beneath; milestones in gold. */
 @Composable
-private fun CardGoalRow(line: YearGoalLine, index: Int, showNames: Boolean) {
+private fun DuskFigure(value: String, label: String, gold: Boolean = false) {
+    Column(Modifier.padding(vertical = 10.dp)) {
+        Text(value, style = MaterialTheme.typography.headlineSmall, color = if (gold) DuskGold else OnDusk)
+        Text(label, style = MaterialTheme.typography.labelMedium, color = OnDusk.copy(alpha = 0.7f))
+    }
+}
+
+@Composable
+private fun CardGoalRow(line: YearGoalLine, index: Int, showNames: Boolean, ink: Color, faint: Color) {
     val goal = line.goal
     val named = showNames && !goal.isPrivate
     Row(Modifier.fillMaxWidth().padding(vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
         if (named && goal.icon.isNotEmpty()) {
-            EmojiGlyph(goal.icon, 16.sp, color = MaterialTheme.colorScheme.onSurface)
+            EmojiGlyph(goal.icon, 16.sp, color = ink)
             Spacer(Modifier.width(Space.s))
         }
         Text(
@@ -223,6 +236,7 @@ private fun CardGoalRow(line: YearGoalLine, index: Int, showNames: Boolean) {
                 else -> "Goal ${index + 1}"
             },
             style = MaterialTheme.typography.bodyLarge,
+            color = ink,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier.weight(1f),
@@ -230,7 +244,7 @@ private fun CardGoalRow(line: YearGoalLine, index: Int, showNames: Boolean) {
         Text(
             plural(line.daysKept, "day"),
             style = MaterialTheme.typography.bodyLarge.copy(fontFeatureSettings = "tnum"),
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            color = faint,
         )
     }
 }

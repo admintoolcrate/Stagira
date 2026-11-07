@@ -620,7 +620,7 @@ private fun MilestoneDialog(goal: Goal, days: Long, onDismiss: () -> Unit) {
         onDismissRequest = onDismiss,
         title = {
             Column {
-                Text(plural(days, "day"), style = MaterialTheme.typography.displaySmall)
+                Text(plural(days, "day"), style = MaterialTheme.typography.displaySmall, color = MaterialTheme.colorScheme.tertiary)
                 Milestones.name(days, goal.currentStart)?.let {
                     Text(it, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }

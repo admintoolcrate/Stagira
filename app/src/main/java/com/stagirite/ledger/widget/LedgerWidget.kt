@@ -72,15 +72,16 @@ internal class Palette(
 
 internal fun palette(style: WidgetStyle): Palette = when (style) {
     WidgetStyle.Solid -> Palette(
-        background = ColorProvider(day = Color(0xFFFFFFFF), night = Color(0xFF161616)),
-        ink = ColorProvider(day = Color(0xFF141414), night = Color(0xFFF2F2F0)),
-        muted = ColorProvider(day = Color(0xFF75756F), night = Color(0xFF8E8E8A)),
-        track = ColorProvider(day = Color(0xFFE6E6E3), night = Color(0xFF2E2E2C)),
+        // The app's warm paper and ink.
+        background = ColorProvider(day = Color(0xFFFCFBF8), night = Color(0xFF1C1B1E)),
+        ink = ColorProvider(day = Color(0xFF1F1D1A), night = Color(0xFFEFEBE4)),
+        muted = ColorProvider(day = Color(0xFF7A756C), night = Color(0xFF9C968C)),
+        track = ColorProvider(day = Color(0xFFE3DDD3), night = Color(0xFF2A2826)),
     )
     WidgetStyle.Translucent -> Palette(
-        background = ColorProvider(day = Color(0xB8FFFFFF), night = Color(0xA6101010)),
-        ink = ColorProvider(day = Color(0xFF141414), night = Color(0xFFF2F2F0)),
-        muted = ColorProvider(day = Color(0xFF55554F), night = Color(0xFFB4B4AF)),
+        background = ColorProvider(day = Color(0xB8FCFBF8), night = Color(0xA6121214)),
+        ink = ColorProvider(day = Color(0xFF1F1D1A), night = Color(0xFFEFEBE4)),
+        muted = ColorProvider(day = Color(0xFF55514A), night = Color(0xFFB8B2A8)),
         track = ColorProvider(day = Color(0x33000000), night = Color(0x40FFFFFF)),
     )
     // No card at all: white type, like the system clock, over the wallpaper.

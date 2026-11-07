@@ -437,7 +437,17 @@ private fun EmptyState(modifier: Modifier = Modifier) {
     ) {
         // Sits in the upper part of the page, under the title, rather than floating mid-screen.
         Spacer(Modifier.weight(0.35f))
-        Text("Day one starts\nwhen you name it.", style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Normal))
+        // Set like the website's headline: the serif, with the turn of the line in gold italic.
+        val gold = MaterialTheme.colorScheme.tertiary
+        Text(
+            androidx.compose.ui.text.buildAnnotatedString {
+                append("Day one starts\n")
+                pushStyle(androidx.compose.ui.text.SpanStyle(fontStyle = FontStyle.Italic, color = gold))
+                append("when you name it.")
+                pop()
+            },
+            style = LedgerType.name.copy(fontSize = 34.sp, lineHeight = 38.sp).capped(),
+        )
         Spacer(Modifier.height(12.dp))
         Text(
             "Something to stop, or something to keep doing. Tap + to add it, and the ledger counts the days.",
@@ -490,7 +500,8 @@ private fun LedgerRow(goal: Goal, today: LocalDate, onClick: () -> Unit, onLongC
                             else -> "${plural(next - days, "day")} to ${Milestones.name(next, goal.currentStart) ?: plural(next, "day")}"
                         },
                         style = MaterialTheme.typography.bodySmall,
-                        color = if (milestoneToday) MaterialTheme.colorScheme.onBackground
+                        // Milestones get the one accent, the muted gold the website uses for them.
+                        color = if (milestoneToday) MaterialTheme.colorScheme.tertiary
                         else MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(top = 2.dp),
                     )
@@ -808,6 +819,8 @@ fun GoalDetailScreen(
                         else -> "${plural(next - days, "day")} to ${Milestones.name(next, goal.currentStart) ?: plural(next, "day")}"
                     },
                     style = MaterialTheme.typography.bodyMedium,
+                    color = if (Milestones.isMilestone(days, goal.currentStart)) MaterialTheme.colorScheme.tertiary
+                    else MaterialTheme.colorScheme.onBackground,
                 )
                 Spacer(Modifier.height(Space.s))
                 ThinProgress(goal.targetProgress(today) ?: Milestones.progress(days, goal.currentStart), Modifier.width(160.dp))
