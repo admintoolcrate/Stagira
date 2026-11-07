@@ -204,6 +204,12 @@ fun SettingsScreen(
                 ReminderSection(settings, lock)
                 Spacer(Modifier.height(16.dp))
                 WeeklySection(settings, lock)
+                Spacer(Modifier.height(12.dp))
+                Text(
+                    "For a reminder about one goal, open the goal and tap “Add a reminder”.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
             }
 
             Section("Sync", group = "Your data") { SyncSection(sync, lock) }
@@ -492,7 +498,7 @@ private fun SettingRow(
 }
 
 @Composable
-private fun SwitchRow(
+internal fun SwitchRow(
     title: String,
     detail: String,
     checked: Boolean,

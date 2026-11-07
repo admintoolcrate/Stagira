@@ -19,6 +19,11 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import com.stagirite.ledger.data.weekReview
+import com.stagirite.ledger.data.defaultReviewYear
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -66,6 +71,8 @@ fun OverviewDashboard(
     update: BetaUpdates.Release? = null,
     onUpdate: () -> Unit = {},
 ) {
+    var showingYear by rememberSaveable { mutableStateOf(false) }
+    if (showingYear) YearReviewDialog(goals, today, onDismiss = { showingYear = false })
     Scaffold(
         topBar = {
             TopAppBar(
@@ -141,6 +148,21 @@ fun OverviewDashboard(
                             )
                         }
                         Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = "Open weekly review")
+                    }
+                }
+            }
+            item(key = "year") {
+                LedgerCard(onClick = { showingYear = true }) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Column(Modifier.weight(1f)) {
+                            Text("Your year", style = MaterialTheme.typography.titleSmall)
+                            Text(
+                                "${defaultReviewYear(today)} in one card, to keep or share",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                        Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = "Open your year")
                     }
                 }
             }

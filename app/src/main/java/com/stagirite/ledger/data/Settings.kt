@@ -212,6 +212,19 @@ class Settings(context: Context) {
         prefs.edit().putBoolean("guideSeen", seen).apply()
     }
 
+    /**
+     * Reminders for single goals on this phone: minutes after midnight, by goal id.
+     * Kept per device, like the daily reminder, so they never sync.
+     */
+    var goalReminders by mutableStateOf(decodeGoalReminders(prefs.getString("goalReminders", null)))
+        private set
+
+    /** Sets a goal's reminder time, or clears it with null. */
+    fun updateGoalReminder(id: String, minutes: Int?) {
+        goalReminders = if (minutes == null) goalReminders - id else goalReminders + (id to minutes)
+        prefs.edit().putString("goalReminders", encodeGoalReminders(goalReminders)).apply()
+    }
+
     /** Milestones already celebrated on this device, as "goalId:runStart:days". */
     private var celebrated by mutableStateOf(prefs.getStringSet("celebrated", emptySet())!!.toSet())
 
@@ -225,3 +238,14 @@ class Settings(context: Context) {
     private inline fun <reified T : Enum<T>> enumOr(name: String?, default: T): T =
         runCatching { enumValueOf<T>(name!!) }.getOrDefault(default)
 }
+
+/** "id=minutes,id=minutes". Goal ids never contain '=' or ','. */
+internal fun encodeGoalReminders(map: Map<String, Int>): String =
+    map.entries.joinToString(",") { "${it.key}=${it.value}" }
+
+internal fun decodeGoalReminders(text: String?): Map<String, Int> =
+    text.orEmpty().split(",").mapNotNull { part ->
+        val id = part.substringBefore("=", "")
+        val minutes = part.substringAfter("=", "").toIntOrNull()
+        if (id.isEmpty() || minutes == null || minutes !in 0 until 24 * 60) null else id to minutes
+    }.toMap()

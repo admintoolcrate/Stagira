@@ -9,11 +9,15 @@ import android.app.PendingIntent
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.net.Uri
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import com.stagirite.ledger.MainActivity
 import com.stagirite.ledger.R
+import com.stagirite.ledger.data.GoalKind
 import com.stagirite.ledger.data.Settings
+import com.stagirite.ledger.data.plural
+import com.stagirite.ledger.widget.EXTRA_OPEN_GOAL
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.ZonedDateTime
@@ -33,9 +37,93 @@ object Reminder {
     const val QUICK_LOG = "log"
     const val QUICK_NEW = "new"
 
+    const val ACTION_GOAL = "com.stagirite.ledger.GOAL"
+    private const val GOAL_CHANNEL = "goals"
+
     fun apply(context: Context, settings: Settings) {
         if (settings.reminder) schedule(context, settings.reminderMinutes) else cancel(context)
         if (settings.weekly) scheduleWeekly(context, settings.weeklyDay, settings.weeklyMinutes) else cancelWeekly(context)
+        settings.goalReminders.forEach { (id, minutes) -> scheduleGoal(context, id, minutes) }
+    }
+
+    /** Sets, moves or (with null) removes the reminder for one goal. */
+    fun setGoal(context: Context, settings: Settings, id: String, minutes: Int?) {
+        settings.updateGoalReminder(id, minutes)
+        if (minutes == null) {
+            alarms(context).cancel(goalPending(context, id))
+            NotificationManagerCompat.from(context).cancel(goalNotificationId(id))
+        } else {
+            scheduleGoal(context, id, minutes)
+        }
+    }
+
+    private fun scheduleGoal(context: Context, id: String, minutes: Int) {
+        val now = ZonedDateTime.now()
+        var next = ZonedDateTime.of(LocalDate.now(), LocalTime.of(minutes / 60, minutes % 60), now.zone)
+        if (!next.isAfter(now)) next = next.plusDays(1)
+        alarms(context).setInexactRepeating(
+            AlarmManager.RTC_WAKEUP,
+            next.toInstant().toEpochMilli(),
+            AlarmManager.INTERVAL_DAY,
+            goalPending(context, id),
+        )
+    }
+
+    // Alarms are told apart by their data, not their extras, so each goal gets its own address.
+    private fun goalUri(id: String) = Uri.parse("stagira://goal/$id")
+
+    private fun goalPending(context: Context, id: String) = PendingIntent.getBroadcast(
+        context, 3,
+        Intent(context, ReminderReceiver::class.java).setAction(ACTION_GOAL).setData(goalUri(id)),
+        PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
+    )
+
+    private fun goalNotificationId(id: String) = 1000 + (id.hashCode() and 0xFFFFF)
+
+    /**
+     * One goal's reminder. Skipped on its rest days and once a slip is logged for
+     * today. The name shown is the stored one (a private goal's cover name), and
+     * none at all while the app lock is on.
+     */
+    fun showGoal(context: Context, id: String) {
+        val app = context.applicationContext as LedgerApplication
+        val goal = app.store.find(id)
+        if (goal == null) {
+            setGoal(context, app.settings, id, null)
+            return
+        }
+        val today = LocalDate.now()
+        if (goal.archived || !goal.isScheduled(today) || goal.isSlip(today)) return
+        val text = when {
+            app.settings.appLock -> "A reminder for one of your goals."
+            goal.kind == GoalKind.Virtue -> "Time for ${goal.title}."
+            else -> "${goal.title} \u00B7 ${plural(goal.daysKept(today), "day")} kept. Nothing to log unless you slipped."
+        }
+        val manager = context.getSystemService(NotificationManager::class.java)
+        manager.createNotificationChannel(
+            NotificationChannel(GOAL_CHANNEL, "Goal reminders", NotificationManager.IMPORTANCE_DEFAULT)
+        )
+        val open = PendingIntent.getActivity(
+            context, 3,
+            Intent(context, MainActivity::class.java)
+                .setData(goalUri(id))
+                .putExtra(EXTRA_OPEN_GOAL, id)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP),
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
+        )
+        val notification = NotificationCompat.Builder(context, GOAL_CHANNEL)
+            .setSmallIcon(R.drawable.ic_notification)
+            .setContentTitle("Stagira")
+            .setContentText(text)
+            .setStyle(NotificationCompat.BigTextStyle().bigText(text))
+            .setContentIntent(open)
+            .setAutoCancel(true)
+            .build()
+        try {
+            NotificationManagerCompat.from(context).notify(goalNotificationId(id), notification)
+        } catch (_: SecurityException) {
+            // Notifications are off for the app.
+        }
     }
 
     private fun scheduleWeekly(context: Context, day: Int, minutes: Int) {
@@ -161,7 +249,11 @@ object Reminder {
 
 class ReminderReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
-        if (intent.action == Reminder.ACTION_WEEKLY) Reminder.showWeekly(context) else Reminder.show(context)
+        when (intent.action) {
+            Reminder.ACTION_WEEKLY -> Reminder.showWeekly(context)
+            Reminder.ACTION_GOAL -> intent.data?.lastPathSegment?.let { Reminder.showGoal(context, it) }
+            else -> Reminder.show(context)
+        }
     }
 }
 

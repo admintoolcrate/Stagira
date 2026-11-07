@@ -55,6 +55,9 @@ A minimal Android app (**Stagira** on your home screen) that does one thing: nam
 - **Weekly review** — the last seven days against the seven before (clean days, slips, urges
   resisted, milestones, a line per goal), with an optional weekly notification that never names
   a goal.
+- **Your year** — on Overview: days kept, longest run, milestones and a line per goal for the
+  year so far (or any earlier year), shareable as an image. Private goals are never named on it,
+  and names can be left off altogether.
 - **Urges resisted** — for Vices, one tap logs a moment you felt the urge and didn't, with Undo.
   Virtues have nothing to log on a good day: good days count on their own. Counted per day only; shown in stats and on the progress card, and never
   counted against you.
@@ -81,6 +84,9 @@ A minimal Android app (**Stagira** on your home screen) that does one thing: nam
 - **App lock** with fingerprint, face or screen lock, locking immediately or after 1 or 5 minutes.
 - **Daily reminder** (optional) at a time you choose, with a Quick log button. It mentions a
   milestone falling that day, by name only when the goal isn't private and the app isn't locked.
+- **Goal reminders** (optional) — a daily time for one goal, set on its page. Skipped on rest
+  days and once a slip is logged; shows the cover name for a private goal, and no name with the
+  app lock on.
 - Undo after deleting a goal; edit a goal's name, note or start date.
 - Light, dark, or follow the system. Optional Google sync. Export / import as JSON.
 

@@ -26,7 +26,8 @@ WHAT IT DOES
 • Virtues on the weekdays you choose; rest days never count against you
 • Home-screen widgets: one goal, an overview, or several goals at once
 • Automatic backup to a file you choose, plus export and import
-• Daily or weekly reminders, and a milestone note on the day you reach one
+• Daily or weekly reminders, a reminder for any single goal, and a milestone note on the day you reach one
+• Your year in one card: days kept, longest run and milestones, to keep or share
 • Optional passages from Aristotle's Nicomachean Ethics, quoted word for word and sourced
 
 PRIVATE BY DESIGN

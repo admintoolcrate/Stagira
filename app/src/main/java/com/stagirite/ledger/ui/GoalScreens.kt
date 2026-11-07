@@ -864,6 +864,7 @@ fun GoalDetailScreen(
                 notes.forEach {
                     Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
+                if (!goal.archived) GoalReminderButton(goal.id)
                 Spacer(Modifier.height(Space.m))
             }
 
