@@ -8,6 +8,10 @@ name: Build APK
 on:
   push:
     branches: ["**"]
+    # Website-only changes (docs/: the site, privacy policy and Play listing notes) never
+    # build the app or publish a beta; GitHub Pages deploys them on its own.
+    # (Path filters don't apply to tag pushes, so a tag like v2.1 always builds.)
+    paths-ignore: ["docs/**"]
     tags: ["v*"]
   workflow_dispatch:
     inputs:
