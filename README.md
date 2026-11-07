@@ -173,7 +173,7 @@ Google only lets an app use Drive once it's registered. This is free and takes a
 1. Go to [Google Cloud Console](https://console.cloud.google.com/) and create a project.
 2. **APIs & Services → Library**: enable the **Google Drive API**.
 3. **APIs & Services → OAuth consent screen** (Google Auth Platform):
-   - App name "Stagira — A Ledger", user type **External**.
+   - App name "Stagira", user type **External**.
    - Under **Data access**, add the scope `.../auth/drive.appdata`.
    - Under **Audience**, leave it in **Testing** and add your Google account as a test user.
 4. **Credentials → Create credentials → OAuth client ID → Android**:
@@ -198,7 +198,7 @@ answers, icon and feature graphic) is in [`docs/play-store/`](docs/play-store/RE
 ## Getting the app
 
 **Download a build:** every push runs the *Build APK* GitHub Action. Open the latest run under
-the repo's **Actions** tab, download the `stagirites-ledger-debug` artifact, unzip it and install
+the repo's **Actions** tab, download the `stagira-debug` artifact, unzip it and install
 `app-debug.apk` (allow installs from unknown sources when asked).
 
 **Build it yourself:** open the project in Android Studio, or run

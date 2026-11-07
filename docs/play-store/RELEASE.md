@@ -26,6 +26,10 @@ Current Google rules this is based on (October 2026):
 2. Choose **Personal** (one-time US$25, ID verification; the 12-tester rule applies) or
    **Organisation** (needs a D-U-N-S number; no tester rule).
 3. Complete identity verification. This can take a few days.
+4. Declare trader status as **not a trader**, and **never add a merchant account** (for selling
+   apps or in-app products). With a merchant account, Play shows your legal name and address on
+   the store page even as a non-trader, and the merchant account can't be removed again. Stagira's
+   current account (ToolCrate) was opened fresh for this reason.
 
 ## 2. Your upload key (you, once — keep it safe)
 
@@ -51,7 +55,7 @@ Then either:
   - `UPLOAD_STORE_PASSWORD`, `UPLOAD_KEY_ALIAS` (`upload`), `UPLOAD_KEY_PASSWORD`
 
   Then, in **Actions → Build APK → Run workflow**, tick **release** (or push a tag such as
-  `v2.1`). That run produces a `stagirite-play-bundle` artifact, signed and ready to upload.
+  `v2.1`). That run produces a `stagira-play-bundle` artifact, signed and ready to upload.
 
 ## 3. Create the app in Play Console (you)
 
@@ -68,10 +72,10 @@ Suggested answers are in [`data-safety.md`](data-safety.md). In short:
 | Privacy policy | A public URL to [`privacy-policy.md`](privacy-policy.md) (see step 6) |
 | Ads | **No, the app doesn't contain ads** |
 | App access | All functionality is available without special access |
-| Content rating | Questionnaire: references to alcohol, tobacco and gambling as things to cut down on; no violence, no user-to-user content |
+| Content rating | Category **All other app types**. The app's only mention is "drinking less" as an example goal: if asked about alcohol, answer **references only** (nothing depicted or encouraged). No violence, no user-to-user content, no purchases |
 | Target audience | **18 and over** (its examples include alcohol and gambling; this also keeps it out of the Families programme) |
 | Data safety | See `data-safety.md` |
-| Health apps | Tick what matches how you describe it. If the listing talks about quitting drinking, smoking or gambling, *Mental and behavioral health* is the honest fit; if it's pitched as a general habit tracker, review the list and decide. |
+| Health apps | **My app does not have any health features.** Ticking a category such as mental and behavioural health made Play treat it as an organisation-only health app and reject it |
 | Government app, financial features, news | No |
 
 ## 4b. Free, with no ads or purchases

@@ -46,7 +46,7 @@ jobs:
         run: ./gradlew testDebugUnitTest assembleDebug
       - uses: actions/upload-artifact@v5
         with:
-          name: stagirites-ledger-debug
+          name: stagira-debug
           path: app/build/outputs/apk/debug/app-debug.apk
       # Each build of the beta branch becomes a pre-release with the APK attached, so testers
       # can install it over their copy (goals stay) without digging through Actions.
@@ -105,7 +105,7 @@ jobs:
       - uses: actions/upload-artifact@v5
         if: env.UPLOAD_KEYSTORE_BASE64 != ''
         with:
-          name: stagirite-play-bundle
+          name: stagira-play-bundle
           path: app/build/outputs/bundle/release/app-release.aab
       # Straight to Play's Internal testing track (no review), once the Play service account is
       # added as a secret (docs/play-store/RELEASE.md, "Uploads from GitHub"). Closed testing and
