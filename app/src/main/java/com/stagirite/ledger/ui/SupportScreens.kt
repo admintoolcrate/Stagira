@@ -13,8 +13,8 @@ import androidx.compose.ui.platform.LocalContext
 import com.stagirite.ledger.BuildConfig
 import com.stagirite.ledger.security.AppLock
 
-/** The developer's Ko-fi page. Empty until there is one; the button then stays hidden. */
-const val KOFI_URL = ""
+/** The developer's Ko-fi page, shown in GitHub test builds only (see below). */
+const val KOFI_URL = "https://ko-fi.com/toolcratetips"
 
 /**
  * Settings → Support Stagira. The app is free, with no ads and nothing to buy.

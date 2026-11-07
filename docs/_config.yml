@@ -16,4 +16,4 @@ defaults:
     values:
       layout: default
 # Set to the Ko-fi page to show a link in the footer.
-kofi: ""
+kofi: "https://ko-fi.com/toolcratetips"
