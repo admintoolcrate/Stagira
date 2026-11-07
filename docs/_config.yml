@@ -1,5 +1,7 @@
 # GitHub Pages (Settings → Pages → Deploy from a branch → /docs).
 title: Stagira
+tagline: The Habit Ledger
+url: "https://stagira.toolcrate.cc"
 description: A quiet ledger of the days you keep.
 # Keeps the old privacy-policy address working (see redirect_from in the policy).
 plugins:
