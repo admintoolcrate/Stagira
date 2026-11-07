@@ -746,7 +746,7 @@ private fun PersonaliseSection(settings: Settings) {
     }
 }
 
-private const val PRIVACY_POLICY_URL = "https://admintoolcrate.github.io/Stagira/play-store/privacy-policy.html"
+private const val PRIVACY_POLICY_URL = "https://stagira.toolcrate.cc/privacy"
 
 private const val MAX_IMPORT_BYTES = 5 * 1024 * 1024
 

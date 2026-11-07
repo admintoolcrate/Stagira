@@ -9,7 +9,7 @@
         android:shortcutLongLabel="@string/shortcut_log_long">
         <intent
             android:action="android.intent.action.VIEW"
-            android:targetPackage="com.stagirite.ledger"
+            android:targetPackage="cc.toolcrate.stagira"
             android:targetClass="com.stagirite.ledger.MainActivity">
             <extra android:name="quick" android:value="log" />
         </intent>
@@ -22,7 +22,7 @@
         android:shortcutLongLabel="@string/shortcut_new_long">
         <intent
             android:action="android.intent.action.VIEW"
-            android:targetPackage="com.stagirite.ledger"
+            android:targetPackage="cc.toolcrate.stagira"
             android:targetClass="com.stagirite.ledger.MainActivity">
             <extra android:name="quick" android:value="new" />
         </intent>

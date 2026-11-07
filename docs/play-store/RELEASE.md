@@ -56,7 +56,7 @@ Then either:
 ## 3. Create the app in Play Console (you)
 
 1. **Create app** → name *Stagira*, default language, **App**, **Free**.
-2. The package name is `com.stagirite.ledger`. It's fixed forever once used.
+2. The package name is `cc.toolcrate.stagira`. It's fixed forever once used.
 3. Accept Play App Signing when you upload the first bundle.
 
 ## 4. App content (Policy → App content) (you, ~20 minutes)
@@ -98,8 +98,8 @@ Play needs a public web page. The repo has a small site in `docs/` for this:
 
 1. On GitHub: **Settings → Pages → Build and deployment**, Source **Deploy from a branch**,
    Branch `main`, folder **/docs** → **Save**.
-2. A minute later the site is at `https://admintoolcrate.github.io/Stagira/`, and the
-   policy at `https://admintoolcrate.github.io/Stagira/play-store/privacy-policy.html`.
+2. A minute later the site is at `https://stagira.toolcrate.cc` (custom domain in `docs/CNAME`), and the
+   policy at `https://stagira.toolcrate.cc/privacy`.
    That second link goes in Play Console → App content → Privacy policy.
 
 (Or paste `privacy-policy.md` into a free Google Sites page.)
@@ -111,7 +111,7 @@ Play re-signs the app with Google's key, so sign-in needs that key registered to
 1. Play Console → **Test and release → Setup → App signing** (often still labelled *App integrity*): copy the
    **SHA-1** of the *App signing key* and of the *Upload key*.
 2. Google Cloud Console → **Credentials** → add an **Android OAuth client** for each SHA-1, package
-   `com.stagirite.ledger` (keep the debug one too).
+   `cc.toolcrate.stagira` (keep the debug one too).
 3. **OAuth consent screen → Publish app** (move from Testing to In production). With only the
    non-sensitive `drive.appdata` scope this is basic verification: app name, support email,
    privacy policy URL, and a homepage on a domain you've verified.

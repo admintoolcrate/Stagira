@@ -30,7 +30,7 @@ android {
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.stagirite.ledger"
+        applicationId = "cc.toolcrate.stagira"
         minSdk = 26
         targetSdk = 36
         // CI builds number themselves from the run (beta 57 is version 1057), so every upload to

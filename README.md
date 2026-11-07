@@ -177,7 +177,7 @@ Google only lets an app use Drive once it's registered. This is free and takes a
    - Under **Data access**, add the scope `.../auth/drive.appdata`.
    - Under **Audience**, leave it in **Testing** and add your Google account as a test user.
 4. **Credentials → Create credentials → OAuth client ID → Android**:
-   - Package name: `com.stagirite.ledger`
+   - Package name: `cc.toolcrate.stagira`
    - SHA-1: `CF:C6:60:65:8C:C7:E4:35:59:14:89:72:32:38:0D:D0:44:C0:9D:04`
      (the fixed debug key in `app/debug.keystore`, used by every debug build including the CI APK)
 
