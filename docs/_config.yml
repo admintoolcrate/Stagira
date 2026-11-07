@@ -1,7 +1,6 @@
 # GitHub Pages (Settings → Pages → Deploy from a branch → /docs).
 title: Stagira
 description: A quiet ledger of the days you keep.
-theme: jekyll-theme-minimal
 # Keeps the old privacy-policy address working (see redirect_from in the policy).
 plugins:
   - jekyll-redirect-from
@@ -10,3 +9,11 @@ exclude:
   - play-store/RELEASE.md
   - play-store/data-safety.md
   - play-store/store-listing.md
+# Every page uses the site's own layout, in the app's style.
+defaults:
+  - scope:
+      path: ""
+    values:
+      layout: default
+# Set to the Ko-fi page to show a link in the footer.
+kofi: ""
