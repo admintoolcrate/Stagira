@@ -2,6 +2,9 @@
 title: Stagira
 description: A quiet ledger of the days you keep.
 theme: jekyll-theme-minimal
+# Keeps the old privacy-policy address working (see redirect_from in the policy).
+plugins:
+  - jekyll-redirect-from
 # The drafting notes for the Play Console aren't pages anyone needs to visit.
 exclude:
   - play-store/RELEASE.md

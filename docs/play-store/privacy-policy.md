@@ -1,6 +1,14 @@
+---
+title: Privacy policy
+permalink: /privacy/
+redirect_from:
+  - /play-store/privacy-policy.html
+  - /play-store/privacy-policy/
+---
+
 # Privacy policy — Stagira
 
-_Effective 25 October 2026_
+_Effective 7 November 2026_
 
 Stagira is a habit and day-count tracker. This policy explains what happens to the
 information you put into it. In short: **it stays on your phone unless you choose to sync it

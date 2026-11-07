@@ -12,7 +12,7 @@ character is built by habit, one day at a time.
   on sync to your own Google Drive, encrypted if you add a passphrase.
 - Free, all of it: no ads, no subscriptions, nothing to unlock.
 
-**[Privacy policy](play-store/privacy-policy.html)** ·
+**[Privacy policy](privacy/)** ·
 [Source code](https://github.com/admintoolcrate/Stagira) ·
 [Beta downloads](https://github.com/admintoolcrate/Stagira/releases) ·
 Contact: admin.toolcrate@gmail.com
