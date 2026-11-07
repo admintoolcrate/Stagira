@@ -10,7 +10,7 @@ character is built by habit, one day at a time.
 
 - No account, no analytics, no servers of ours. Your ledger stays on your phone unless you turn
   on sync to your own Google Drive, encrypted if you add a passphrase.
-- Free to use, with an optional one-time Plus.
+- Free, all of it: no ads, no subscriptions, nothing to unlock.
 
 **[Privacy policy](play-store/privacy-policy.html)** ·
 [Source code](https://github.com/admintoolcrate/Stagira) ·

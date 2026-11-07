@@ -66,7 +66,7 @@ Suggested answers are in [`data-safety.md`](data-safety.md). In short:
 | Section | Answer |
 |---|---|
 | Privacy policy | A public URL to [`privacy-policy.md`](privacy-policy.md) (see step 6) |
-| Ads | **Yes, the app contains ads** (only the optional "Watch an ad to support us") |
+| Ads | **No, the app doesn't contain ads** |
 | App access | All functionality is available without special access |
 | Content rating | Questionnaire: references to alcohol, tobacco and gambling as things to cut down on; no violence, no user-to-user content |
 | Target audience | **18 and over** (its examples include alcohol and gambling; this also keeps it out of the Families programme) |
@@ -74,36 +74,13 @@ Suggested answers are in [`data-safety.md`](data-safety.md). In short:
 | Health apps | Tick what matches how you describe it. If the listing talks about quitting drinking, smoking or gambling, *Mental and behavioral health* is the honest fit; if it's pitched as a general habit tracker, review the list and decide. |
 | Government app, financial features, news | No |
 
-## 4b. Plus, tips and the optional ad (you)
+## 4b. Free, with no ads or purchases
 
-**In-app products** (Monetize → Products → In-app products, after the first bundle is uploaded).
-Create these *one-time products* with exactly these ids:
-
-| Product id | What | Suggested price |
-|---|---|---|
-| `plus` | Stagira Plus | 4.99 |
-| `tip_small_2` | Small tip | 1.99 |
-| `tip_medium` | Tip | 4.99 |
-| `tip_large_2` | Large tip | 9.99 |
-
-Then add your Google account as a **licence tester** (Settings → License testing) so you can buy
-them free while testing. Debug builds from GitHub have Plus unlocked anyway; only the Play
-version charges.
-
-**AdMob** (only if you want the "watch an ad" option to earn):
-
-1. Create an account at [admob.google.com](https://admob.google.com), add the app, and create
-   a **Rewarded** ad unit.
-2. The ids are in `app/build.gradle.kts`: app `ca-app-pub-8879201576445737~6754347629` in every
-   build, and the rewarded unit `ca-app-pub-8879201576445737/2133626084` in release (Play) builds
-   only. Test builds use Google's sample ad unit, so nobody taps a real ad on a test copy.
-3. **Blocking controls → Sensitive categories:** block *Alcohol*, *Gambling & betting* and
-   *Dating*, and consider *Drugs & supplements*. For a recovery app this matters.
-4. **Privacy & messaging:** create a **European regulations (GDPR)** message for the app; the
-   app shows it automatically to EEA/UK users before an ad.
-5. Link the AdMob app to the Play listing once it's live.
-
-A brand-new AdMob account usually serves few or no ads for its first days while Google reviews it.
+Stagira has no in-app products, no ads and no Google ad or billing libraries. In Play Console:
+**Advertising ID: No**, **Ads: No**, no in-app products (deactivate any you created), and trader
+status **non-trader**, since the app earns nothing. The Ko-fi link lives on the website, and in
+GitHub test builds only: Play expects support for a developer inside an app to go through Play
+billing.
 
 ## 5. Store listing (Grow → Store presence → Main store listing) (you)
 

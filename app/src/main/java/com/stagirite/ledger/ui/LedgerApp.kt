@@ -82,7 +82,6 @@ fun LedgerApp(
     sync: SyncManager,
     lock: AppLock,
     vault: PrivateTitles,
-    support: SupportUi,
     /** Set when the weekly-review notification was tapped. */
     openWeekly: Boolean = false,
     onWeeklyOpened: () -> Unit = {},
@@ -93,24 +92,7 @@ fun LedgerApp(
     quick: String? = null,
     onQuickHandled: () -> Unit = {},
 ) {
-    val context = LocalContext.current
-    var plusReason by rememberSaveable { mutableStateOf<String?>(null) }
-    val plus = PlusUi(has = support.billing.plus, offer = { plusReason = it })
-
-    // A purchase or tip went through: say thank you once.
-    val thanks = support.billing.thanks
-    LaunchedEffect(thanks) {
-        if (thanks != null) {
-            Toast.makeText(context, thanks, Toast.LENGTH_LONG).show()
-            support.billing.thanks = null
-            plusReason = null
-        }
-    }
-
-    CompositionLocalProvider(LocalPlus provides plus, LocalSupport provides support) {
-        LedgerAppContent(store, settings, sync, lock, vault, openWeekly, onWeeklyOpened, openGoal, onGoalOpened, quick, onQuickHandled)
-        plusReason?.let { PlusSheet(it, support, onDismiss = { plusReason = null }) }
-    }
+    LedgerAppContent(store, settings, sync, lock, vault, openWeekly, onWeeklyOpened, openGoal, onGoalOpened, quick, onQuickHandled)
 }
 
 @Composable
@@ -218,8 +200,7 @@ private fun LedgerAppContent(
     }
 
     // Keep the home-screen widget in step with the lock and sort order.
-    val hasPlus = LocalPlus.current.has
-    LaunchedEffect(settings.widgetsLocked, settings.sortOrder, settings.widgetStyle, hasPlus) { runCatching { LedgerWidget.refresh(context) } }
+    LaunchedEffect(settings.widgetsLocked, settings.sortOrder, settings.widgetStyle) { runCatching { LedgerWidget.refresh(context) } }
     val rawOpen = openId?.let(store::find)
     val openGoal = rawOpen?.let(vault::reveal)
     val anySealed = store.goals.any { it.isPrivate }

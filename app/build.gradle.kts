@@ -36,14 +36,8 @@ android {
         // CI builds number themselves from the run (beta 57 is version 1057), so every upload to
         // Play has a new, higher code. Builds made elsewhere use the fixed fallback.
         versionCode = System.getenv("GITHUB_RUN_NUMBER")?.toIntOrNull()?.let { 1000 + it } ?: 12
-        versionName = "3.2"
+        versionName = "3.3"
 
-        // AdMob for "Watch an ad to support us". The app ID is the real one in every build, as
-        // Google recommends: it ties the app to its consent message, which EU users must see
-        // before any ad, test or real. Test builds use Google's sample ad unit (below, in
-        // buildTypes) so nobody taps a real ad on a test copy, which AdMob counts against you.
-        val admobAppId = (project.findProperty("admobAppId") as String?) ?: "ca-app-pub-8879201576445737~6754347629"
-        manifestPlaceholders["admobAppId"] = admobAppId
         // The CI run number, which names each beta release ("beta-57"); 0 for builds made elsewhere.
         buildConfigField("int", "BUILD_NUMBER", (System.getenv("GITHUB_RUN_NUMBER")?.toIntOrNull() ?: 0).toString())
     }
@@ -71,21 +65,10 @@ android {
 
     buildTypes {
         debug {
-            // Google's sample rewarded ad unit: always "Test Ad", never paid, safe to tap.
-            buildConfigField("String", "ADMOB_REWARDED_ID", "\"ca-app-pub-3940256099942544/5224354917\"")
-            // Test builds have Plus unlocked, so every feature can be tried.
-            buildConfigField("boolean", "PLUS_FOR_TESTING", "true")
             // Test builds look for a newer beta on GitHub; Play builds never do.
             buildConfigField("boolean", "BETA_UPDATES", "true")
         }
         release {
-            // The real "Support Stagira" rewarded ad unit.
-            val admobRewardedId = (project.findProperty("admobRewardedId") as String?) ?: "ca-app-pub-8879201576445737/2133626084"
-            buildConfigField("String", "ADMOB_REWARDED_ID", "\"$admobRewardedId\"")
-            // Off for real releases. On for Play testing tracks while purchases aren't set up yet,
-            // so testers can try everything: build with -PplusForTesting=true (CI: "unlock_plus").
-            val plusForTesting = (project.findProperty("plusForTesting") as String?) == "true"
-            buildConfigField("boolean", "PLUS_FOR_TESTING", plusForTesting.toString())
             buildConfigField("boolean", "BETA_UPDATES", "false")
             signingConfigs.findByName("release")?.let { signingConfig = it }
             isMinifyEnabled = true
@@ -125,15 +108,9 @@ dependencies {
     // The Goal widget keeps its chosen goal in Glance's Preferences state.
     implementation("androidx.datastore:datastore-preferences-core:1.1.1")
     implementation("com.google.android.gms:play-services-auth:21.3.0")
-    // Plus and the tip jar.
-    implementation("com.android.billingclient:billing-ktx:8.0.0")
     // Play's review prompt and in-app updates (Play builds only; see support/PlayServices.kt).
     implementation("com.google.android.play:review:2.0.2")
     implementation("com.google.android.play:app-update:2.1.0")
-    // "Watch an ad to support us": only started when the user taps it.
-    implementation("com.google.android.gms:play-services-ads:23.6.0")
-    // Google's consent form for ads, required in the EEA and UK.
-    implementation("com.google.android.ump:user-messaging-platform:3.1.0")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.2")
     debugImplementation("androidx.compose.ui:ui-tooling")
 

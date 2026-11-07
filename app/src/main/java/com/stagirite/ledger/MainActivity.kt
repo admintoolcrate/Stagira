@@ -20,7 +20,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import com.stagirite.ledger.ui.SupportUi
 import com.stagirite.ledger.reminders.Reminder
 import androidx.fragment.app.FragmentActivity
 import com.stagirite.ledger.data.ThemeMode
@@ -93,7 +92,6 @@ class MainActivity : FragmentActivity() {
                     } else {
                         LedgerApp(
                             app.store, settings, app.sync, lock, app.privateTitles,
-                            support = remember { SupportUi(app.billing, app.supportAd, lock) },
                             openWeekly = openWeekly,
                             onWeeklyOpened = { openWeekly = false },
                             openGoal = openGoal,
@@ -112,8 +110,6 @@ class MainActivity : FragmentActivity() {
         app.lock.onForeground()
         if (app.lock.locked) unlock()
         app.sync.requestSync()
-        // Picks up a Plus bought on another phone, or a refund.
-        app.billing.refresh()
         // Test copies from GitHub: is there a newer beta? (At most twice a day; never in Play builds.)
         lifecycleScope.launch { app.beta.check() }
         // Copies from Google Play: offer a newer version as a background download.

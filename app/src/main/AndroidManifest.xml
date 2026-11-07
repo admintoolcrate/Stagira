@@ -2,8 +2,10 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <!-- Used for Google Drive when sync is on, Google Play purchases, and an ad only if the user asks to watch one. -->
+    <!-- Used for Google Drive when sync is on, and Google Play's own update and review services. -->
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- No ads and no advertising ID: make sure no library brings the permission back in. -->
+    <uses-permission android:name="com.google.android.gms.permission.AD_ID" tools:node="remove" />
     <!-- Optional daily reminder. -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
@@ -18,20 +20,6 @@
         android:label="@string/app_name"
         android:supportsRtl="true"
         android:theme="@style/Theme.Ledger">
-
-        <!-- Google's ad library ("Watch an ad to support us"). It's never started at launch:
-             the start-up hook below is removed, measurement is delayed, and MobileAds is
-             only initialised when the user taps the button. -->
-        <meta-data
-            android:name="com.google.android.gms.ads.APPLICATION_ID"
-            android:value="${admobAppId}" />
-        <meta-data
-            android:name="com.google.android.gms.ads.DELAY_APP_MEASUREMENT_INIT"
-            android:value="true" />
-        <provider
-            android:name="com.google.android.gms.ads.MobileAdsInitProvider"
-            android:authorities="${applicationId}.mobileadsinitprovider"
-            tools:node="remove" />
 
         <activity
             android:name=".MainActivity"

@@ -101,7 +101,7 @@ private val Wide = DpSize(250.dp, 110.dp)
 private val Tall = DpSize(250.dp, 250.dp)
 
 /**
- * The Goals widget (Plus). One goal (or a small widget) gets the count large with
+ * The Goals widget. One goal (or a small widget) gets the count large with
  * its next milestone; more goals share the space as a list, each with a
  * progress line. Private goals show their cover names; with the app lock on,
  * it shows nothing but "Locked".
@@ -116,9 +116,8 @@ class LedgerWidget : GlanceAppWidget() {
         provideContent {
             val today = LocalDate.now()
             val locked = app.settings.widgetsLocked
-            val plus = app.billing.plus
-            val goals = if (locked || !plus) emptyList() else sortGoals(app.store.goals, app.settings.sortOrder, today).take(6)
-            WidgetContent(goals, iconsFor(context, goals), locked, plus, today, palette(app.settings.widgetStyle))
+            val goals = if (locked) emptyList() else sortGoals(app.store.goals, app.settings.sortOrder, today).take(6)
+            WidgetContent(goals, iconsFor(context, goals), locked, today, palette(app.settings.widgetStyle))
         }
     }
 
@@ -172,7 +171,6 @@ private fun WidgetContent(
     goals: List<Goal>,
     icons: Map<String, Bitmap>,
     locked: Boolean,
-    plus: Boolean,
     today: LocalDate,
     c: Palette,
 ) {
@@ -180,7 +178,6 @@ private fun WidgetContent(
     Column(widgetRoot(c).clickable(actionStartActivity<MainActivity>())) {
         when {
             locked -> Message("Locked", "Tap to open", c)
-            !plus -> Message("Part of Plus", "This widget shows several goals. The Goal and Overview widgets are free.", c)
             goals.isEmpty() -> Message("No goals yet", "Tap to add your first.", c)
             goals.size == 1 || size.width < Wide.width -> Hero(goals.first(), icons, today, c, roomy = size.width >= Wide.width)
             else -> {

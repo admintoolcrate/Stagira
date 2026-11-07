@@ -30,14 +30,14 @@ WHAT IT DOES
 • Optional passages from Aristotle's Nicomachean Ethics, quoted word for word and sourced
 
 PRIVATE BY DESIGN
-• No account, no analytics, no servers of ours, and no ads unless you choose to watch one
+• No account, no analytics, no ads, no servers of ours, and nothing to buy
 • Your ledger is kept on your phone
 • Optional sync to your own Google Drive, end-to-end encrypted with a passphrase if you like
 • App lock with fingerprint, face or screen lock
 • Private titles: show a cover name, and keep the real one behind a PIN
 
-FREE, WITH A ONE-TIME PLUS
-Counting, logging, history, the app lock, private titles, backup and two widgets are free. Stagira Plus, one payment and no subscription, adds unlimited goals (free holds 3), Google Drive sync, the multi-goal widget, and insights: the progress card, year view and weekly review. There's also a tip jar, and an optional ad you can watch to support the app.
+FREE, ALL OF IT
+Every feature is free for everyone: unlimited goals, sync, all three widgets, the progress card, year view and weekly review. No ads, no subscriptions, nothing to unlock.
 
 CALM BY DESIGN
 Black and white, light and dark, no badges and no streak-shaming. Turn off the quotes, celebrations or vibration if you'd rather it say less.

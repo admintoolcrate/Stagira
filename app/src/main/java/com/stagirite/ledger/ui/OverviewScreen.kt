@@ -66,7 +66,6 @@ fun OverviewDashboard(
     update: BetaUpdates.Release? = null,
     onUpdate: () -> Unit = {},
 ) {
-    val plus = LocalPlus.current
     Scaffold(
         topBar = {
             TopAppBar(
@@ -130,7 +129,7 @@ fun OverviewDashboard(
             item(key = "summary") { SummaryCard(goals, today) }
             item(key = "week") {
                 val w = weekReview(goals, today)
-                LedgerCard(onClick = { if (plus.has) onWeekly() else plus.offer("The weekly review is part of Plus.") }) {
+                LedgerCard(onClick = onWeekly) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Column(Modifier.weight(1f)) {
                             Text("This week", style = MaterialTheme.typography.titleSmall)

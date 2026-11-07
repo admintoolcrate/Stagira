@@ -21,7 +21,7 @@ A minimal Android app (**Stagira** on your home screen) that does one thing: nam
   again when you leave the app.
 - **Home-screen widgets** — Goal (free): one goal you choose, its count large; wide, a "Resisted +1"
   button for Vices; tall, the goal's week. Overview (free): this week, days kept and what's coming
-  up. Goals (Plus): several goals with progress. All: from one cell up, Solid, See-through or Clear,
+  up. Goals: several goals with progress. All: from one cell up, Solid, See-through or Clear,
   "Milestone today" on the day. Private goals show their cover names; optionally hidden while locked.
 - **Tablets and landscape** — screens keep a readable width in the middle.
 - **Accessibility** — TalkBack labels throughout (including the private-titles action), large text
@@ -36,11 +36,8 @@ A minimal Android app (**Stagira** on your home screen) that does one thing: nam
 - **Sort** — as added, longest current run, next milestone, or name.
 - **Suggestions** when adding a goal (No alcohol, Exercise, Read …) fill in the icon and type.
 - **Personalise** — Aristotle passages, milestone celebrations and vibration can each be turned off.
-- **Free, with a one-time Plus** — Plus (one payment, no subscription) adds unlimited goals
-  (free holds 3), Google Drive sync, the Goals widget, and the Progress card, year view and weekly
-  review. Counting, slips, notes, the app lock, private titles and export are always free.
-  A tip jar, and an optional "watch an ad to support us" that only loads Google's ad service
-  when tapped, with alcohol, gambling and dating ads blocked. Test builds have Plus unlocked.
+- **Free, all of it** — every feature for everyone. No ads, no in-app purchases, no Google ad or
+  billing libraries in the app.
 - **Bug reports and feature requests** — from Settings → Help & feedback, sent through GitHub
   (pre-filled issue) or email (admin.toolcrate@gmail.com). Optional device details are shown
   before sending; goal data is never included.
@@ -90,9 +87,8 @@ A minimal Android app (**Stagira** on your home screen) that does one thing: nam
 ## Privacy
 
 - Works fully offline. Sync is **off** until you connect an account.
-- No analytics and no server of ours. No ads unless you tap *Watch an ad to support us*; Google's
-  ad service isn't started before that. The only network traffic is to Google Drive, and only
-  when sync is on.
+- No analytics, no ads and no server of ours. Network traffic is to Google Drive when sync is
+  on, and Google Play's own update and review services in the Play version.
 - Sync uses Drive's hidden **app data folder** with the `drive.appdata` scope: the app can't see
   any of your other Drive files, and the folder doesn't show up in Drive. (This is the same kind of
   storage Play Games uses for saved games; Play Games itself is reserved for games.)
