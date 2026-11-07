@@ -1,6 +1,7 @@
 package com.stagirite.ledger.ui
 
 import com.stagirite.ledger.LedgerApplication
+import com.stagirite.ledger.data.plural
 import android.net.Uri
 import android.content.Intent
 import com.stagirite.ledger.widget.LedgerWidget
@@ -244,9 +245,9 @@ private fun SyncSection(sync: SyncManager, lock: AppLock) {
 
     if (state == SyncState.Off) {
         Note(
-            "Link a Google account to keep your ledger in step across devices. It's stored in a " +
+            "Link a Google account to keep your ledger in step across devices. It’s stored in a " +
                 "hidden folder in your own Google Drive that only this app can open — the app " +
-                "can't see anything else in your Drive. You can add a passphrase so it's " +
+                "can’t see anything else in your Drive. You can add a passphrase so it’s " +
                 "encrypted before it leaves your phone.",
         )
         sync.connectError?.let {
@@ -294,7 +295,7 @@ private fun SyncSection(sync: SyncManager, lock: AppLock) {
     Spacer(Modifier.height(16.dp))
     SettingRow(
         title = "End-to-end encryption",
-        detail = if (sync.encrypted) "On — Google can't read your synced ledger."
+        detail = if (sync.encrypted) "On — Google can’t read your synced ledger."
         else "Off — add a passphrase to encrypt the synced copy.",
         action = if (sync.encrypted) "Change" else "Turn on",
         enabled = state == SyncState.Idle && !sync.busy,
@@ -328,7 +329,7 @@ private fun SyncSection(sync: SyncManager, lock: AppLock) {
         PassphraseDialog(
             title = if (sync.encrypted) "New passphrase" else "Set a passphrase",
             message = "Your synced ledger will be re-encrypted. Other devices will ask for the " +
-                "new passphrase. If you forget it, the synced copy can't be recovered.",
+                "new passphrase. If you forget it, the synced copy can’t be recovered.",
             confirm = "Save",
             dismiss = "Cancel",
             needsConfirmation = true,
@@ -349,7 +350,7 @@ private fun SyncSection(sync: SyncManager, lock: AppLock) {
             text = {
                 Column {
                     Text(
-                        "Your ledger stays on this phone. The app's access to your Google account " +
+                        "Your ledger stays on this phone. The app’s access to your Google account " +
                             "is revoked.",
                         style = MaterialTheme.typography.bodyMedium,
                     )
@@ -390,7 +391,7 @@ private fun DataSection(store: GoalStore, settings: Settings, sync: SyncManager,
             }
         }.isSuccess
         if (ok) settings.markBackedUp()
-        Toast.makeText(context, if (ok) "Exported" else "Couldn't export", Toast.LENGTH_SHORT).show()
+        Toast.makeText(context, if (ok) "Exported" else "Couldn’t export", Toast.LENGTH_SHORT).show()
     }
     val importer = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         if (uri == null) return@rememberLauncherForActivityResult
@@ -403,11 +404,11 @@ private fun DataSection(store: GoalStore, settings: Settings, sync: SyncManager,
             }
         }.getOrNull()
         if (goals == null) {
-            Toast.makeText(context, "That isn't a ledger export", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, "That isn’t a ledger export", Toast.LENGTH_SHORT).show()
         } else {
             store.mergeIn(goals)
             sync.requestSync()
-            Toast.makeText(context, "Imported ${goals.size} goals", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, "Imported ${plural(goals.size.toLong(), "goal")}", Toast.LENGTH_SHORT).show()
         }
     }
 

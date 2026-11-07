@@ -75,7 +75,7 @@ fun RunsChart(
                 .fillMaxWidth()
                 .height(140.dp)
                 .semantics {
-                    contentDescription = "Run lengths: " + shown.joinToString { "${it.days} days" }
+                    contentDescription = "Run lengths: " + shown.joinToString { plural(it.days.toLong(), "day") }
                 }
                 .pointerInput(shown) {
                     detectTapGestures { pos ->

@@ -161,7 +161,7 @@ private fun LedgerAppContent(
             text = {
                 Text(
                     "Last time, Stagira ran into a problem and had to close. You can send the technical " +
-                        "details to the developer to help fix it. You'll see exactly what's sent first; it " +
+                        "details to the developer to help fix it. You’ll see exactly what’s sent first; it " +
                         "contains no goals or notes.",
                 )
             },
@@ -471,7 +471,7 @@ private fun LedgerAppContent(
                             UnlockResult.Unlocked -> pinFlow = null
                             UnlockResult.Wrong -> error = "That PIN didn\u2019t work."
                             is UnlockResult.Wait -> error = "Too many wrong PINs. Try again in " +
-                                (if (r.millis < 60_000) "${(r.millis + 999) / 1000} seconds" else "${(r.millis + 59_999) / 60_000} minutes") + "."
+                                (if (r.millis < 60_000) plural((r.millis + 999) / 1000, "second") else plural((r.millis + 59_999) / 60_000, "minute")) + "."
                         }
                         PinFlow.Set -> {
                             vault.setPin(pin)
@@ -511,10 +511,10 @@ private fun LedgerAppContent(
         SyncState.ChoosePassphrase -> PassphraseDialog(
             title = "Encrypt your synced ledger?",
             message = "With a passphrase, your goals are encrypted on this phone before upload. " +
-                "Google can't read them, and neither can anyone else. You'll need the passphrase " +
-                "on each new device. If you forget it, the synced copy can't be recovered.",
+                "Google can’t read them, and neither can anyone else. You’ll need the passphrase " +
+                "on each new device. If you forget it, the synced copy can’t be recovered.",
             confirm = "Encrypt",
-            dismiss = "Don't encrypt",
+            dismiss = "Don’t encrypt",
             needsConfirmation = true,
             busy = sync.busy,
             onConfirm = { sync.choosePassphrase(it) },
@@ -523,7 +523,7 @@ private fun LedgerAppContent(
         is SyncState.EnterPassphrase -> PassphraseDialog(
             title = "Enter sync passphrase",
             message = "Your synced ledger is encrypted. Enter the passphrase you chose on your other device.",
-            error = if (state.wrongAttempt) "That passphrase didn't work." else null,
+            error = if (state.wrongAttempt) "That passphrase didn’t work." else null,
             confirm = "Unlock",
             dismiss = "Disconnect",
             needsConfirmation = false,

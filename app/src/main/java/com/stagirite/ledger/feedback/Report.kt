@@ -41,7 +41,7 @@ data class Report(
                     section("Steps to reproduce", steps)
                     section("What you expected", expected)
                 }
-                ReportKind.Feature -> section("What you'd like", details)
+                ReportKind.Feature -> section("What you’d like", details)
             }
             if (device != null) section("Device", device)
             append("_Sent from the app. No goal data is included._")

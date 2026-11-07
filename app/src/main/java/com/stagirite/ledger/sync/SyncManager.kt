@@ -254,7 +254,7 @@ class SyncManager(
 
     /** Before the first connection, a failure leaves sync off and says why. */
     private fun connectFailed(e: Exception?) {
-        val message = e?.let(::describe) ?: "Google didn't grant access."
+        val message = e?.let(::describe) ?: "Google didn’t grant access."
         if (connected) state = SyncState.Failed(message) else connectError = message
     }
 
@@ -364,13 +364,13 @@ class SyncManager(
 
     private fun describe(e: Exception): String = when {
         e is ApiException && e.statusCode == CommonStatusCodes.DEVELOPER_ERROR ->
-            "Google doesn't recognise this app yet. It has to be registered with Google once " +
+            "Google doesn’t recognise this app yet. It has to be registered with Google once " +
                 "before sync can work (see \u201CSetting up Google sign-in\u201D in the README)."
         e is ApiException && e.statusCode == CommonStatusCodes.NETWORK_ERROR ->
             "No connection. Will try again later."
         e is DriveException && (e.code == 401 || e.code == 403) ->
             "Google Drive refused access. Try reconnecting."
-        e is IOException -> "Couldn't reach Google Drive. Will try again later."
+        e is IOException -> "Couldn’t reach Google Drive. Will try again later."
         else -> e.message ?: "Sync failed."
     }
 }

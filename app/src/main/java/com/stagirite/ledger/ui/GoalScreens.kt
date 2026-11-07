@@ -775,7 +775,7 @@ fun GoalDetailScreen(
                 val countDescription = Modifier.semantics(mergeDescendants = true) {
                     contentDescription = (
                         when {
-                            days == 0L && goal.slips.isEmpty() -> "Started today, day one is tomorrow"
+                            days == 0L && goal.slips.isEmpty() -> "Started today · day one is tomorrow"
                             days == 0L -> "0 days, began again today, day one is tomorrow"
                             else -> plural(days, "day")
                         }
