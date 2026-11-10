@@ -78,30 +78,10 @@ class StoreScreenshots {
     @Before
     fun onlyWhenAsked() = assumeTrue(System.getProperty("screenshots") == "true")
 
-    private val today = LocalDate.of(2026, 11, 14)
-    private fun ago(n: Long) = today.minusDays(n)
-
-    private val drink = Goal(
-        "drink", "Drink less", ago(200),
-        slips = listOf(ago(151), ago(97), ago(64)),
-        reason = "Clearer mornings, and more of them.",
-        icon = "🍷", kind = GoalKind.Vice,
-        urges = mapOf(ago(1) to 1, ago(3) to 2, ago(6) to 1, ago(10) to 1, ago(17) to 1),
-    )
-    private val phone = Goal("phone", "No phone in bed", ago(21), icon = "📵", kind = GoalKind.Vice)
-    private val read = Goal(
-        "read", "Read before bed", ago(120),
-        slips = listOf(ago(58), ago(12)),
-        icon = "📖", kind = GoalKind.Virtue,
-    )
-    private val walk = Goal(
-        "walk", "Morning walk", ago(90),
-        slips = listOf(ago(40), ago(10)),
-        icon = "🚶", kind = GoalKind.Virtue,
-        schedule = setOf(DayOfWeek.MONDAY, DayOfWeek.WEDNESDAY, DayOfWeek.FRIDAY, DayOfWeek.SATURDAY),
-    )
-    private val goals = listOf(drink, phone, read, walk)
-    private val privacy = PrivacyUi(hasPin = false, unlocked = false, requestPin = {}, open = { null })
+    private val today = Samples.today
+    private val drink = Samples.drink
+    private val goals = Samples.goals
+    private val privacy = Samples.privacy
 
     @Test
     fun s1_goals() = shoot("1-goals", "Count the days", "you keep.") {
