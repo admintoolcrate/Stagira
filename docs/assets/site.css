@@ -300,3 +300,6 @@ section:first-child, .hero-bg + section { margin-top: 0; }
 }
 
 
+
+/* Page not found: centred in the space between header and footer */
+.notfound { min-height: 46vh; display: flex; flex-direction: column; justify-content: center; }
