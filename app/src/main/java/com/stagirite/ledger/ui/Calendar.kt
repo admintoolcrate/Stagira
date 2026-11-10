@@ -261,7 +261,7 @@ fun YearCalendar(
     val ink = MaterialTheme.colorScheme.onBackground
     val faint = MaterialTheme.colorScheme.outlineVariant
     // Kept days in a warm mid-tone: clear at this small size without the weight of solid ink.
-    val kept = MaterialTheme.colorScheme.outline
+    val keptTint = MaterialTheme.colorScheme.outline
 
     Column(modifier.fillMaxWidth()) {
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -316,7 +316,7 @@ fun YearCalendar(
                                 val y = (slot / 7) * cell + (cell - dot) / 2
                                 val corner = CornerRadius(dot * 0.25f)
                                 when (states[i]) {
-                                    DayState.Kept -> drawRoundRect(kept, Offset(x, y), Size(dot, dot), corner)
+                                    DayState.Kept -> drawRoundRect(keptTint, Offset(x, y), Size(dot, dot), corner)
                                     DayState.Slip -> drawRoundRect(
                                         ink, Offset(x + stroke / 2, y + stroke / 2), Size(dot - stroke, dot - stroke), corner,
                                         style = Stroke(stroke),
