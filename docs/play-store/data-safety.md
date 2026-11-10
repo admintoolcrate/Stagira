@@ -19,7 +19,10 @@ collected), purpose **App functionality** only:
 | Category | Type | Why |
 |---|---|---|
 | App activity | Other user-generated content | Goal names, notes and dates in the synced copy |
-| Health and fitness | Health info | Goals may describe habits such as drinking or smoking |
+
+Not **Health info**: the app never asks for health data. Goals are whatever the user types, which
+Play counts as user-generated content. Declaring health info would also sit oddly with the Health
+apps declaration ("no health features"), the answer that got the app through review.
 
 Everything else, including location, device or other IDs, app interactions, diagnostics,
 contacts, financial info, messages, photos, audio and web history: **not collected**. There are
