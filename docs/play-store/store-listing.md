@@ -24,7 +24,7 @@ WHAT IT DOES
 • Progress measured by the gaps between slips: are your runs getting longer?
 • Calendars, stats, run charts and a weekly review
 • Virtues on the weekdays you choose; rest days never count against you
-• Home-screen widgets: one goal, an overview, or several goals at once
+• Home-screen widgets: one goal, an overview, several goals at once, or a daily passage from Aristotle
 • Automatic backup to a file you choose, plus export and import
 • Daily or weekly reminders, a reminder for any single goal, and a milestone note on the day you reach one
 • Your year in one card: days kept, longest run and milestones, to keep or share
@@ -38,7 +38,7 @@ PRIVATE BY DESIGN
 • Private titles: show a cover name, and keep the real one behind a PIN
 
 FREE, ALL OF IT
-Every feature is free for everyone: unlimited goals, sync, all three widgets, the progress card, year view and weekly review. No ads, no subscriptions, nothing to unlock.
+Every feature is free for everyone: unlimited goals, sync, all four widgets, the progress card, year view and weekly review. No ads, no subscriptions, nothing to unlock.
 
 CALM BY DESIGN
 Black and white, light and dark, no badges and no streak-shaming. Turn off the quotes, celebrations or vibration if you'd rather it say less.

@@ -155,7 +155,7 @@ fun SettingsScreen(
                 }
                 Spacer(Modifier.height(6.dp))
                 Text(
-                    "Clear drops the card and sets the text in white, for darker wallpapers.",
+                    "Glass lets the wallpaper show through. Clear drops the card for white text on darker wallpapers. Dusk is the website\u2019s evening colours.",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -702,6 +702,11 @@ private fun AboutSection(onShowGuide: () -> Unit) {
             runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(PRIVACY_POLICY_URL))) }
         }) { Text("Privacy policy") }
     }
+    // A plain link to the website, in every copy. (Donation links stay off the Play version:
+    // Google Play's payments policy doesn't allow pointing to outside payments from the app.)
+    TextButton(onClick = {
+        runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(WEBSITE_URL))) }
+    }) { Text("stagira.toolcrate.cc") }
 
     Spacer(Modifier.height(20.dp))
     Text("Sources and licences", style = MaterialTheme.typography.titleSmall)
@@ -754,6 +759,7 @@ private fun PersonaliseSection(settings: Settings) {
 }
 
 private const val PRIVACY_POLICY_URL = "https://stagira.toolcrate.cc/privacy"
+private const val WEBSITE_URL = "https://stagira.toolcrate.cc"
 
 private const val MAX_IMPORT_BYTES = 5 * 1024 * 1024
 

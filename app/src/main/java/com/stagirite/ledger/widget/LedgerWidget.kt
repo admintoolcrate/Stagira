@@ -23,6 +23,7 @@ import androidx.glance.GlanceId
 import androidx.glance.GlanceModifier
 import androidx.glance.Image
 import androidx.glance.ImageProvider
+import androidx.glance.LocalContext
 import androidx.glance.LocalSize
 import androidx.glance.action.ActionParameters
 import androidx.glance.action.actionParametersOf
@@ -68,7 +69,13 @@ internal class Palette(
     val ink: ColorProvider,
     val muted: ColorProvider,
     val track: ColorProvider,
+    /** The muted gold the app and website keep for milestones. */
+    val accent: ColorProvider,
+    /** A drawn background (the Dusk gradient) in place of a flat colour. */
+    val image: Int? = null,
 )
+
+private val Gold = ColorProvider(day = Color(0xFFA4814F), night = Color(0xFFD0AE74))
 
 internal fun palette(style: WidgetStyle): Palette = when (style) {
     WidgetStyle.Solid -> Palette(
@@ -77,12 +84,14 @@ internal fun palette(style: WidgetStyle): Palette = when (style) {
         ink = ColorProvider(day = Color(0xFF1F1D1A), night = Color(0xFFEFEBE4)),
         muted = ColorProvider(day = Color(0xFF7A756C), night = Color(0xFF9C968C)),
         track = ColorProvider(day = Color(0xFFE3DDD3), night = Color(0xFF2A2826)),
+        accent = Gold,
     )
     WidgetStyle.Translucent -> Palette(
         background = ColorProvider(day = Color(0xB8FCFBF8), night = Color(0xA6121214)),
         ink = ColorProvider(day = Color(0xFF1F1D1A), night = Color(0xFFEFEBE4)),
         muted = ColorProvider(day = Color(0xFF55514A), night = Color(0xFFB8B2A8)),
         track = ColorProvider(day = Color(0x33000000), night = Color(0x40FFFFFF)),
+        accent = Gold,
     )
     // No card at all: white type, like the system clock, over the wallpaper.
     WidgetStyle.Clear -> Palette(
@@ -90,6 +99,16 @@ internal fun palette(style: WidgetStyle): Palette = when (style) {
         ink = ColorProvider(day = Color.White, night = Color.White),
         muted = ColorProvider(day = Color(0xD9FFFFFF), night = Color(0xD9FFFFFF)),
         track = ColorProvider(day = Color(0x4DFFFFFF), night = Color(0x4DFFFFFF)),
+        accent = ColorProvider(day = Color(0xFFF0D7A6), night = Color(0xFFF0D7A6)),
+    )
+    // The website's dusk panel, the same by day and night.
+    WidgetStyle.Dusk -> Palette(
+        background = null,
+        ink = ColorProvider(day = Color(0xFFF2EDE4), night = Color(0xFFF2EDE4)),
+        muted = ColorProvider(day = Color(0xB3F2EDE4), night = Color(0xB3F2EDE4)),
+        track = ColorProvider(day = Color(0x38F2EDE4), night = Color(0x38F2EDE4)),
+        accent = ColorProvider(day = Color(0xFFD0AE74), night = Color(0xFFD0AE74)),
+        image = R.drawable.widget_dusk,
     )
 }
 
@@ -123,11 +142,12 @@ class LedgerWidget : GlanceAppWidget() {
     }
 
     companion object {
-        /** Redraws every placed widget, of all three kinds. */
+        /** Redraws every placed widget, of all four kinds. */
         suspend fun refresh(context: Context) {
             LedgerWidget().updateAll(context)
             GoalWidget().updateAll(context)
             OverviewWidget().updateAll(context)
+            QuoteWidget().updateAll(context)
         }
     }
 }
@@ -201,7 +221,8 @@ private fun WidgetContent(
 internal fun widgetRoot(c: Palette): GlanceModifier {
     val short = LocalSize.current.height < SHORT
     var root = GlanceModifier.fillMaxSize()
-    if (c.background != null) root = root.background(c.background).cornerRadius(if (short) 18.dp else 24.dp)
+    if (c.image != null) root = root.background(ImageProvider(c.image)).cornerRadius(if (short) 18.dp else 24.dp)
+    else if (c.background != null) root = root.background(c.background).cornerRadius(if (short) 18.dp else 24.dp)
     return if (short) root.padding(horizontal = 12.dp, vertical = 8.dp) else root.padding(horizontal = 18.dp, vertical = 16.dp)
 }
 
@@ -210,7 +231,57 @@ internal val SHORT = 100.dp
 
 @Composable
 internal fun Header(c: Palette) {
-    Text("STAGIRA", style = TextStyle(color = c.muted, fontSize = 11.sp, fontWeight = FontWeight.Bold))
+    // As on the website: a small gold mark before the spaced capitals.
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Text("\u25CF", style = TextStyle(color = c.accent, fontSize = 7.sp))
+        Spacer(GlanceModifier.width(5.dp))
+        Text("STAGIRA", style = TextStyle(color = c.muted, fontSize = 11.sp, fontWeight = FontWeight.Bold))
+    }
+}
+
+private val serifCache = HashMap<String, Bitmap>()
+
+/** [text] drawn in EB Garamond, white, to be tinted; Glance itself can't use the app's fonts. */
+internal fun serifBitmap(context: Context, text: String, px: Float): Bitmap = synchronized(serifCache) {
+    serifCache.getOrPut("$text|${px.toInt()}") {
+        val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            typeface = ResourcesCompat.getFont(context, R.font.eb_garamond_regular)
+            textSize = px
+            color = android.graphics.Color.WHITE
+            fontFeatureSettings = "tnum"
+        }
+        // Cropped to the ink itself, so a count lines up with the words beside it.
+        val bounds = android.graphics.Rect()
+        paint.getTextBounds(text, 0, text.length, bounds)
+        val pad = 2
+        val w = (bounds.width() + pad * 2).coerceAtLeast(1)
+        val h = (bounds.height() + pad * 2).coerceAtLeast(1)
+        Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888).also {
+            Canvas(it).drawText(text, pad - bounds.left.toFloat(), pad - bounds.top.toFloat(), paint)
+        }
+    }
+}
+
+/** A count set in the app's serif, as in the app itself. Scales with the text size up to 1.25×. */
+@Composable
+internal fun SerifText(text: String, size: Float, color: ColorProvider) {
+    val context = LocalContext.current
+    val density = context.resources.displayMetrics.density
+    val scale = context.resources.configuration.fontScale.coerceIn(1f, 1.25f)
+    val bitmap = serifBitmap(context, text, size * density * scale)
+    Image(
+        ImageProvider(bitmap),
+        contentDescription = text,
+        colorFilter = ColorFilter.tint(color),
+        modifier = GlanceModifier.size((bitmap.width / density).dp, (bitmap.height / density).dp),
+    )
+}
+
+/** A goal's count, or "Today" on a new goal's first day. */
+@Composable
+internal fun Count(goal: Goal, days: Long, size: Float, c: Palette) {
+    val fresh = days == 0L && goal.slips.isEmpty()
+    SerifText(if (fresh) "Today" else "$days", if (fresh) size * 0.6f else size, c.ink)
 }
 
 @Composable
@@ -260,11 +331,7 @@ internal fun Hero(goal: Goal, icons: Map<String, Bitmap>, today: LocalDate, c: P
         }
         Spacer(GlanceModifier.defaultWeight())
         Row(verticalAlignment = Alignment.Bottom) {
-            Text(
-                if (days == 0L && goal.slips.isEmpty()) "Today" else "$days",
-                style = TextStyle(color = c.ink, fontSize = if (days == 0L && goal.slips.isEmpty()) 32.sp else if (roomy) 56.sp else 48.sp, fontWeight = FontWeight.Medium),
-                maxLines = 1,
-            )
+            Count(goal, days, if (roomy) 60f else 50f, c)
             Spacer(GlanceModifier.width(6.dp))
             Text(
                 when (days) {
@@ -273,7 +340,7 @@ internal fun Hero(goal: Goal, icons: Map<String, Bitmap>, today: LocalDate, c: P
                     else -> "days"
                 },
                 style = TextStyle(color = c.muted, fontSize = 13.sp),
-                modifier = GlanceModifier.padding(bottom = if (roomy) 10.dp else 7.dp),
+                modifier = GlanceModifier.padding(bottom = 1.dp),
             )
         }
         Spacer(GlanceModifier.height(6.dp))
@@ -284,7 +351,7 @@ internal fun Hero(goal: Goal, icons: Map<String, Bitmap>, today: LocalDate, c: P
                 if (roomy && urges > 0) append(" \u00B7 resisted ${if (urges == 1) "once" else "${urges}\u00D7"} today")
             },
             style = TextStyle(
-                color = if (Milestones.isMilestone(days, goal.currentStart)) c.ink else c.muted,
+                color = if (Milestones.isMilestone(days, goal.currentStart)) c.accent else c.muted,
                 fontSize = 11.sp,
                 fontWeight = if (Milestones.isMilestone(days, goal.currentStart)) FontWeight.Bold else FontWeight.Normal,
             ),
@@ -367,11 +434,8 @@ private fun TinyGoal(goal: Goal, icons: Map<String, Bitmap>, days: Long, c: Pale
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Icon(goal, icons, c, 18)
-        Text(
-            if (days == 0L && goal.slips.isEmpty()) "Today" else "$days",
-            style = TextStyle(color = c.ink, fontSize = if (days == 0L && goal.slips.isEmpty()) 14.sp else 24.sp, fontWeight = FontWeight.Medium),
-            maxLines = 1,
-        )
+        Spacer(GlanceModifier.height(2.dp))
+        Count(goal, days, 26f, c)
     }
 }
 
@@ -388,11 +452,7 @@ private fun StripGoal(goal: Goal, icons: Map<String, Bitmap>, days: Long, c: Pal
             if (wide) Text(nextLine(days, goal.currentStart), style = TextStyle(color = c.muted, fontSize = 11.sp), maxLines = 1)
         }
         Spacer(GlanceModifier.width(8.dp))
-        Text(
-            if (days == 0L && goal.slips.isEmpty()) "Today" else "$days",
-            style = TextStyle(color = c.ink, fontSize = if (days == 0L && goal.slips.isEmpty()) 16.sp else 28.sp, fontWeight = FontWeight.Medium),
-            maxLines = 1,
-        )
+        Count(goal, days, 30f, c)
     }
 }
 
@@ -407,10 +467,11 @@ private fun GoalRow(goal: Goal, icons: Map<String, Bitmap>, today: LocalDate, c:
             }
             Column(GlanceModifier.defaultWeight()) {
                 Text(goal.title, style = TextStyle(color = c.ink, fontSize = 14.sp, fontWeight = FontWeight.Medium), maxLines = 1)
-                Text(statusLine(goal, days), style = TextStyle(color = c.muted, fontSize = 11.sp), maxLines = 1)
+                val milestone = Milestones.isMilestone(days, goal.currentStart)
+                Text(statusLine(goal, days), style = TextStyle(color = if (milestone) c.accent else c.muted, fontSize = 11.sp), maxLines = 1)
             }
             Spacer(GlanceModifier.width(10.dp))
-            Text("$days", style = TextStyle(color = c.ink, fontSize = 26.sp, fontWeight = FontWeight.Medium), maxLines = 1)
+            SerifText("$days", 30f, c.ink)
         }
         Spacer(GlanceModifier.height(6.dp))
         Progress(days, goal.currentStart, c)

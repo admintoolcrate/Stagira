@@ -186,7 +186,7 @@ private fun OverviewContent(goals: List<Goal>, today: LocalDate, c: Palette, roo
 @Composable
 private fun Figure(value: String, label: String, c: Palette, modifier: GlanceModifier, small: Boolean = false) {
     Column(modifier) {
-        Text(value, style = TextStyle(color = c.ink, fontSize = if (small) 22.sp else 30.sp, fontWeight = FontWeight.Medium), maxLines = 1)
+        SerifText(value, if (small) 24f else 32f, c.ink)
         Text(label, style = TextStyle(color = c.muted, fontSize = 11.sp), maxLines = 1)
     }
 }

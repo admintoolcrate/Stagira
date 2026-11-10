@@ -17,8 +17,10 @@ enum class SortOrder(val label: String) {
 /** How the home-screen widget's background is drawn. */
 enum class WidgetStyle(val label: String) {
     Solid("Solid"),
-    Translucent("See-through"),
+    Translucent("Glass"),
     Clear("Clear"),
+    /** The website's dusk gradient, with gold for milestones. */
+    Dusk("Dusk"),
 }
 
 enum class LockDelay(val label: String, val millis: Long) {

@@ -3,6 +3,7 @@
     <string name="widget_description">Goals: several goals, each with progress to its next milestone</string>
     <string name="goal_widget_description">Goal: one goal of your choosing, its count large</string>
     <string name="overview_widget_description">Overview: this week, days kept and what\u2019s coming up</string>
+    <string name="quote_widget_description">Aristotle: a passage from the Nicomachean Ethics, a new one each day</string>
     <string name="shortcut_log_short">Quick log</string>
     <string name="shortcut_log_long">Log a slip or an urge</string>
     <string name="shortcut_new_short">New goal</string>

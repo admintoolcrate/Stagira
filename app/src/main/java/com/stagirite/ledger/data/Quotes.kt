@@ -282,6 +282,16 @@ object Quotes {
         ),
     )
 
+    /**
+     * The Aristotle widget's passage: a different one each day, from every list,
+     * kept to those short enough to read at a glance on the home screen.
+     */
+    fun forWidget(today: java.time.LocalDate, maxChars: Int = 220): Quote {
+        val pool = (starting + milestone + slip).distinctBy { it.text }.filter { it.text.length <= maxChars }
+            .ifEmpty { starting }
+        return pool[(today.toEpochDay() % pool.size).toInt()]
+    }
+
     /** A passage for the empty page; a different one each day. */
     fun forEmptyLedger(today: java.time.LocalDate): Quote =
         starting[(today.toEpochDay() % starting.size).toInt()]
