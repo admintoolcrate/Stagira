@@ -299,13 +299,15 @@ section:first-child, .hero-bg + section { margin-top: 0; }
   .hero-bg::after { background: linear-gradient(180deg, color-mix(in srgb, var(--paper) 35%, transparent) 0%, color-mix(in srgb, var(--paper) 65%, transparent) 60%, var(--paper) 100%); }
 }
 
-/* One more day: the tally being crossed, beside Aristotle on habit */
-.kept { display: grid; grid-template-columns: minmax(0, 340px) minmax(0, 1fr); gap: 56px; align-items: center; max-width: 1000px; margin: 144px auto 0; }
-.kept .passage { margin: 0; max-width: none; }
-.kept-video { aspect-ratio: 9 / 16; border-radius: 28px; overflow: hidden; background: var(--card-solid); border: 1px solid var(--rule); box-shadow: var(--shadow); }
-.kept-video video { display: block; width: 100%; height: 100%; object-fit: cover; }
+
+/* The tally beside the questions: faded into the page, a quiet companion to the FAQ */
+.faq-grid { display: grid; grid-template-columns: minmax(0, 1fr) 280px; gap: 72px; align-items: center; }
+.faq-video { aspect-ratio: 9 / 16; border-radius: 28px; overflow: hidden; opacity: .62; filter: saturate(.8);
+  -webkit-mask-image: radial-gradient(120% 90% at 50% 45%, #000 55%, transparent 100%); mask-image: radial-gradient(120% 90% at 50% 45%, #000 55%, transparent 100%); }
+.faq-video video { display: block; width: 100%; height: 100%; object-fit: cover; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .faq-video { opacity: .35; filter: saturate(.7) brightness(.85); } }
+:root[data-theme="dark"] .faq-video { opacity: .35; filter: saturate(.7) brightness(.85); }
 @media (max-width: 900px) {
-  .kept { grid-template-columns: 1fr; gap: 32px; }
-  .kept-video { width: min(320px, 100%); justify-self: center; }
+  .faq-grid { grid-template-columns: 1fr; }
+  .faq-video { display: none; }
 }
-@media (max-width: 640px) { .kept { margin-top: 80px; } }
