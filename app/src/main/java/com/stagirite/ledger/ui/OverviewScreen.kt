@@ -7,8 +7,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.automirrored.filled.List
-import androidx.compose.material.icons.filled.DateRange
-import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.outlined.DateRange
+import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -39,6 +39,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import java.time.format.DateTimeFormatter
+import com.stagirite.ledger.data.Milestones
+import androidx.compose.foundation.layout.width
 import com.stagirite.ledger.data.DayState
 import com.stagirite.ledger.data.Goal
 import com.stagirite.ledger.data.GoalKind
@@ -76,9 +80,9 @@ fun OverviewDashboard(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Overview") },
+                title = { Text("Overview", style = LedgerType.title) },
                 actions = {
-                    IconButton(onClick = onSettings) { Icon(Icons.Filled.Settings, contentDescription = "Settings") }
+                    IconButton(onClick = onSettings) { Icon(Icons.Outlined.Settings, contentDescription = "Settings") }
                 },
                 colors = plainTopBarColors(),
             )
@@ -194,7 +198,7 @@ fun HomeNav(overview: Boolean, onSelect: (overview: Boolean) -> Unit) {
         NavigationBarItem(
             selected = overview,
             onClick = { onSelect(true) },
-            icon = { Icon(Icons.Filled.DateRange, contentDescription = null) },
+            icon = { Icon(Icons.Outlined.DateRange, contentDescription = null) },
             label = { Text("Overview") },
             colors = colors,
         )
@@ -249,18 +253,29 @@ fun ComingUpCard(goals: List<Goal>, today: LocalDate, onOpen: (Goal) -> Unit) {
                     .padding(horizontal = 20.dp, vertical = 14.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
+                GoalIcon(up.goal.icon, tile = 36.dp)
+                if (up.goal.icon.isNotEmpty()) Spacer(Modifier.width(Space.m))
                 Column(Modifier.weight(1f)) {
                     Text(up.goal.title, style = MaterialTheme.typography.bodyLarge, maxLines = 1, overflow = TextOverflow.Ellipsis)
                     Text(
-                        "${plural(up.milestone, "day")} on ${today.plusDays(up.inDays).format(mediumDate)}",
+                        (Milestones.name(up.milestone, up.goal.currentStart) ?: plural(up.milestone, "day")) +
+                            " \u00B7 " + today.plusDays(up.inDays).format(DateTimeFormatter.ofPattern("EEE d MMM")),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
+                    Spacer(Modifier.height(6.dp))
+                    ThinProgress(Milestones.progress(up.goal.daysKept(today), up.goal.currentStart), Modifier.width(120.dp))
                 }
-                Text(
-                    if (up.inDays == 1L) "tomorrow" else "in ${plural(up.inDays, "day")}",
-                    style = MaterialTheme.typography.labelLarge,
-                )
+                Spacer(Modifier.width(Space.m))
+                // How long to go, set like the counts: the number in the serif, the unit beneath.
+                Column(horizontalAlignment = Alignment.End) {
+                    if (up.inDays == 1L) {
+                        Text("tomorrow", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.tertiary)
+                    } else {
+                        Text("${up.inDays}", style = LedgerType.count.copy(fontSize = 28.sp, lineHeight = 28.sp).capped())
+                        Text("days to go", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                }
             }
             if (i < ups.lastIndex) HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
         }

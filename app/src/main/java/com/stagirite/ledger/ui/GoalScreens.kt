@@ -46,10 +46,10 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.outlined.Edit
+import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -217,7 +217,7 @@ fun GoalListScreen(
                 scrollBehavior = scroll,
                 actions = {
                     IconButton(onClick = onSettings) {
-                        Icon(Icons.Filled.Settings, contentDescription = "Settings")
+                        Icon(Icons.Outlined.Settings, contentDescription = "Settings")
                     }
                     Box {
                         IconButton(onClick = { menu = true }) {
@@ -527,7 +527,8 @@ private fun LedgerRow(goal: Goal, today: LocalDate, onClick: () -> Unit, onLongC
                 }
             }
             Spacer(Modifier.height(Space.m))
-            ThinProgress(goal.targetProgress(today) ?: Milestones.progress(days, goal.currentStart))
+            if (milestoneToday) ThinProgress(1f, gold = true)
+            else ThinProgress(goal.targetProgress(today) ?: Milestones.progress(days, goal.currentStart))
         }
     }
 }
@@ -725,11 +726,11 @@ fun GoalDetailScreen(
             TopAppBar(
                 title = {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(goal.title, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = false))
+                        Text(goal.title, style = LedgerType.title, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = false))
                         // Shown only while private titles are unlocked, so a cover name gives nothing away.
                         if (goal.isPrivate && privacy.unlocked) {
                             Icon(
-                                Icons.Filled.Lock,
+                                Icons.Outlined.Lock,
                                 contentDescription = "Private title",
                                 modifier = Modifier.padding(start = 8.dp).size(16.dp),
                                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -744,7 +745,7 @@ fun GoalDetailScreen(
                 },
                 actions = {
                     IconButton(onClick = { editing = true }) {
-                        Icon(Icons.Filled.Edit, contentDescription = "Edit goal")
+                        Icon(Icons.Outlined.Edit, contentDescription = "Edit goal")
                     }
                 },
                 colors = plainTopBarColors(),
@@ -826,7 +827,8 @@ fun GoalDetailScreen(
                     else MaterialTheme.colorScheme.onBackground,
                 )
                 Spacer(Modifier.height(Space.s))
-                ThinProgress(goal.targetProgress(today) ?: Milestones.progress(days, goal.currentStart), Modifier.width(160.dp))
+                if (Milestones.isMilestone(days, goal.currentStart)) ThinProgress(1f, Modifier.width(160.dp), gold = true)
+                else ThinProgress(goal.targetProgress(today) ?: Milestones.progress(days, goal.currentStart), Modifier.width(160.dp))
                 TextButton(onClick = { movingStart = true }) {
                     Text(
                         when {
@@ -838,7 +840,7 @@ fun GoalDetailScreen(
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                     Icon(
-                        Icons.Filled.Edit,
+                        Icons.Outlined.Edit,
                         contentDescription = "Change start date",
                         modifier = Modifier.padding(start = 6.dp).size(14.dp),
                         tint = MaterialTheme.colorScheme.onSurfaceVariant,

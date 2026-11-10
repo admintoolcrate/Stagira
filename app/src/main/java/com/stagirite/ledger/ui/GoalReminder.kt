@@ -10,7 +10,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -59,7 +59,7 @@ fun GoalReminderButton(goalId: String) {
     TextButton(onClick = { picking = true }) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(
-                Icons.Filled.Notifications,
+                Icons.Outlined.Notifications,
                 contentDescription = null,
                 modifier = Modifier.padding(end = 6.dp).size(14.dp),
                 tint = MaterialTheme.colorScheme.onSurfaceVariant,

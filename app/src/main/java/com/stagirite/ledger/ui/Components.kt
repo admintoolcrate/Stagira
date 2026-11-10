@@ -104,13 +104,14 @@ fun plainTopBarColors() = TopAppBarDefaults.topAppBarColors(
 )
 
 @Composable
-fun ThinProgress(progress: Float, modifier: Modifier = Modifier) {
+fun ThinProgress(progress: Float, modifier: Modifier = Modifier, gold: Boolean = false) {
     LinearProgressIndicator(
         progress = { progress },
         modifier = modifier
             .fillMaxWidth()
             .height(2.dp),
-        color = MaterialTheme.colorScheme.onBackground,
+        // On a milestone day the line is full, in the one accent colour.
+        color = if (gold) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.onBackground,
         trackColor = MaterialTheme.colorScheme.outlineVariant,
         strokeCap = StrokeCap.Butt,
         gapSize = 0.dp,
@@ -214,7 +215,7 @@ fun ProgressRing(
 @Composable
 fun Figure(value: String, label: String, modifier: Modifier = Modifier) {
     Column(modifier.padding(vertical = 10.dp)) {
-        Text(value, style = MaterialTheme.typography.headlineSmall)
+        Text(value, style = LedgerType.figure.capped())
         Text(
             label,
             style = MaterialTheme.typography.labelMedium,

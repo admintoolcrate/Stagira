@@ -20,7 +20,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.outlined.Share
 import androidx.compose.material3.Button
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -98,7 +98,7 @@ internal fun YearReviewPage(goals: List<Goal>, today: LocalDate, onDismiss: () -
             Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(Space.l)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     IconButton(onClick = onDismiss) { Icon(Icons.Filled.Close, contentDescription = "Close") }
-                    Text("Your year", style = MaterialTheme.typography.titleLarge, modifier = Modifier.weight(1f))
+                    Text("Your year", style = LedgerType.title, modifier = Modifier.weight(1f))
                     IconButton(onClick = { year-- }, enabled = year > firstYear) {
                         Icon(Icons.AutoMirrored.Filled.KeyboardArrowLeft, contentDescription = "Previous year")
                     }
@@ -145,7 +145,7 @@ internal fun YearReviewPage(goals: List<Goal>, today: LocalDate, onDismiss: () -
                         enabled = !sharing,
                         modifier = Modifier.fillMaxWidth().height(52.dp),
                     ) {
-                        Icon(Icons.Filled.Share, contentDescription = null, modifier = Modifier.padding(end = Space.s))
+                        Icon(Icons.Outlined.Share, contentDescription = null, modifier = Modifier.padding(end = Space.s))
                         Text("Share as an image")
                     }
                     Text(

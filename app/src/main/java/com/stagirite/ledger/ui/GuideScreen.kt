@@ -142,7 +142,7 @@ fun GuideScreen(onDone: () -> Unit, onCreate: ((GoalDraft) -> Unit)? = null) {
                         contentAlignment = Alignment.Center,
                     ) { EmojiGlyph(page.icon, 32.sp) }
                     Spacer(Modifier.height(28.dp))
-                    Text(page.title, style = MaterialTheme.typography.headlineMedium)
+                    Text(page.title, style = LedgerType.name)
                     Spacer(Modifier.height(12.dp))
                     Text(
                         page.body,
@@ -209,7 +209,7 @@ private fun FirstGoalPage(
     val today = LocalDate.now()
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
         Spacer(Modifier.height(Space.l))
-        Text("What are you starting?", style = MaterialTheme.typography.headlineMedium)
+        Text("What are you starting?", style = LedgerType.name.copy(fontSize = 32.sp, lineHeight = 36.sp))
         Spacer(Modifier.height(Space.s))
         Text(
             "Pick the kind of goal, give it a name, and the count begins.",

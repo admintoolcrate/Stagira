@@ -52,7 +52,7 @@ fun WeeklyReviewScreen(goals: List<Goal>, today: LocalDate, onOpen: (Goal) -> Un
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Weekly review") },
+                title = { Text("Weekly review", style = LedgerType.title) },
                 navigationIcon = {
                     IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back") }
                 },

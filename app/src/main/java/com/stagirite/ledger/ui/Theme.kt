@@ -128,6 +128,10 @@ object LedgerType {
     val name = TextStyle(fontFamily = Garamond, fontSize = 36.sp, lineHeight = 40.sp, letterSpacing = 0.sp)
     /** A passage from Aristotle. */
     val passage = TextStyle(fontFamily = Garamond, fontSize = 20.sp, lineHeight = 28.sp)
+    /** A screen's title in the top bar, as the website sets its headings. */
+    val title = TextStyle(fontFamily = Garamond, fontSize = 30.sp, lineHeight = 34.sp)
+    /** A headline figure in a summary: days kept, a week's tally. */
+    val figure = TextStyle(fontFamily = Garamond, fontSize = 32.sp, lineHeight = 34.sp, fontFeatureSettings = FIGURES)
     /** Quotation marks around a passage. */
     val mark = TextStyle(fontFamily = Garamond, fontSize = 44.sp, lineHeight = 44.sp)
 }
