@@ -76,10 +76,10 @@ description: Stagira is a quiet habit tracker for Android. Pick something to giv
 <section class="kept reveal" aria-label="One more day">
   <div class="kept-video">
     <video id="tally" muted playsinline preload="none" aria-hidden="true"
-      poster="{{ '/assets/video/tally-start.jpg' | relative_url }}"
-      data-end="{{ '/assets/video/tally-end.jpg' | relative_url }}">
-      <source src="{{ '/assets/video/tally.webm' | relative_url }}" type="video/webm">
-      <source src="{{ '/assets/video/tally.mp4' | relative_url }}" type="video/mp4">
+      poster="{{ '/assets/video/tally-start.jpg' | relative_url }}?v={{ site.time | date: '%s' }}"
+      data-end="{{ '/assets/video/tally-end.jpg' | relative_url }}?v={{ site.time | date: '%s' }}">
+      <source src="{{ '/assets/video/tally.webm' | relative_url }}?v={{ site.time | date: '%s' }}" type="video/webm">
+      <source src="{{ '/assets/video/tally.mp4' | relative_url }}?v={{ site.time | date: '%s' }}" type="video/mp4">
     </video>
   </div>
   <figure class="passage">
