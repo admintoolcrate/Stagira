@@ -130,6 +130,38 @@ object Quotes {
                 "deficiency, since this is the easiest way of hitting the mean and the right course.",
             "II.9, 1109b",
         ),
+        Quote(
+            "…virtue, like art, is constantly dealing with what is harder, since the harder the task the " +
+                "better is success.",
+            "II.3, 1105a",
+        ),
+        Quote(
+            "Hence, inasmuch as to hit the mean extremely well is difficult, the second best way to sail, as " +
+                "the saying goes, is to take the least of the evils…",
+            "II.9, 1109a",
+        ),
+        Quote(
+            "Also he will give a small amount of pain at the moment for the sake of a large amount of " +
+                "pleasure in the future.",
+            "IV.6, 1127a",
+        ),
+        Quote(
+            "It appears to be pleasure that misleads the mass of mankind…",
+            "III.4, 1113a",
+            AKRASIA,
+        ),
+        Quote(
+            "…the self-restrained man is the man who abides by the results of his calculations, the " +
+                "unrestrained, one who readily abandons the conclusion he has reached…",
+            "VII.1, 1145b",
+            AKRASIA,
+        ),
+        Quote(
+            "He consequently feels pain not only when he fails to get them, but also from his desire for " +
+                "them, since desire is accompanied by pain…",
+            "III.11, 1119a",
+            "Rackham’s “profligate” is someone ruled by appetite: the wanting itself hurts, not only going without.",
+        ),
     )
 
     /** Words for reaching a milestone. */
@@ -230,6 +262,43 @@ object Quotes {
             "…in this working out of details Time seems to be a good inventor or at all events coadjutor.",
             "I.7, 1098a",
         ),
+        Quote(
+            "And so with Courage: we become brave by training ourselves to despise and endure terrors, and " +
+                "we shall be best able to endure terrors when we have become brave.",
+            "II.2, 1104b",
+        ),
+        Quote(
+            "A man is temperate if he abstains from bodily pleasures and finds this abstinence itself " +
+                "enjoyable, profligate if he feels it irksome…",
+            "II.3, 1104b",
+        ),
+        Quote(
+            "An index of our dispositions is afforded by the pleasure or pain that accompanies our actions.",
+            "II.3, 1104b",
+        ),
+        Quote(
+            "Still, even if happiness is not sent us from heaven, but is won by virtue and by some kind of " +
+                "study or practice, it seems to be one of the most divine things that exist.",
+            "I.9, 1099b",
+        ),
+        Quote(
+            "Hence in the temperate man the appetitive element must be in harmony with principle.",
+            "III.12, 1119b",
+        ),
+        Quote(
+            "…only a fixed disposition of Courage will enable one to face sudden peril.",
+            "III.8, 1117a",
+        ),
+        Quote(
+            "…by acting in dangerous situations and forming a habit of fear or of confidence we become " +
+                "courageous or cowardly.",
+            "II.1, 1103b",
+        ),
+        Quote(
+            "…for it is a mark of virtue to feel both pleasure and pain on the right occasions and in the " +
+                "right manner.",
+            "IV.1, 1121a",
+        ),
     )
 
     /**
@@ -279,6 +348,39 @@ object Quotes {
             "…moral or ethical virtue is the product of habit (ethos), and has indeed derived its name, with a slight " +
                 "variation of form, from that word.",
             "II.1, 1103a",
+        ),
+        Quote(
+            "The virtues on the other hand we acquire by first having actually practised them, just as we do " +
+                "the arts.",
+            "II.1, 1103a",
+        ),
+        Quote(
+            "This is shown by the way in which men train themselves for some contest or pursuit: they " +
+                "practice continually.",
+            "III.5, 1114a",
+        ),
+        Quote(
+            "…virtue in active exercise cannot be inoperative—it will of necessity act, and act well.",
+            "I.8, 1099a",
+        ),
+        Quote(
+            "And further, the life of active virtue is essentially pleasant.",
+            "I.8, 1099a",
+        ),
+        Quote(
+            "Virtue is displayed in doing good rather than in having good done to one, and in performing " +
+                "noble acts rather than in avoiding base ones…",
+            "IV.1, 1120a",
+        ),
+        Quote(
+            "It is therefore not of small moment whether we are trained from childhood in one set of habits " +
+                "or another…",
+            "II.1, 1103b",
+        ),
+        Quote(
+            "…it is the active exercise of our faculties in conformity with virtue that causes happiness, " +
+                "and the opposite activities its opposite.",
+            "I.10, 1100b",
         ),
     )
 

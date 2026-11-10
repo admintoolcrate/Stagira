@@ -81,7 +81,7 @@ A minimal Android app (**Stagira** on your home screen) that does one thing: nam
   spreading out through the first year (120, 150, 180, 200, 250, 300), then a year, 400 and 500 days,
   18 months, two years, 750 and 1,000 days, and every year and every 500 days after. Years fall on
   the real anniversary. Reaching one shows a short celebration with an Aristotle passage; each
-  milestone of a run gets a different one, from 50 passages verified word for word.
+  milestone of a run gets a different one, from 71 passages verified word for word.
 - **Log a slip** in two taps: Today, Yesterday, or another day from a calendar, with Undo.
 - **App lock** with fingerprint, face or screen lock, locking immediately or after 1 or 5 minutes.
 - **Daily reminder** (optional) at a time you choose, with a Quick log button. It mentions a
