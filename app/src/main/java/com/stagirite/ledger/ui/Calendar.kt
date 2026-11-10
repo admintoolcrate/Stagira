@@ -25,6 +25,8 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
@@ -181,7 +183,7 @@ private fun DayCell(
                 .size(30.dp)
                 .then(
                     when (state) {
-                        DayState.Kept -> Modifier.background(ink, CircleShape)
+                        DayState.Kept -> Modifier.background(MaterialTheme.colorScheme.secondaryContainer, CircleShape)
                         DayState.Slip -> Modifier.border(BorderStroke(1.5.dp, ink), CircleShape)
                         else -> Modifier
                     }
@@ -192,7 +194,7 @@ private fun DayCell(
                 if (state == DayState.Rest) "\u2013" else "${day.dayOfMonth}",
                 style = MaterialTheme.typography.labelMedium,
                 color = when (state) {
-                    DayState.Kept -> MaterialTheme.colorScheme.background
+                    DayState.Kept -> MaterialTheme.colorScheme.onSecondaryContainer
                     DayState.Slip -> ink
                     else -> MaterialTheme.colorScheme.outline
                 },
@@ -214,31 +216,27 @@ private fun DayCell(
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun CalendarLegend(slipLabel: String, showUrgeKey: Boolean = false, showRestKey: Boolean = false) {
     val ink = MaterialTheme.colorScheme.onBackground
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        Box(Modifier.size(10.dp).background(ink, CircleShape))
-        Spacer(Modifier.width(6.dp))
-        Text("Kept", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        Spacer(Modifier.width(16.dp))
-        Box(Modifier.size(10.dp).border(BorderStroke(1.5.dp, ink), CircleShape))
-        Spacer(Modifier.width(6.dp))
-        Text(slipLabel, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        Spacer(Modifier.width(16.dp))
-        Box(Modifier.width(10.dp).height(2.dp).background(ink))
-        Spacer(Modifier.width(6.dp))
-        Text("Today", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        if (showRestKey) {
-            Spacer(Modifier.width(16.dp))
-            Text("\u2013 Rest", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        }
-        if (showUrgeKey) {
-            Spacer(Modifier.width(16.dp))
-            Box(Modifier.size(4.dp).background(ink, CircleShape))
+    val label = MaterialTheme.typography.labelSmall
+    val muted = MaterialTheme.colorScheme.onSurfaceVariant
+    // Each key stays whole when the row wraps.
+    @Composable
+    fun Key(mark: @Composable () -> Unit, text: String) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            mark()
             Spacer(Modifier.width(6.dp))
-            Text("Urge resisted", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(text, style = label, color = muted)
         }
+    }
+    FlowRow(horizontalArrangement = Arrangement.spacedBy(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        Key({ Box(Modifier.size(10.dp).background(MaterialTheme.colorScheme.secondaryContainer, CircleShape)) }, "Kept")
+        Key({ Box(Modifier.size(10.dp).border(BorderStroke(1.5.dp, ink), CircleShape)) }, slipLabel)
+        Key({ Box(Modifier.width(10.dp).height(2.dp).background(ink)) }, "Today")
+        if (showRestKey) Key({ Text("\u2013", style = label, color = muted) }, "Rest")
+        if (showUrgeKey) Key({ Box(Modifier.size(4.dp).background(ink, CircleShape)) }, "Urge resisted")
     }
 }
 
@@ -262,6 +260,8 @@ fun YearCalendar(
     val firstDay = WeekFields.of(locale).firstDayOfWeek
     val ink = MaterialTheme.colorScheme.onBackground
     val faint = MaterialTheme.colorScheme.outlineVariant
+    // Kept days in a warm mid-tone: clear at this small size without the weight of solid ink.
+    val kept = MaterialTheme.colorScheme.outline
 
     Column(modifier.fillMaxWidth()) {
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -316,7 +316,7 @@ fun YearCalendar(
                                 val y = (slot / 7) * cell + (cell - dot) / 2
                                 val corner = CornerRadius(dot * 0.25f)
                                 when (states[i]) {
-                                    DayState.Kept -> drawRoundRect(ink, Offset(x, y), Size(dot, dot), corner)
+                                    DayState.Kept -> drawRoundRect(kept, Offset(x, y), Size(dot, dot), corner)
                                     DayState.Slip -> drawRoundRect(
                                         ink, Offset(x + stroke / 2, y + stroke / 2), Size(dot - stroke, dot - stroke), corner,
                                         style = Stroke(stroke),
@@ -377,10 +377,7 @@ fun LedgerCalendar(
                     },
                     shape = SegmentedButtonDefaults.itemShape(i, 2),
                     icon = {},
-                    colors = SegmentedButtonDefaults.colors(
-                        activeContainerColor = MaterialTheme.colorScheme.primary,
-                        activeContentColor = MaterialTheme.colorScheme.onPrimary,
-                    ),
+                    colors = ledgerSegmentColors(),
                 ) { Text(if (isYear) "Year" else "Month") }
             }
         }

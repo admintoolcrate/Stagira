@@ -122,10 +122,7 @@ fun SettingsScreen(
                             onClick = { settings.updateTheme(mode) },
                             shape = SegmentedButtonDefaults.itemShape(i, modes.size),
                             icon = {},
-                            colors = SegmentedButtonDefaults.colors(
-                                activeContainerColor = MaterialTheme.colorScheme.primary,
-                                activeContentColor = MaterialTheme.colorScheme.onPrimary,
-                            ),
+                            colors = ledgerSegmentColors(),
                         ) { Text(mode.name) }
                     }
                 }
@@ -146,10 +143,7 @@ fun SettingsScreen(
                             },
                             shape = SegmentedButtonDefaults.itemShape(i, styles.size),
                             icon = {},
-                            colors = SegmentedButtonDefaults.colors(
-                                activeContainerColor = MaterialTheme.colorScheme.primary,
-                                activeContentColor = MaterialTheme.colorScheme.onPrimary,
-                            ),
+                            colors = ledgerSegmentColors(),
                         ) { Text(style.label) }
                     }
                 }
@@ -543,10 +537,7 @@ private fun LockSection(settings: Settings, lock: AppLock) {
                     onClick = { settings.updateLockDelay(delay) },
                     shape = SegmentedButtonDefaults.itemShape(i, delays.size),
                     icon = {},
-                    colors = SegmentedButtonDefaults.colors(
-                        activeContainerColor = MaterialTheme.colorScheme.primary,
-                        activeContentColor = MaterialTheme.colorScheme.onPrimary,
-                    ),
+                    colors = ledgerSegmentColors(),
                 ) { Text(delay.label, maxLines = 1) }
             }
         }

@@ -16,6 +16,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -255,12 +256,14 @@ fun GoalListScreen(
         bottomBar = bottomBar,
         floatingActionButton = {
             // Tap for a new goal; hold for quick logging (a slip, an urge resisted, the weekly review).
+            // Round and warm, with a soft shadow: present without shouting.
             Surface(
-                shape = RoundedCornerShape(18.dp),
-                color = MaterialTheme.colorScheme.primary,
-                contentColor = MaterialTheme.colorScheme.onPrimary,
-                shadowElevation = 6.dp,
-                modifier = Modifier.size(60.dp),
+                shape = CircleShape,
+                color = MaterialTheme.colorScheme.secondaryContainer,
+                contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                shadowElevation = 3.dp,
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+                modifier = Modifier.size(58.dp),
             ) {
                 Box(
                     Modifier.combinedClickable(
@@ -811,6 +814,8 @@ fun GoalDetailScreen(
                     },
                     style = MaterialTheme.typography.labelLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    // Tucked up under the figures, which carry the serif's deep descent room.
+                    modifier = Modifier.offset(y = (-10).dp),
                 )
                 Spacer(Modifier.height(Space.xl))
                 Text(
@@ -865,6 +870,11 @@ fun GoalDetailScreen(
                         modifier = Modifier.weight(1f).height(52.dp),
                         // Narrower side padding, so "Resisted an urge" fits on a 360dp-wide phone.
                         contentPadding = PaddingValues(horizontal = 12.dp),
+                        // The soft tint: the good news shouldn't be the heaviest thing on the page.
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                            contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                        ),
                     ) { Text(goal.urgeLabel, maxLines = 1, overflow = TextOverflow.Ellipsis) }
                     // Tap to choose the day; press and hold to log today without a dialog.
                     HoldButton(

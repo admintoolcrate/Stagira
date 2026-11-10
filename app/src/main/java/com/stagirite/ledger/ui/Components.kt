@@ -58,6 +58,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -101,6 +102,17 @@ const val MILLIS_PER_DAY = 86_400_000L
 fun plainTopBarColors() = TopAppBarDefaults.topAppBarColors(
     containerColor = MaterialTheme.colorScheme.background,
     scrolledContainerColor = MaterialTheme.colorScheme.background,
+)
+
+/** Segmented choices: the chosen one in the soft tint, the rest open, all on a hairline. */
+@Composable
+fun ledgerSegmentColors() = SegmentedButtonDefaults.colors(
+    activeContainerColor = MaterialTheme.colorScheme.secondaryContainer,
+    activeContentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+    activeBorderColor = MaterialTheme.colorScheme.outlineVariant,
+    inactiveContainerColor = Color.Transparent,
+    inactiveContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+    inactiveBorderColor = MaterialTheme.colorScheme.outlineVariant,
 )
 
 @Composable
