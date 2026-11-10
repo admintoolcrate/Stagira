@@ -87,6 +87,15 @@
         var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}});},{rootMargin:'0px 0px -8% 0px'});
         document.querySelectorAll('.reveal').forEach(function(el){io.observe(el);});
       }
+      /* Morning light behind the top of the home page: plays only while on screen, and never
+         with reduced motion or data saver on (the still image shows instead). */
+      var v=document.getElementById('dawn');
+      if(v&&!matchMedia('(prefers-reduced-motion: reduce)').matches&&!(navigator.connection&&navigator.connection.saveData)){
+        var play=function(){var p=v.play();if(p&&p.catch)p.catch(function(){});};
+        if('IntersectionObserver' in window){
+          new IntersectionObserver(function(es){es[0].isIntersecting?play():v.pause();}).observe(v);
+        }else{play();}
+      }
     })();
   </script>
 </body>
