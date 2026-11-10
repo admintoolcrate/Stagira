@@ -22,11 +22,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.test.captureToImage
-import androidx.compose.ui.test.junit4.createComposeRule
-import androidx.compose.ui.test.onRoot
+import androidx.activity.ComponentActivity
+import android.graphics.Canvas
+import android.os.Looper
+import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import org.robolectric.Shadows.shadowOf
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontStyle
@@ -73,7 +74,7 @@ import java.time.LocalDate
 @Config(sdk = [35], qualifiers = "w360dp-h640dp-xxhdpi")
 class StoreScreenshots {
     @get:Rule
-    val compose = createComposeRule()
+    val compose = createAndroidComposeRule<ComponentActivity>()
 
     @Before
     fun onlyWhenAsked() = assumeTrue(System.getProperty("screenshots") == "true")
@@ -164,7 +165,12 @@ class StoreScreenshots {
             LedgerTheme(dark) { Frame(caption, accent, dark, screen) }
         }
         compose.mainClock.advanceTimeBy(3_000)
-        val bitmap = compose.onRoot().captureToImage().asAndroidBitmap()
+        shadowOf(Looper.getMainLooper()).idle()
+        // Drawn straight from the window: Compose's own capture waits for a screen frame,
+        // which never comes under Robolectric.
+        val view = compose.activity.window.decorView
+        val bitmap = Bitmap.createBitmap(view.width, view.height, Bitmap.Config.ARGB_8888)
+        view.draw(Canvas(bitmap))
         val dir = File("build/store-screenshots").apply { mkdirs() }
         File(dir, "$name.png").outputStream().use { bitmap.compress(Bitmap.CompressFormat.PNG, 100, it) }
     }
