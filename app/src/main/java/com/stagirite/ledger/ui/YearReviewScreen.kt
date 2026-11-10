@@ -76,6 +76,14 @@ private const val CARD_GOALS = 5
  */
 @Composable
 fun YearReviewDialog(goals: List<Goal>, today: LocalDate, onDismiss: () -> Unit) {
+    Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
+        YearReviewPage(goals, today, onDismiss)
+    }
+}
+
+/** The page inside the dialog: the year picker, the card, and sharing. */
+@Composable
+internal fun YearReviewPage(goals: List<Goal>, today: LocalDate, onDismiss: () -> Unit) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val firstYear = goals.minOfOrNull { it.since.year } ?: today.year
@@ -85,7 +93,7 @@ fun YearReviewDialog(goals: List<Goal>, today: LocalDate, onDismiss: () -> Unit)
     val review = remember(goals, year, today) { yearReview(goals, year, today) }
     val layer = rememberGraphicsLayer()
 
-    Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
+    run {
         Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
             Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(Space.l)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {

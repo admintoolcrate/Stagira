@@ -38,7 +38,6 @@ import androidx.compose.ui.text.withStyle
 import com.stagirite.ledger.data.Goal
 import com.stagirite.ledger.data.GoalKind
 import com.stagirite.ledger.data.SortOrder
-import com.stagirite.ledger.data.yearReview
 import com.stagirite.ledger.ui.DuskGradient
 import com.stagirite.ledger.ui.GoalDetailScreen
 import com.stagirite.ledger.ui.GoalListScreen
@@ -48,7 +47,7 @@ import com.stagirite.ledger.ui.LedgerType
 import com.stagirite.ledger.ui.OverviewDashboard
 import com.stagirite.ledger.ui.PrivacyUi
 import com.stagirite.ledger.ui.WeeklyReviewScreen
-import com.stagirite.ledger.ui.YearCard
+import com.stagirite.ledger.ui.YearReviewPage
 import org.junit.Assume.assumeTrue
 import org.junit.Before
 import org.junit.Rule
@@ -138,12 +137,7 @@ class StoreScreenshots {
 
     @Test
     fun s5_year() = shoot("5-year", "Your year,", "in one card.") {
-        Box(
-            Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).padding(20.dp),
-            contentAlignment = Alignment.Center,
-        ) {
-            YearCard(yearReview(goals, today.year, today)!!, showNames = true, inProgress = true)
-        }
+        YearReviewPage(goals, today, onDismiss = {})
     }
 
     @Test

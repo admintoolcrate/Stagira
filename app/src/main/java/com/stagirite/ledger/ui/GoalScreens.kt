@@ -858,6 +858,8 @@ fun GoalDetailScreen(
                             }
                         },
                         modifier = Modifier.weight(1f).height(52.dp),
+                        // Narrower side padding, so "Resisted an urge" fits on a 360dp-wide phone.
+                        contentPadding = PaddingValues(horizontal = 12.dp),
                     ) { Text(goal.urgeLabel, maxLines = 1, overflow = TextOverflow.Ellipsis) }
                     // Tap to choose the day; press and hold to log today without a dialog.
                     HoldButton(
