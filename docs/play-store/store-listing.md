@@ -47,7 +47,7 @@ Stagira is a personal tracker, not medical advice or treatment. If you're strugg
 
 ## Category
 
-Health & Fitness
+Productivity (where most habit trackers sit; it also keeps the app clear of health-app expectations)
 
 ## Contact
 

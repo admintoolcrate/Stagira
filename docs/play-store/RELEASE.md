@@ -94,7 +94,7 @@ billing.
 - **Phone screenshots:** at least 2 (up to 8). Take them on your phone from the release build,
   using made-up goals, not your own. A good set: home page, a goal's ring and stats, the year
   view, the progress card, the weekly review, the Day 0 screen with a quote, dark mode.
-- Category: **Health & Fitness** (or Productivity). Contact email: `admin.toolcrate@gmail.com`.
+- Category: **Productivity**. Contact email: `admin.toolcrate@gmail.com`.
 
 ## 6. Host the privacy policy (you)
 
