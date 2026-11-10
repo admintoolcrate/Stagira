@@ -36,7 +36,7 @@ android {
         // CI builds number themselves from the run (beta 57 is version 1057), so every upload to
         // Play has a new, higher code. Builds made elsewhere use the fixed fallback.
         versionCode = System.getenv("GITHUB_RUN_NUMBER")?.toIntOrNull()?.let { 1000 + it } ?: 12
-        versionName = "3.6"
+        versionName = "3.7"
 
         // The CI run number, which names each beta release ("beta-57"); 0 for builds made elsewhere.
         buildConfigField("int", "BUILD_NUMBER", (System.getenv("GITHUB_RUN_NUMBER")?.toIntOrNull() ?: 0).toString())
