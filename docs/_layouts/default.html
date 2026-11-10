@@ -89,6 +89,21 @@
       }
       /* Morning light behind the top of the home page: plays only while on screen, and never
          with reduced motion or data saver on (the still image shows instead). */
+      /* The tally: crossed once each time it comes into view, then it rests on the finished
+         mark (no loop, so the stroke never vanishes). Reduced motion or data saver: the
+         finished mark as a still image. */
+      var tv=document.getElementById('tally');
+      if(tv){
+        if(matchMedia('(prefers-reduced-motion: reduce)').matches||(navigator.connection&&navigator.connection.saveData)||!('IntersectionObserver' in window)){
+          tv.poster=tv.getAttribute('data-end');
+        }else{
+          var seen=false;
+          new IntersectionObserver(function(es){
+            if(es[0].isIntersecting&&!seen){seen=true;try{tv.currentTime=0;}catch(e){}var p=tv.play();if(p&&p.catch)p.catch(function(){tv.poster=tv.getAttribute('data-end');});}
+            else if(!es[0].isIntersecting&&seen){seen=false;tv.pause();}
+          },{threshold:.6}).observe(tv);
+        }
+      }
       var v=document.getElementById('dawn');
       if(v&&!matchMedia('(prefers-reduced-motion: reduce)').matches&&!(navigator.connection&&navigator.connection.saveData)){
         var play=function(){var p=v.play();if(p&&p.catch)p.catch(function(){});};
