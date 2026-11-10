@@ -7,7 +7,6 @@ import androidx.activity.ComponentActivity
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
-import com.stagirite.ledger.LedgerApplication
 import com.stagirite.ledger.data.SortOrder
 import com.stagirite.ledger.ui.GoalDetailScreen
 import com.stagirite.ledger.ui.GoalListScreen
@@ -15,8 +14,6 @@ import com.stagirite.ledger.ui.GuideScreen
 import com.stagirite.ledger.ui.HomeNav
 import com.stagirite.ledger.ui.LedgerTheme
 import com.stagirite.ledger.ui.OverviewDashboard
-import com.stagirite.ledger.ui.PrivateTitlesUi
-import com.stagirite.ledger.ui.SettingsScreen
 import com.stagirite.ledger.ui.WeeklyReviewScreen
 import org.junit.Assume.assumeTrue
 import org.junit.Before
@@ -70,14 +67,6 @@ class ReviewScreenshots {
         )
     }
     @Test fun r4_week() = draw("r4-week") { WeeklyReviewScreen(s.goals, s.today, onOpen = {}, onBack = {}) }
-    @Test fun r5_settings() = draw("r5-settings") {
-        val app = compose.activity.application as LedgerApplication
-        SettingsScreen(
-            app.store, app.settings, app.sync, app.lock,
-            PrivateTitlesUi(hasPin = false, unlocked = false, onSetUp = {}, onChange = {}, onForget = {}),
-            onShowGuide = {}, onBack = {},
-        )
-    }
     @Test fun r6_guide() = draw("r6-guide") { GuideScreen(onDone = {}, onCreate = {}) }
     @Test fun r7_list_dark() = list(true, "r7-list-dark")
     @Test fun r8_goal_dark() = goal(true, "r8-goal-dark")
