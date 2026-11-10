@@ -86,6 +86,16 @@ android {
         compose = true
         buildConfig = true
     }
+
+    // The store screenshots (StoreScreenshots.kt) draw real screens under Robolectric, fonts included.
+    testOptions {
+        unitTests.isIncludeAndroidResources = true
+    }
+}
+
+// Store screenshots are only drawn when asked for: ./gradlew testDebugUnitTest -Pscreenshots=true
+tasks.withType<Test>().configureEach {
+    systemProperty("screenshots", providers.gradleProperty("screenshots").getOrElse("false"))
 }
 
 kotlin {
@@ -115,6 +125,11 @@ dependencies {
     debugImplementation("androidx.compose.ui:ui-tooling")
 
     testImplementation("junit:junit:4.13.2")
+    // Store screenshots: real Compose screens rendered on the JVM.
+    testImplementation(composeBom)
+    testImplementation("org.robolectric:robolectric:4.16")
+    testImplementation("androidx.compose.ui:ui-test-junit4")
+    debugImplementation("androidx.compose.ui:ui-test-manifest")
     // Android's built-in org.json is a stub in local unit tests.
     testImplementation("org.json:json:20240303")
 }

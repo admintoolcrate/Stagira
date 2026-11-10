@@ -153,7 +153,7 @@ fun YearReviewDialog(goals: List<Goal>, today: LocalDate, onDismiss: () -> Unit)
 }
 
 @Composable
-private fun YearCard(review: YearReview, showNames: Boolean, inProgress: Boolean) {
+internal fun YearCard(review: YearReview, showNames: Boolean, inProgress: Boolean) {
     // The website's dusk panel: the same card in light and dark, so a shared image always looks right.
     val ink = OnDusk
     val faint = OnDusk.copy(alpha = 0.7f)
