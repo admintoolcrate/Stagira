@@ -89,11 +89,12 @@
       }
       /* Morning light behind the top of the home page: plays only while on screen, and never
          with reduced motion or data saver on (the still image shows instead). */
-      /* The tally: crossed once each time it comes into view, then it rests on the finished
-         mark (no loop, so the stroke never vanishes). Reduced motion or data saver: the
-         finished mark as a still image. */
+      /* The tally beside the questions: crossed once each time it comes into view, then it
+         rests on the finished mark (no loop, so the stroke never vanishes). Reduced motion or
+         data saver: the finished mark as a still image. Hidden on phones, so nothing loads there. */
       var tv=document.getElementById('tally');
-      if(tv){
+      if(tv&&getComputedStyle(tv.parentNode).display!=='none'){
+        tv.poster=tv.getAttribute('data-start');
         if(matchMedia('(prefers-reduced-motion: reduce)').matches||(navigator.connection&&navigator.connection.saveData)||!('IntersectionObserver' in window)){
           tv.poster=tv.getAttribute('data-end');
         }else{
