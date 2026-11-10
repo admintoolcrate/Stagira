@@ -394,6 +394,16 @@ object Quotes {
         return pool[(today.toEpochDay() % pool.size).toInt()]
     }
 
+    /**
+     * Every passage, starting from the day's: the Aristotle widget takes the first
+     * one that fits its size.
+     */
+    fun widgetPool(today: java.time.LocalDate): List<Quote> {
+        val pool = (starting + milestone + slip).distinctBy { it.text }
+        val start = (today.toEpochDay() % pool.size).toInt()
+        return pool.drop(start) + pool.take(start)
+    }
+
     /** A passage for the empty page; a different one each day. */
     fun forEmptyLedger(today: java.time.LocalDate): Quote =
         starting[(today.toEpochDay() % starting.size).toInt()]

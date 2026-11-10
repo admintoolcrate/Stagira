@@ -21,6 +21,8 @@ enum class WidgetStyle(val label: String) {
     Clear("Clear"),
     /** The website's dusk gradient, with gold for milestones. */
     Dusk("Dusk"),
+    /** Its morning twin: soft peach, rose and lavender, with dark ink. */
+    Dawn("Dawn"),
 }
 
 enum class LockDelay(val label: String, val millis: Long) {

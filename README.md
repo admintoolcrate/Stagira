@@ -22,8 +22,9 @@ A minimal Android app (**Stagira** on your home screen) that does one thing: nam
 - **Home-screen widgets** — Goal (free): one goal you choose, its count large; wide, a "Resisted +1"
   button for Vices; tall, the goal's week. Overview (free): this week, days kept and what's coming
   up. Goals: several goals with progress. Aristotle: a passage from the Ethics, a new one each day.
-  All: counts set in EB Garamond, from one cell up, Solid, Glass, Clear or Dusk (the website's
-  evening gradient), "Milestone today" in gold on the day. Private goals show their cover names;
+  All: counts set in EB Garamond, from one cell up, Solid, Glass, Clear, Dusk or Dawn (the
+  website's evening and morning gradients), each widget with its own background if you like
+  (long-press it → settings), "Milestone today" in gold on the day. Private goals show their cover names;
   optionally hidden while locked.
 - **Tablets and landscape** — screens keep a readable width in the middle.
 - **Accessibility** — TalkBack labels throughout (including the private-titles action), large text

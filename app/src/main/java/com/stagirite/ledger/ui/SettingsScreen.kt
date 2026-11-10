@@ -155,7 +155,7 @@ fun SettingsScreen(
                 }
                 Spacer(Modifier.height(6.dp))
                 Text(
-                    "Glass lets the wallpaper show through. Clear drops the card for white text on darker wallpapers. Dusk is the website\u2019s evening colours.",
+                    "Glass lets the wallpaper show through. Clear drops the card for white text on darker wallpapers. Dusk and Dawn are the website\u2019s evening and morning colours. Each widget can also have its own: long-press it and choose its settings.",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )

@@ -81,7 +81,7 @@
         </receiver>
         <!-- Picks the goal for a Goal widget; started by the launcher when one is placed. -->
         <activity
-            android:name=".widget.GoalWidgetSetup"
+            android:name=".widget.WidgetSetup"
             android:exported="true"
             android:theme="@style/Theme.Ledger">
             <intent-filter>

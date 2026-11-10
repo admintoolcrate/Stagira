@@ -24,6 +24,9 @@ import androidx.glance.GlanceModifier
 import androidx.glance.Image
 import androidx.glance.ImageProvider
 import androidx.glance.LocalContext
+import androidx.glance.currentState
+import androidx.glance.state.PreferencesGlanceStateDefinition
+import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.glance.LocalSize
 import androidx.glance.action.ActionParameters
 import androidx.glance.action.actionParametersOf
@@ -110,7 +113,23 @@ internal fun palette(style: WidgetStyle): Palette = when (style) {
         accent = ColorProvider(day = Color(0xFFD0AE74), night = Color(0xFFD0AE74)),
         image = R.drawable.widget_dusk,
     )
+    // The morning twin: a pale sunrise with the app's dark ink.
+    WidgetStyle.Dawn -> Palette(
+        background = null,
+        ink = ColorProvider(day = Color(0xFF2A2622), night = Color(0xFF2A2622)),
+        muted = ColorProvider(day = Color(0xFF6E645A), night = Color(0xFF6E645A)),
+        track = ColorProvider(day = Color(0x2E2A2622), night = Color(0x2E2A2622)),
+        accent = ColorProvider(day = Color(0xFF94703F), night = Color(0xFF94703F)),
+        image = R.drawable.widget_dawn,
+    )
 }
+
+/** A widget's own style, kept in its Glance state; unset means "as the app's setting". */
+val WidgetStyleKey = stringPreferencesKey("style")
+
+/** The style a widget shows: its own choice if it has one, else the app-wide setting. */
+internal fun widgetStyle(own: String?, appWide: WidgetStyle): WidgetStyle =
+    own?.let { name -> WidgetStyle.entries.firstOrNull { it.name == name } } ?: appWide
 
 /** Intent extra: the goal to open when a row is tapped. */
 const val EXTRA_OPEN_GOAL = "open_goal"
@@ -129,6 +148,9 @@ private val Tall = DpSize(250.dp, 250.dp)
 class LedgerWidget : GlanceAppWidget() {
     override val sizeMode = SizeMode.Responsive(setOf(Small, Wide, Tall))
 
+    // Holds the widget's own style, chosen from its settings.
+    override val stateDefinition = PreferencesGlanceStateDefinition
+
     override suspend fun provideGlance(context: Context, id: GlanceId) {
         val app = context.applicationContext as LedgerApplication
         // Everything is read inside the content, so a redraw (or any change to the ledger while
@@ -137,7 +159,8 @@ class LedgerWidget : GlanceAppWidget() {
             val today = LocalDate.now()
             val locked = app.settings.widgetsLocked
             val goals = if (locked) emptyList() else sortGoals(app.store.goals, app.settings.sortOrder, today).take(6)
-            WidgetContent(goals, iconsFor(context, goals), locked, today, palette(app.settings.widgetStyle))
+            val style = widgetStyle(currentState(WidgetStyleKey), app.settings.widgetStyle)
+            WidgetContent(goals, iconsFor(context, goals), locked, today, palette(style))
         }
     }
 

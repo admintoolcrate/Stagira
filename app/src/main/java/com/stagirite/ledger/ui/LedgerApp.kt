@@ -297,6 +297,7 @@ private fun LedgerAppContent(
                 canNote = !rawOpen.isPrivate || vault.unlocked,
             onUrge = { store.resistUrge(rawOpen.id, today) },
             onUndoUrge = { store.unresistUrge(rawOpen.id, today) },
+                onRemoveUrge = { day -> store.unresistUrge(rawOpen.id, day) },
                 onNote = { day, text ->
                     if (rawOpen.isPrivate) {
                         val o = vault.open(rawOpen)

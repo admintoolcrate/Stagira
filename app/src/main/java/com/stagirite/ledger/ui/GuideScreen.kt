@@ -44,6 +44,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import java.time.LocalDate
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material3.Icon
 import kotlinx.coroutines.launch
 
 private class GuidePage(val icon: String, val title: String, val body: String)
@@ -90,13 +96,13 @@ fun GuideScreen(onDone: () -> Unit, onCreate: ((GoalDraft) -> Unit)? = null) {
     val scope = rememberCoroutineScope()
     val last = pager.currentPage == count - 1
     var title by rememberSaveable { mutableStateOf("") }
-    var template by remember { mutableStateOf<GoalTemplate?>(null) }
+    var icon by rememberSaveable { mutableStateOf("") }
     var kind by rememberSaveable { mutableStateOf(GoalKind.Vice) }
+    var sinceEpochDay by rememberSaveable { mutableStateOf(LocalDate.now().toEpochDay()) }
     val finish = {
         val name = title.trim()
         if (onCreate != null && name.isNotEmpty()) {
-            val t = template?.takeIf { it.title == name }
-            onCreate(GoalDraft(name, LocalDate.now(), "", t?.icon ?: "", kind, false, null))
+            onCreate(GoalDraft(name, LocalDate.ofEpochDay(sinceEpochDay), "", icon, kind, false, null))
         }
         onDone()
     }
@@ -114,10 +120,12 @@ fun GuideScreen(onDone: () -> Unit, onCreate: ((GoalDraft) -> Unit)? = null) {
             HorizontalPager(pager, Modifier.weight(1f)) { i ->
                 if (i == pages.size) {
                     FirstGoalPage(
-                        title, kind,
-                        onTitle = { title = it; template = null },
-                        onKind = { kind = it; template = null; title = "" },
-                        onTemplate = { template = it; title = it.title },
+                        title, icon, kind, LocalDate.ofEpochDay(sinceEpochDay),
+                        onTitle = { title = it },
+                        onIcon = { icon = it },
+                        onKind = { kind = it; title = ""; icon = "" },
+                        onTemplate = { title = it.title; icon = it.icon },
+                        onSince = { sinceEpochDay = it.toEpochDay() },
                     )
                     return@HorizontalPager
                 }
@@ -179,42 +187,41 @@ fun GuideScreen(onDone: () -> Unit, onCreate: ((GoalDraft) -> Unit)? = null) {
     }
 }
 
-/** The last page of a first visit: name something, or pick a common one. */
+/**
+ * The last page of a first visit: the same choices as the full goal editor (the
+ * kind, an icon, the name and the start date), with common goals to pick from.
+ */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun FirstGoalPage(
     title: String,
+    icon: String,
     kind: GoalKind,
+    since: LocalDate,
     onTitle: (String) -> Unit,
+    onIcon: (String) -> Unit,
     onKind: (GoalKind) -> Unit,
     onTemplate: (GoalTemplate) -> Unit,
+    onSince: (LocalDate) -> Unit,
 ) {
-    Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.Center) {
+    var pickingIcon by rememberSaveable { mutableStateOf(false) }
+    var pickingDay by rememberSaveable { mutableStateOf(false) }
+    val today = LocalDate.now()
+    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
+        Spacer(Modifier.height(Space.l))
         Text("What are you starting?", style = MaterialTheme.typography.headlineMedium)
         Spacer(Modifier.height(Space.s))
         Text(
-            "The count starts today; you can change the date later.",
+            "Pick the kind of goal, give it a name, and the count begins.",
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         Spacer(Modifier.height(Space.l))
-        Row(horizontalArrangement = Arrangement.spacedBy(Space.s)) {
-            GoalKind.entries.forEach { k ->
-                FilterChip(selected = kind == k, onClick = { onKind(k) }, label = { Text(k.choice) })
-            }
+        GoalKind.entries.forEach { k ->
+            KindChoice(k, selected = kind == k) { onKind(k) }
+            Spacer(Modifier.height(Space.s))
         }
-        Text(kind.blurb, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        Spacer(Modifier.height(Space.l))
-        OutlinedTextField(
-            value = title,
-            onValueChange = onTitle,
-            label = { Text("Goal") },
-            placeholder = { Text(if (kind == GoalKind.Virtue) "e.g. One good deed a day" else "e.g. Drink less") },
-            singleLine = true,
-            keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences, imeAction = ImeAction.Done),
-            modifier = Modifier.fillMaxWidth(),
-        )
-        Spacer(Modifier.height(Space.l))
+        Spacer(Modifier.height(Space.s))
         FlowRow(horizontalArrangement = Arrangement.spacedBy(Space.s), verticalArrangement = Arrangement.spacedBy(Space.s)) {
             goalTemplates.filter { it.kind == kind }.forEach { t ->
                 FilterChip(
@@ -225,5 +232,52 @@ private fun FirstGoalPage(
                 )
             }
         }
+        Spacer(Modifier.height(Space.l))
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Box(
+                Modifier
+                    .size(52.dp)
+                    .background(MaterialTheme.colorScheme.surfaceContainer, CircleShape)
+                    .clickable { pickingIcon = true },
+                contentAlignment = Alignment.Center,
+            ) {
+                if (icon.isEmpty()) {
+                    Icon(Icons.Filled.Add, contentDescription = "Choose an icon", tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                } else {
+                    EmojiGlyph(icon, 26.sp)
+                }
+            }
+            Spacer(Modifier.width(Space.m))
+            OutlinedTextField(
+                value = title,
+                onValueChange = onTitle,
+                label = { Text("Goal") },
+                placeholder = { Text(if (kind == GoalKind.Virtue) "e.g. One good deed a day" else "e.g. Drink less") },
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences, imeAction = ImeAction.Done),
+                modifier = Modifier.weight(1f),
+            )
+        }
+        Spacer(Modifier.height(Space.s))
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text("Started", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
+            TextButton(onClick = { pickingDay = true }) {
+                Text(if (since == today) "Today" else since.format(mediumDate))
+            }
+        }
+        Spacer(Modifier.height(Space.l))
+    }
+
+    if (pickingIcon) {
+        IconPickerDialog(current = icon, onDismiss = { pickingIcon = false }, onPick = { onIcon(it); pickingIcon = false })
+    }
+    if (pickingDay) {
+        DayPickerDialog(
+            initial = since,
+            earliest = null,
+            latest = today,
+            onDismiss = { pickingDay = false },
+            onPick = { onSince(it); pickingDay = false },
+        )
     }
 }

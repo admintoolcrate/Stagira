@@ -19,6 +19,8 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -68,6 +70,8 @@ fun MonthCalendar(
     stateOf: (LocalDate) -> DayState,
     onMonthChange: (YearMonth) -> Unit,
     onDayClick: ((LocalDate) -> Unit)? = null,
+    /** Press and hold a day: see what's logged on it, and undo any of it. */
+    onDayLongClick: ((LocalDate) -> Unit)? = null,
     modifier: Modifier = Modifier,
     slipLabel: String = "Slip",
     /** Urges resisted on a day; days with any get a small dot. */
@@ -118,7 +122,7 @@ fun MonthCalendar(
                     Box(Modifier.weight(1f).aspectRatio(1f), contentAlignment = Alignment.Center) {
                         if (index in 0 until month.lengthOfMonth()) {
                             val day = first.plusDays(index.toLong())
-                            DayCell(day, stateOf(day), day == today, onDayClick, slipLabel, urgesOf(day))
+                            DayCell(day, stateOf(day), day == today, onDayClick, slipLabel, urgesOf(day), onDayLongClick)
                         }
                     }
                 }
@@ -129,6 +133,7 @@ fun MonthCalendar(
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun DayCell(
     day: LocalDate,
@@ -137,6 +142,7 @@ private fun DayCell(
     onClick: ((LocalDate) -> Unit)?,
     slipLabel: String,
     urges: Int,
+    onLongClick: ((LocalDate) -> Unit)? = null,
 ) {
     val ink = MaterialTheme.colorScheme.onBackground
     val clickable = onClick != null && (state == DayState.Kept || state == DayState.Slip)
@@ -154,7 +160,15 @@ private fun DayCell(
             .padding(3.dp)
             .then(
                 if (clickable) {
-                    Modifier.clickable(onClickLabel = if (state == DayState.Slip) "Remove ${slipLabel.lowercase()}" else "Log a ${slipLabel.lowercase()}", role = Role.Button) { onClick?.invoke(day) }
+                    Modifier.combinedClickable(
+                        onClickLabel = if (state == DayState.Slip) "Remove ${slipLabel.lowercase()}" else "Log a ${slipLabel.lowercase()}",
+                        role = Role.Button,
+                        onLongClickLabel = "See or undo what\u2019s logged",
+                        onLongClick = onLongClick?.let { { it(day) } },
+                    ) { onClick?.invoke(day) }
+                } else if (onLongClick != null && urges > 0) {
+                    // A rest day can still hold urges logged by mistake.
+                    Modifier.combinedClickable(onLongClickLabel = "See or undo what\u2019s logged", onLongClick = { onLongClick(day) }) {}
                 } else {
                     Modifier
                 },
@@ -348,6 +362,7 @@ fun LedgerCalendar(
     urgesOf: (LocalDate) -> Int = { 0 },
     showUrgeKey: Boolean = false,
     showRestKey: Boolean = false,
+    onDayLongClick: ((LocalDate) -> Unit)? = null,
 ) {
     var yearView by rememberSaveable { mutableStateOf(false) }
     var month by rememberSaveable { mutableStateOf(YearMonth.from(today).toString()) }
@@ -392,6 +407,7 @@ fun LedgerCalendar(
                     year = it.year
                 },
                 onDayClick = onDayClick,
+                onDayLongClick = onDayLongClick,
                 slipLabel = slipLabel,
                 urgesOf = urgesOf,
                 showUrgeKey = showUrgeKey,

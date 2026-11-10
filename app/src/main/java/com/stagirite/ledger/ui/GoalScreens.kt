@@ -683,8 +683,11 @@ fun GoalDetailScreen(
     onNote: (LocalDate, String) -> Unit = { _, _ -> },
     onUrge: () -> Unit = {},
     onUndoUrge: () -> Unit = {},
+    /** Takes back one urge logged on that day, from holding the day in the calendar. */
+    onRemoveUrge: (LocalDate) -> Unit = {},
 ) {
     val buzz = rememberBuzz()
+    var heldDay by rememberSaveable { mutableStateOf<Long?>(null) }
     var notingDay by rememberSaveable { mutableStateOf<Long?>(null) }
     var editing by rememberSaveable { mutableStateOf(false) }
     var slipSheet by rememberSaveable { mutableStateOf(false) }
@@ -918,9 +921,10 @@ fun GoalDetailScreen(
                             urgesOf = { goal.urgesOn(it) },
                             showUrgeKey = goal.urges.isNotEmpty(),
                             showRestKey = goal.hasSchedule,
+                            onDayLongClick = { heldDay = it.toEpochDay() },
                         )
                         Text(
-                            "Tap a day to log or remove a $slipWord.",
+                            "Tap a day to log or remove a $slipWord. Hold a day to see or undo what\u2019s logged.",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.padding(top = 8.dp),
@@ -1032,6 +1036,36 @@ fun GoalDetailScreen(
                 }) { Text("Save") }
             },
             dismissButton = { TextButton(onClick = { notingDay = null }) { Text("Cancel") } },
+        )
+    }
+
+    heldDay?.let { epochDay ->
+        val day = LocalDate.ofEpochDay(epochDay)
+        val isSlip = goal.isSlip(day)
+        val urges = goal.urgesOn(day)
+        AlertDialog(
+            onDismissRequest = { heldDay = null },
+            title = { Text(day.format(longDate)) },
+            text = {
+                Column {
+                    if (!isSlip && urges == 0) {
+                        Text("Nothing logged on this day.", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                    if (isSlip) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text("${slipWord.capitalised()} logged", modifier = Modifier.weight(1f))
+                            TextButton(onClick = { onRemoveSlip(day) }) { Text("Remove") }
+                        }
+                    }
+                    if (urges > 0) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text("${goal.urgesLabel}: $urges", modifier = Modifier.weight(1f))
+                            TextButton(onClick = { onRemoveUrge(day) }) { Text("Remove one") }
+                        }
+                    }
+                }
+            },
+            confirmButton = { TextButton(onClick = { heldDay = null }) { Text("Done") } },
         )
     }
 
@@ -1631,7 +1665,7 @@ private fun GoalDialog(
 
 /** One of the two kinds of goal, as a card to pick. */
 @Composable
-private fun KindChoice(kind: GoalKind, selected: Boolean, onClick: () -> Unit) {
+internal fun KindChoice(kind: GoalKind, selected: Boolean, onClick: () -> Unit) {
     val shape = RoundedCornerShape(14.dp)
     Row(
         Modifier
@@ -1652,7 +1686,7 @@ private fun KindChoice(kind: GoalKind, selected: Boolean, onClick: () -> Unit) {
 /** A grid of monochrome emoji to choose from, or none. */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun IconPickerDialog(current: String, onDismiss: () -> Unit, onPick: (String) -> Unit) {
+internal fun IconPickerDialog(current: String, onDismiss: () -> Unit, onPick: (String) -> Unit) {
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text("Icon") },

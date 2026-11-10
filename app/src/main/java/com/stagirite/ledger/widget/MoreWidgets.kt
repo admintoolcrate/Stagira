@@ -73,11 +73,11 @@ class GoalWidget : GlanceAppWidget() {
     override suspend fun provideGlance(context: Context, id: GlanceId) {
         val app = context.applicationContext as LedgerApplication
         val appWidgetId = GlanceAppWidgetManager(context).getAppWidgetId(id)
-        val choose = Intent(context, GoalWidgetSetup::class.java)
+        val choose = Intent(context, WidgetSetup::class.java)
             .putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
             .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         provideContent {
-            val colours = palette(app.settings.widgetStyle)
+            val colours = palette(widgetStyle(currentState(WidgetStyleKey), app.settings.widgetStyle))
             val goalId = currentState(ChosenGoal) ?: WidgetGoals.goalFor(context, appWidgetId)
             val goal = goalId?.let(app.store::find)?.takeIf { !it.archived }
             val roomy = LocalSize.current.width >= 250.dp
@@ -115,10 +115,13 @@ class OverviewWidget : GlanceAppWidget() {
     // From one cell up: one cell and one row get their own compact layouts.
     override val sizeMode = SizeMode.Responsive(setOf(DpSize(57.dp, 57.dp), DpSize(180.dp, 57.dp), DpSize(110.dp, 110.dp), DpSize(250.dp, 110.dp), DpSize(110.dp, 180.dp), DpSize(250.dp, 210.dp)))
 
+    // Holds the widget's own style, chosen from its settings.
+    override val stateDefinition = PreferencesGlanceStateDefinition
+
     override suspend fun provideGlance(context: Context, id: GlanceId) {
         val app = context.applicationContext as LedgerApplication
         provideContent {
-            val colours = palette(app.settings.widgetStyle)
+            val colours = palette(widgetStyle(currentState(WidgetStyleKey), app.settings.widgetStyle))
             val locked = app.settings.widgetsLocked
             val goals = if (locked) emptyList() else app.store.goals
             Column(widgetRoot(colours).clickable(actionStartActivity<MainActivity>())) {

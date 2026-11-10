@@ -3,7 +3,7 @@
 <appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
     android:description="@string/goal_widget_description"
     android:initialLayout="@layout/glance_default_loading_layout"
-    android:configure="com.stagirite.ledger.widget.GoalWidgetSetup"
+    android:configure="com.stagirite.ledger.widget.WidgetSetup"
     android:widgetFeatures="reconfigurable"
     android:minWidth="40dp"
     android:minHeight="40dp"
