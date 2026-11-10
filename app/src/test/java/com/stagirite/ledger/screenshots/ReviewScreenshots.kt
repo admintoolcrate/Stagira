@@ -7,7 +7,6 @@ import androidx.activity.ComponentActivity
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
-import androidx.test.core.app.ApplicationProvider
 import com.stagirite.ledger.LedgerApplication
 import com.stagirite.ledger.data.SortOrder
 import com.stagirite.ledger.ui.GoalDetailScreen
@@ -72,7 +71,7 @@ class ReviewScreenshots {
     }
     @Test fun r4_week() = draw("r4-week") { WeeklyReviewScreen(s.goals, s.today, onOpen = {}, onBack = {}) }
     @Test fun r5_settings() = draw("r5-settings") {
-        val app = ApplicationProvider.getApplicationContext<LedgerApplication>()
+        val app = compose.activity.application as LedgerApplication
         SettingsScreen(
             app.store, app.settings, app.sync, app.lock,
             PrivateTitlesUi(hasPin = false, unlocked = false, onSetUp = {}, onChange = {}, onForget = {}),
