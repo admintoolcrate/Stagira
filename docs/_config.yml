@@ -6,6 +6,8 @@ description: A quiet ledger of the days you keep.
 # Keeps the old privacy-policy address working (see redirect_from in the policy).
 plugins:
   - jekyll-redirect-from
+  # Writes /sitemap.xml for search engines (supported by GitHub Pages).
+  - jekyll-sitemap
 # The drafting notes for the Play Console aren't pages anyone needs to visit.
 exclude:
   - play-store/RELEASE.md
