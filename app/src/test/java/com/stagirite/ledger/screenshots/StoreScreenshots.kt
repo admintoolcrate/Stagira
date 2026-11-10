@@ -157,10 +157,13 @@ class StoreScreenshots {
 
     /** Draws [screen] at phone size, framed under the caption, and saves it as a PNG. */
     private fun shoot(name: String, caption: String, accent: String, dark: Boolean = false, screen: @Composable () -> Unit) {
+        // Some screens keep a clock or an animation running, so they're never "idle": drive the
+        // clock by hand and let entrance animations finish before taking the picture.
+        compose.mainClock.autoAdvance = false
         compose.setContent {
             LedgerTheme(dark) { Frame(caption, accent, dark, screen) }
         }
-        compose.waitForIdle()
+        compose.mainClock.advanceTimeBy(3_000)
         val bitmap = compose.onRoot().captureToImage().asAndroidBitmap()
         val dir = File("build/store-screenshots").apply { mkdirs() }
         File(dir, "$name.png").outputStream().use { bitmap.compress(Bitmap.CompressFormat.PNG, 100, it) }
