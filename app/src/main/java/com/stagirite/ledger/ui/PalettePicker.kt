@@ -111,10 +111,11 @@ private fun PaletteCard(tone: Tone, selected: Boolean, onClick: () -> Unit) {
                         .align(Alignment.BottomEnd)
                         .padding(6.dp)
                         .size(18.dp)
-                        .background(MaterialTheme.colorScheme.onBackground, CircleShape),
+                        // In the palette's own gold, so it shows on the dark night strip too.
+                        .background(Color(night.accent), CircleShape),
                     contentAlignment = Alignment.Center,
                 ) {
-                    Icon(Icons.Filled.Check, contentDescription = null, tint = MaterialTheme.colorScheme.background, modifier = Modifier.size(12.dp))
+                    Icon(Icons.Filled.Check, contentDescription = null, tint = Color(night.page), modifier = Modifier.size(12.dp))
                 }
             }
         }
