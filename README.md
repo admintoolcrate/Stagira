@@ -46,7 +46,7 @@ A minimal Android app (**Stagira** on your home screen) that does one thing: nam
   before sending; goal data is never included.
 - **Guide** — a short optional introduction on first launch, and an About page explaining the
   name, in Settings.
-- **Begin again** when you slip: the count restarts, the run is kept, and you get a short passage
+- **Try again** when you slip: the count restarts, the run is kept, and you get a short passage
   from Aristotle for the day (see *Quotations*).
 - **Backdated entries** — change when a goal (or the current run) started by tapping its "since"
   date, and record a slip on any past day (or remove one), from the goal page or by

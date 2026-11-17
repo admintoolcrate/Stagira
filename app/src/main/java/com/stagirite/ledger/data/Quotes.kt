@@ -24,7 +24,7 @@ object Quotes {
     private const val AKRASIA =
         "“Unrestrained” is Rackham’s word for akrasia: knowing what’s best and giving in anyway."
 
-    /** Words for the day you begin again. */
+    /** Words for the day you try again. */
     val slip = listOf(
         Quote(
             "…it is the profligate who cannot be cured, whereas the unrestrained man can…",

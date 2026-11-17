@@ -12,7 +12,7 @@ Count the days you keep. A private, quiet ledger for the habits that shape you.
 
 Stagira is a quiet record of the days you keep.
 
-Tackle a vice, something to stop or cut down on, like drinking less. Or practise a virtue, something good to do each day, like one good deed. Good days count on their own: there's nothing to log unless something goes wrong. If you slip, log it in a couple of taps and begin again. The run you had stays in your history.
+Tackle a vice, something to stop or cut down on, like drinking less. Or practise a virtue, something good to do each day, like one good deed. Good days count on their own: there's nothing to log unless something goes wrong. If you slip, log it in a couple of taps and try again. The run you had stays in your history.
 
 Aristotle, born in Stagira, taught that character isn't something we're born with but something we build, one habit at a time. Stagira keeps count of the days you put in.
 

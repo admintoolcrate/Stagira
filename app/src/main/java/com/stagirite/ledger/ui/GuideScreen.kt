@@ -73,7 +73,7 @@ private val pages = listOf(
         "🌱",
         "When you slip",
         "It happens to everyone, and it doesn\u2019t undo the days you kept. Log it in a couple of taps " +
-            "and begin again. The run you had stays in your history, with a note on what happened if you " +
+            "and try again. The run you had stays in your history, with a note on what happened if you " +
             "want one.",
     ),
     GuidePage(

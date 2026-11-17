@@ -696,7 +696,7 @@ private fun AboutSection(onShowGuide: () -> Unit) {
     Spacer(Modifier.height(4.dp))
     Note(
         "Each goal tackles a Vice, something to stop or cut down, or practises a Virtue, something good " +
-            "to do each day. Good days count on their own; you only log a slip if one happens, and then begin again: the run " +
+            "to do each day. Good days count on their own; you only log a slip if one happens, and then try again: the run " +
             "you had stays in your history, with a note if " +
             "you add one. Milestones mark the way, with a passage from Aristotle at each.",
     )
@@ -754,7 +754,7 @@ private fun AboutSection(onShowGuide: () -> Unit) {
 @Composable
 private fun PersonaliseSection(settings: Settings) {
     val rows: List<Triple<String, String, Pair<Boolean, (Boolean) -> Unit>>> = listOf(
-        Triple("Passages from Aristotle", "When you begin again, at milestones, on an empty page and in the guide.", settings.quotes to settings::updateQuotes),
+        Triple("Passages from Aristotle", "When you try again, at milestones, on an empty page and in the guide.", settings.quotes to settings::updateQuotes),
         Triple("Milestone celebrations", "A moment to mark each milestone the day you reach it.", settings.celebrations to settings::updateCelebrations),
         Triple("Vibration", "A light buzz when you log a slip or reach a milestone.", settings.haptics to settings::updateHaptics),
     )

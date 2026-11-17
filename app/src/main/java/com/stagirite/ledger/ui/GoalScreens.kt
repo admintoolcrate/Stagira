@@ -520,7 +520,7 @@ private fun LedgerRow(goal: Goal, today: LocalDate, onClick: () -> Unit, onLongC
                     }
                     Text(
                         when (days) {
-                            0L -> if (goal.slips.isEmpty()) "started" else "begun again"
+                            0L -> if (goal.slips.isEmpty()) "started" else "trying again"
                             1L -> "day"
                             else -> "days"
                         },
@@ -794,7 +794,7 @@ fun GoalDetailScreen(
                     contentDescription = (
                         when {
                             days == 0L && goal.slips.isEmpty() -> "Started today · day one is tomorrow"
-                            days == 0L -> "0 days, began again today, day one is tomorrow"
+                            days == 0L -> "0 days, trying again today, day one is tomorrow"
                             else -> plural(days, "day")
                         }
                     ) + "; " +
@@ -824,7 +824,7 @@ fun GoalDetailScreen(
                         goal.target != null && days >= goal.target -> "Target of ${plural(goal.target, "day")} reached"
                         goal.target != null -> "${plural(goal.target - days, "day")} to your target of ${goal.target}"
                         days == 0L && goal.slips.isEmpty() -> "Day one is tomorrow"
-                        days == 0L -> "Begin again: day one is tomorrow"
+                        days == 0L -> "Try again: day one is tomorrow"
                         else -> "${plural(next - days, "day")} to ${Milestones.name(next, goal.currentStart) ?: plural(next, "day")}"
                     },
                     style = MaterialTheme.typography.bodyMedium,
@@ -839,7 +839,7 @@ fun GoalDetailScreen(
                         when {
                             days > 0L -> "${describeSpan(goal.currentStart, today)} \u00B7 since ${goal.currentStart.format(mediumDate)}"
                             goal.slips.isEmpty() -> "Started today"
-                            else -> "Began again today"
+                            else -> "Trying again today"
                         },
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -901,7 +901,7 @@ fun GoalDetailScreen(
             if (beganAgainToday) {
                 LedgerCard {
                     Text(
-                        "You began again today.",
+                        "You\u2019re trying again today.",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -1111,7 +1111,7 @@ fun GoalDetailScreen(
         }
         AlertDialog(
             onDismissRequest = finish,
-            title = { Text("Begin again") },
+            title = { Text("Try again") },
             text = {
                 Column(Modifier.verticalScroll(rememberScrollState())) {
                     Text(
@@ -1226,7 +1226,7 @@ private fun StatsPanel(goal: Goal, today: LocalDate) {
     }
     Row(Modifier.fillMaxWidth()) {
         Figure("${(stats.keptRate * 100).roundToInt()}%", "Days kept", Modifier.weight(1f))
-        Figure("${stats.freshStarts}", "Begun again", Modifier.weight(1f))
+        Figure("${stats.freshStarts}", "Tried again", Modifier.weight(1f))
         Figure("${stats.slipsLast30}", "${(goal.kind?.slips ?: "slips").capitalised()}, 30 days", Modifier.weight(1f))
     }
     if (stats.urgesTotal > 0) {
