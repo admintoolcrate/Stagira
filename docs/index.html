@@ -29,41 +29,43 @@ description: Stagira is a quiet habit tracker for Android. Pick something to giv
   <div class="demo" aria-roledescription="carousel" aria-label="Try the app's screens and palettes">
     <div class="phone">
       <div class="screen" id="screen">
+        <div class="status" aria-hidden="true"><span>9:41</span><i class="cam"></i><span class="sys"><b></b><b></b><b></b></span></div>
         <div class="slides" id="slides" tabindex="0" aria-live="polite">
-          <div class="slide" role="group" aria-roledescription="slide" aria-label="1 of 4: Goals">
-            <div class="screen-top"><span class="screen-title">Stagira</span><span class="screen-plus" aria-hidden="true">+</span></div>
-          <p class="screen-label">The Habit Ledger</p>
-          <p class="screen-date">Saturday 14 November</p>
-          <ul class="ledger" aria-hidden="true">
-            <li>
-              <span class="name">Drink less</span>
-              <span class="note">11 days to 75 days</span>
-              <span class="count">64<small>days</small></span>
-              <span class="line"><i style="--w:85%"></i></span>
-            </li>
-            <li class="milestone">
-              <span class="name">No phone in bed</span>
-              <span class="note">Milestone today</span>
-              <span class="count">21<small>days</small></span>
-              <span class="line"><i style="--w:100%"></i></span>
-            </li>
-            <li>
-              <span class="name">Read before bed</span>
-              <span class="note">2 days to 2 weeks</span>
-              <span class="count">12<small>days</small></span>
-              <span class="line"><i style="--w:86%"></i></span>
-            </li>
-            <li>
-              <span class="name">Morning walk</span>
-              <span class="note">Mon · Wed · Fri · Sat</span>
-              <span class="count">10<small>days</small></span>
-              <span class="line"><i style="--w:66%"></i></span>
-            </li>
-          </ul>
-          <div class="screen-quote">
-            <p>“One swallow does not make spring, nor does one fine day.”</p>
-            <span>Aristotle · NE I.7</span>
-          </div>
+          <div class="slide s-goals" role="group" aria-roledescription="slide" aria-label="1 of 4: Goals">
+            <div class="screen-top"><span class="screen-title">Stagira</span><span class="screen-icons" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2.5v3M12 18.5v3M4.2 6l2.2 1.8M17.6 16.2 19.8 18M2.5 12h3M18.5 12h3M4.2 18l2.2-1.8M17.6 7.8 19.8 6"/></svg><svg viewBox="0 0 24 24"><circle cx="12" cy="5" r="1.4"/><circle cx="12" cy="12" r="1.4"/><circle cx="12" cy="19" r="1.4"/></svg></span></div>
+            <p class="screen-label">The Habit Ledger</p>
+            <p class="screen-date">Saturday 14 November</p>
+            <ul class="ledger" aria-hidden="true">
+              <li>
+                <span class="name">Drink less</span>
+                <span class="note">11 days to 75 days</span>
+                <span class="count">64<small>days</small></span>
+                <span class="line"><i style="--w:85%"></i></span>
+              </li>
+              <li class="milestone">
+                <span class="name">No phone in bed</span>
+                <span class="note">Milestone today</span>
+                <span class="count">21<small>days</small></span>
+                <span class="line"><i style="--w:100%"></i></span>
+              </li>
+              <li>
+                <span class="name">Read before bed</span>
+                <span class="note">2 days to 2 weeks</span>
+                <span class="count">12<small>days</small></span>
+                <span class="line"><i style="--w:86%"></i></span>
+              </li>
+              <li>
+                <span class="name">Morning walk</span>
+                <span class="note">Mon · Wed · Fri · Sat</span>
+                <span class="count">10<small>days</small></span>
+                <span class="line"><i style="--w:66%"></i></span>
+              </li>
+            </ul>
+            <div class="screen-quote">
+              <p>“One swallow does not make spring, nor does one fine day.”</p>
+              <span>Aristotle · NE I.7</span>
+            </div>
+            <span class="fab" aria-hidden="true">+</span>
           </div>
           <div class="slide s-goal" role="group" aria-roledescription="slide" aria-label="2 of 4: a goal's page">
             <div class="s-bar"><span aria-hidden="true">←</span> Drink less</div>
@@ -99,13 +101,22 @@ description: Stagira is a quiet habit tracker for Android. Pick something to giv
             </div>
           </div>
         </div>
+        <div class="tabs" aria-hidden="true">
+          <span class="tab on"><svg viewBox="0 0 24 24"><path d="M5 7h14M5 12h14M5 17h14"/></svg>Goals</span>
+          <span class="tab"><svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/></svg>Overview</span>
+        </div>
+        <i class="home-ind" aria-hidden="true"></i>
       </div>
     </div>
-    <div class="dots" role="group" aria-label="Screens">
-      <button type="button" class="dot-btn" aria-label="Goals" aria-current="true"></button>
-      <button type="button" class="dot-btn" aria-label="A goal's page"></button>
-      <button type="button" class="dot-btn" aria-label="Overview"></button>
-      <button type="button" class="dot-btn" aria-label="Your year"></button>
+    <div class="controls">
+      <button type="button" class="arrow" id="prev" aria-label="Previous screen"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>
+      <div class="dots" role="group" aria-label="Screens">
+        <button type="button" class="dot-btn" aria-label="Goals" aria-current="true"></button>
+        <button type="button" class="dot-btn" aria-label="A goal's page"></button>
+        <button type="button" class="dot-btn" aria-label="Overview"></button>
+        <button type="button" class="dot-btn" aria-label="Your year"></button>
+      </div>
+      <button type="button" class="arrow" id="next" aria-label="Next screen"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></button>
     </div>
     <div class="swatches" role="group" aria-label="Palette">
       <button type="button" class="swatch" data-palette="Paper" aria-pressed="true" aria-label="Paper palette" title="Paper" style="--sw-page:#F3EEE4;--sw-ink:#2A2217"></button>
@@ -117,7 +128,7 @@ description: Stagira is a quiet habit tracker for Android. Pick something to giv
       <button type="button" class="swatch" data-palette="Lavender" aria-pressed="false" aria-label="Lavender palette" title="Lavender" style="--sw-page:#F1EFF8;--sw-ink:#29234A"></button>
       <button type="button" class="swatch" data-palette="Dusk" aria-pressed="false" aria-label="Dusk palette" title="Dusk" style="--sw-page:#2A2B38;--sw-ink:#F2EDE4"></button>
     </div>
-    <p class="palette-name" id="palette-name">Paper</p>
+    <p class="palette-name"><em id="palette-name">Paper</em><span id="palette-desc">Warm cream and brown-black ink: the original, bookish look.</span></p>
   </div>
 </section>
 
