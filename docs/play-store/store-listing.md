@@ -28,6 +28,7 @@ WHAT IT DOES
 • Automatic backup to a file you choose, plus export and import
 • Daily or weekly reminders, a reminder for any single goal, and a milestone note on the day you reach one
 • Your year in one card: days kept, longest run and milestones, to keep or share
+• Eight palettes, each with its own ink, in light and dark: Paper, Snow, Stone, Sage, Ocean, Rose, Lavender and Dusk
 • Optional passages from Aristotle's Nicomachean Ethics, quoted word for word and sourced
 
 PRIVATE BY DESIGN
@@ -38,10 +39,10 @@ PRIVATE BY DESIGN
 • Private titles: show a cover name, and keep the real one behind a PIN
 
 FREE, ALL OF IT
-Every feature is free for everyone: unlimited goals, sync, all four widgets, the progress card, year view and weekly review. No ads, no subscriptions, nothing to unlock.
+Every feature is free for everyone: unlimited goals, sync, all four widgets, all eight palettes, the progress card, year view and weekly review. No ads, no subscriptions, nothing to unlock.
 
 CALM BY DESIGN
-Black and white, light and dark, no badges and no streak-shaming. Turn off the quotes, celebrations or vibration if you'd rather it say less.
+Quiet colours, light and dark, no badges and no streak-shaming. Turn off the quotes, celebrations or vibration if you'd rather it say less.
 
 Stagira is a personal tracker, not medical advice or treatment. If you're struggling with alcohol, drugs or gambling, please also reach out to a doctor or a local support service.
 
