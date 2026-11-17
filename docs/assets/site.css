@@ -303,3 +303,18 @@ section:first-child, .hero-bg + section { margin-top: 0; }
 
 /* Page not found: centred in the space between header and footer */
 .notfound { min-height: 46vh; display: flex; flex-direction: column; justify-content: center; }
+
+/* The mockup, as the app is now: the date under the title, gold milestone lines */
+.screen-date { margin: -2px 0 8px; font-size: 11px; color: var(--muted); }
+.ledger .milestone .line i { background: var(--gold); }
+
+/* Eight feature cards: four across on wide screens */
+@media (min-width: 1001px) { .grid { grid-template-columns: repeat(4, 1fr); } }
+@media (min-width: 641px) and (max-width: 1000px) { .grid { grid-template-columns: 1fr 1fr; } }
+
+/* A look inside: the real screens in a row that scrolls sideways, snapping to each */
+.shots { display: flex; gap: 18px; margin: 0; padding: 4px 2px 18px; list-style: none; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: thin; scrollbar-color: var(--mark) transparent; }
+.shots li { flex: 0 0 auto; width: clamp(200px, 23%, 248px); scroll-snap-align: start; }
+.shots img { display: block; width: 100%; height: auto; border-radius: 22px; border: 1px solid var(--rule); box-shadow: var(--shadow); background: var(--card-solid); }
+.shots:focus-visible { outline-offset: 6px; }
+@media (max-width: 640px) { .shots li { width: 68%; } }
