@@ -26,42 +26,98 @@ description: Stagira is a quiet habit tracker for Android. Pick something to giv
     </ul>
   </div>
 
-  <div class="phone" aria-label="An example ledger in the app" role="img">
-    <div class="screen">
-      <div class="screen-top"><span class="screen-title">Stagira</span><span class="screen-plus" aria-hidden="true">+</span></div>
-      <p class="screen-label">The Habit Ledger</p>
-      <p class="screen-date">Saturday 14 November</p>
-      <ul class="ledger" aria-hidden="true">
-        <li>
-          <span class="name">Drink less</span>
-          <span class="note">11 days to 75 days</span>
-          <span class="count">64<small>days</small></span>
-          <span class="line"><i style="--w:85%"></i></span>
-        </li>
-        <li class="milestone">
-          <span class="name">No phone in bed</span>
-          <span class="note">Milestone today</span>
-          <span class="count">21<small>days</small></span>
-          <span class="line"><i style="--w:100%"></i></span>
-        </li>
-        <li>
-          <span class="name">Read before bed</span>
-          <span class="note">2 days to 2 weeks</span>
-          <span class="count">12<small>days</small></span>
-          <span class="line"><i style="--w:86%"></i></span>
-        </li>
-        <li>
-          <span class="name">Morning walk</span>
-          <span class="note">Mon · Wed · Fri · Sat</span>
-          <span class="count">10<small>days</small></span>
-          <span class="line"><i style="--w:66%"></i></span>
-        </li>
-      </ul>
-      <div class="screen-quote">
-        <p>“One swallow does not make spring, nor does one fine day.”</p>
-        <span>Aristotle · NE I.7</span>
+  <div class="demo" aria-roledescription="carousel" aria-label="Try the app's screens and palettes">
+    <div class="phone">
+      <div class="screen" id="screen">
+        <div class="slides" id="slides" tabindex="0" aria-live="polite">
+          <div class="slide" role="group" aria-roledescription="slide" aria-label="1 of 4: Goals">
+            <div class="screen-top"><span class="screen-title">Stagira</span><span class="screen-plus" aria-hidden="true">+</span></div>
+          <p class="screen-label">The Habit Ledger</p>
+          <p class="screen-date">Saturday 14 November</p>
+          <ul class="ledger" aria-hidden="true">
+            <li>
+              <span class="name">Drink less</span>
+              <span class="note">11 days to 75 days</span>
+              <span class="count">64<small>days</small></span>
+              <span class="line"><i style="--w:85%"></i></span>
+            </li>
+            <li class="milestone">
+              <span class="name">No phone in bed</span>
+              <span class="note">Milestone today</span>
+              <span class="count">21<small>days</small></span>
+              <span class="line"><i style="--w:100%"></i></span>
+            </li>
+            <li>
+              <span class="name">Read before bed</span>
+              <span class="note">2 days to 2 weeks</span>
+              <span class="count">12<small>days</small></span>
+              <span class="line"><i style="--w:86%"></i></span>
+            </li>
+            <li>
+              <span class="name">Morning walk</span>
+              <span class="note">Mon · Wed · Fri · Sat</span>
+              <span class="count">10<small>days</small></span>
+              <span class="line"><i style="--w:66%"></i></span>
+            </li>
+          </ul>
+          <div class="screen-quote">
+            <p>“One swallow does not make spring, nor does one fine day.”</p>
+            <span>Aristotle · NE I.7</span>
+          </div>
+          </div>
+          <div class="slide s-goal" role="group" aria-roledescription="slide" aria-label="2 of 4: a goal's page">
+            <div class="s-bar"><span aria-hidden="true">←</span> Drink less</div>
+            <p class="s-kind">Vice</p>
+            <p class="s-big">64</p>
+            <p class="s-unit">days</p>
+            <p class="s-to">11 days to 75 days</p>
+            <span class="line s-line" aria-hidden="true"><i style="--w:85%"></i></span>
+            <p class="s-since">2 months, 3 days · since Sep 11, 2026</p>
+            <div class="s-btns"><span class="s-btn s-tint">Resisted an urge</span><span class="s-btn">Log a slip</span></div>
+            <div class="s-card"><p class="s-cap">Why</p><p>Clearer mornings, and more of them.</p></div>
+          </div>
+          <div class="slide s-over" role="group" aria-roledescription="slide" aria-label="3 of 4: Overview">
+            <div class="s-bar s-bar-plain">Overview</div>
+            <div class="s-card s-stats"><div><b>389</b><span>Days kept</span></div><div><b>98%</b><span>Of all days</span></div><div><b>12/14</b><span>This month</span></div></div>
+            <div class="s-card s-row"><div><b>This week</b><span>7 of 7 days kept · 4 resisted</span></div><span aria-hidden="true">›</span></div>
+            <div class="s-card s-row"><div><b>Your year</b><span>2026 in one card, to keep or share</span></div><span aria-hidden="true">›</span></div>
+            <p class="s-cap s-cap-out">Coming up</p>
+            <div class="s-card s-list">
+              <div><b>Read before bed</b><span>2 weeks · Mon 16 Nov</span><em>2</em></div>
+              <div><b>Morning walk</b><span>2 weeks · Wed 18 Nov</span><em>4</em></div>
+              <div><b>No phone in bed</b><span>30 days · Mon 23 Nov</span><em>9</em></div>
+            </div>
+          </div>
+          <div class="slide s-year" role="group" aria-roledescription="slide" aria-label="4 of 4: Your year">
+            <div class="s-bar"><span aria-hidden="true">×</span> Your year</div>
+            <div class="s-yearcard">
+              <p class="s-cap">Stagira · 2026 so far</p>
+              <p class="s-big">194</p>
+              <p class="s-sub">days kept, with nothing slipped<br>of 201 days tracked</p>
+              <div class="s-trio"><div><b>64 days</b><span>longest run</span></div><div><b class="g">99</b><span>milestones</span></div><div><b>6</b><span>urges resisted</span></div></div>
+              <ul><li>Drink less<span>198 days</span></li><li>Read before bed<span>119 days</span></li><li>Morning walk<span>50 days</span></li><li>No phone in bed<span>22 days</span></li></ul>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
+    <div class="dots" role="group" aria-label="Screens">
+      <button type="button" class="dot-btn" aria-label="Goals" aria-current="true"></button>
+      <button type="button" class="dot-btn" aria-label="A goal's page"></button>
+      <button type="button" class="dot-btn" aria-label="Overview"></button>
+      <button type="button" class="dot-btn" aria-label="Your year"></button>
+    </div>
+    <div class="swatches" role="group" aria-label="Palette">
+      <button type="button" class="swatch" data-palette="Paper" aria-pressed="true" aria-label="Paper palette" title="Paper" style="--sw-page:#F3EEE4;--sw-ink:#2A2217"></button>
+      <button type="button" class="swatch" data-palette="Snow" aria-pressed="false" aria-label="Snow palette" title="Snow" style="--sw-page:#FFFFFF;--sw-ink:#111111"></button>
+      <button type="button" class="swatch" data-palette="Stone" aria-pressed="false" aria-label="Stone palette" title="Stone" style="--sw-page:#E9E9E6;--sw-ink:#1C1C1E"></button>
+      <button type="button" class="swatch" data-palette="Sage" aria-pressed="false" aria-label="Sage palette" title="Sage" style="--sw-page:#EDF2EC;--sw-ink:#1F3326"></button>
+      <button type="button" class="swatch" data-palette="Ocean" aria-pressed="false" aria-label="Ocean palette" title="Ocean" style="--sw-page:#ECF2F8;--sw-ink:#17304D"></button>
+      <button type="button" class="swatch" data-palette="Rose" aria-pressed="false" aria-label="Rose palette" title="Rose" style="--sw-page:#F8EDEB;--sw-ink:#3B1F24"></button>
+      <button type="button" class="swatch" data-palette="Lavender" aria-pressed="false" aria-label="Lavender palette" title="Lavender" style="--sw-page:#F1EFF8;--sw-ink:#29234A"></button>
+      <button type="button" class="swatch" data-palette="Dusk" aria-pressed="false" aria-label="Dusk palette" title="Dusk" style="--sw-page:#2A2B38;--sw-ink:#F2EDE4"></button>
+    </div>
+    <p class="palette-name" id="palette-name">Paper</p>
   </div>
 </section>
 
@@ -70,21 +126,8 @@ description: Stagira is a quiet habit tracker for Android. Pick something to giv
   <ol>
     <li><span class="num">I</span><b>Name it.</b> <span>Something to give up or cut down on, or something good to do. Start from today, or from a day in the past.</span></li>
     <li><span class="num">II</span><b>Live it.</b> <span>The count goes up at midnight. No daily check-in needed: every good day counts on its own.</span></li>
-    <li><span class="num">III</span><b>Begin again.</b> <span>Slipped? Log it in two taps. The count starts again, and your previous run stays in your history.</span></li>
+    <li><span class="num">III</span><b>Try again.</b> <span>Slipped? Log it in two taps. The count starts over, and your previous run stays in your history.</span></li>
   </ol>
-</section>
-
-<section id="look" class="look reveal" aria-labelledby="look-h">
-  <h2 id="look-h" class="label">A look inside</h2>
-  <ul class="shots" tabindex="0" aria-label="Screens from the app">
-    <li><img src="{{ '/assets/screens/1-goals.webp' | relative_url }}" alt="Count the days you keep: the Goals screen, each goal with its count of days" width="720" height="1280" loading="lazy" decoding="async"></li>
-    <li><img src="{{ '/assets/screens/2-goal.webp' | relative_url }}" alt="Every day you hold to it adds to the count: a goal's page, 64 days of Drink less" width="720" height="1280" loading="lazy" decoding="async"></li>
-    <li><img src="{{ '/assets/screens/3-overview.webp' | relative_url }}" alt="How it's all going, at a glance: the Overview, with days kept and what's coming up" width="720" height="1280" loading="lazy" decoding="async"></li>
-    <li><img src="{{ '/assets/screens/4-week.webp' | relative_url }}" alt="A weekly review, without the guilt: this week against the last" width="720" height="1280" loading="lazy" decoding="async"></li>
-    <li><img src="{{ '/assets/screens/5-year.webp' | relative_url }}" alt="Your year, in one card: days kept, longest run and milestones, to keep or share" width="720" height="1280" loading="lazy" decoding="async"></li>
-    <li><img src="{{ '/assets/screens/6-dark.webp' | relative_url }}" alt="No ads, no account. Just your ledger: the Goals screen in dark mode" width="720" height="1280" loading="lazy" decoding="async"></li>
-    <li><img src="{{ '/assets/screens/7-palettes.webp' | relative_url }}" alt="Eight palettes. Make it yours: Paper, Snow, Stone, Sage, Ocean, Rose, Lavender and Dusk" width="720" height="1280" loading="lazy" decoding="async"></li>
-  </ul>
 </section>
 
 <figure class="passage reveal">
@@ -163,7 +206,7 @@ description: Stagira is a quiet habit tracker for Android. Pick something to giv
     </details>
     <details>
       <summary>What happens when I slip?</summary>
-      <p>Log it in two taps and begin again. The count starts over, but your previous run stays in your history and stats, and you get a short passage from Aristotle for the day. You can also add or remove a slip on a past day.</p>
+      <p>Log it in two taps and try again. The count starts over, but your previous run stays in your history and stats, and you get a short passage from Aristotle for the day. You can also add or remove a slip on a past day.</p>
     </details>
     <details>
       <summary>What's the difference between a vice and a virtue?</summary>

@@ -135,9 +135,9 @@ section:first-child, .hero-bg + section { margin-top: 0; }
 .ticks li::before { content: "✓"; margin-right: 6px; color: var(--ink); }
 
 /* The phone, showing the app's Goals tab */
-.phone { justify-self: center; width: min(340px, 100%); padding: 10px; border-radius: 46px; background: var(--card); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border: 1px solid var(--rule); box-shadow: var(--shadow); animation: float 9s ease-in-out infinite; }
+.phone { width: 100%; padding: 10px; border-radius: 46px; background: var(--card); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border: 1px solid var(--rule); box-shadow: var(--shadow); animation: float 9s ease-in-out infinite; }
 @keyframes float { 0%, 100% { transform: translateY(0) rotate(1.2deg); } 50% { transform: translateY(-10px) rotate(.4deg); } }
-.screen { border-radius: 36px; background: var(--paper); padding: 26px 20px 20px; overflow: hidden; }
+.screen { border-radius: 36px; background: var(--paper); color: var(--ink); overflow: hidden; transition: background .5s ease, color .5s ease; }
 .screen-top { display: flex; justify-content: space-between; align-items: center; }
 .screen-title { font: 400 30px/1 var(--serif); }
 .screen-plus { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 12px; background: var(--ink); color: var(--paper); font-size: 22px; line-height: 1; }
@@ -312,9 +312,66 @@ section:first-child, .hero-bg + section { margin-top: 0; }
 @media (min-width: 1001px) { .grid { grid-template-columns: repeat(4, 1fr); } }
 @media (min-width: 641px) and (max-width: 1000px) { .grid { grid-template-columns: 1fr 1fr; } }
 
-/* A look inside: the real screens in a row that scrolls sideways, snapping to each */
-.shots { display: flex; gap: 18px; margin: 0; padding: 4px 2px 18px; list-style: none; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: thin; scrollbar-color: var(--mark) transparent; }
-.shots li { flex: 0 0 auto; width: clamp(200px, 23%, 248px); scroll-snap-align: start; }
-.shots img { display: block; width: 100%; height: auto; border-radius: 22px; border: 1px solid var(--rule); box-shadow: var(--shadow); background: var(--card-solid); }
-.shots:focus-visible { outline-offset: 6px; }
-@media (max-width: 640px) { .shots li { width: 68%; } }
+
+/* The live demo: swipe between screens, try the app's palettes. The palette's colours are set
+   on .screen by script, from the app's own values, under the site's names (--paper, --ink…). */
+.hero > * { min-width: 0; }
+.demo { justify-self: center; width: min(340px, 100%); min-width: 0; display: flex; flex-direction: column; align-items: center; }
+.slides { user-select: none; -webkit-user-select: none; cursor: grab; display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; overscroll-behavior-x: contain; outline: none; }
+.slides::-webkit-scrollbar { display: none; }
+.slide { flex: 0 0 100%; height: 548px; padding: 26px 20px 20px; scroll-snap-align: start; scroll-snap-stop: always; overflow: hidden; }
+.slide p { margin: 0; }
+.screen .ledger, .screen .ledger li { border-color: var(--rule); transition: border-color .5s; }
+.screen .ledger .line { background: var(--tint, var(--rule)); }
+.dots { display: flex; gap: 8px; margin-top: 18px; }
+.dot-btn { width: 8px; height: 8px; padding: 0; border: 0; border-radius: 999px; background: var(--mark); cursor: pointer; transition: width .3s, background .3s; }
+.dot-btn[aria-current="true"] { width: 22px; background: var(--ink); }
+.swatches { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-top: 16px; }
+.swatch { width: 26px; height: 26px; padding: 0; border-radius: 50%; cursor: pointer; border: 1px solid var(--rule);
+  background: linear-gradient(135deg, var(--sw-page) 0 52%, var(--sw-ink) 52% 100%); box-shadow: 0 0 0 2px transparent; transition: box-shadow .25s, transform .25s; }
+.swatch:hover { transform: scale(1.08); }
+.swatch[aria-pressed="true"] { box-shadow: 0 0 0 2px var(--paper), 0 0 0 3.5px var(--ink); }
+.palette-name { margin: 10px 0 0; font: 500 11px/1 var(--sans); letter-spacing: .16em; text-transform: uppercase; color: var(--muted); }
+
+/* The other screens */
+.s-bar { font: 400 22px/1.2 var(--serif); margin-bottom: 18px; }
+.s-bar span { font-family: var(--sans); font-size: 16px; margin-right: 6px; color: var(--muted); }
+.s-goal { text-align: center; }
+.s-goal .s-bar { text-align: left; }
+.s-kind { font: 500 10px/1 var(--sans); letter-spacing: .16em; text-transform: uppercase; color: var(--muted); }
+.s-big { font: 400 76px/1 var(--serif); margin-top: 8px !important; font-feature-settings: "tnum"; }
+.s-unit { font-size: 12px; color: var(--muted); }
+.s-to { margin-top: 16px !important; font-size: 12.5px; }
+.s-line { display: block; width: 46%; height: 2px; margin: 8px auto 0; background: var(--tint, var(--rule)); border-radius: 2px; overflow: hidden; }
+.s-line i { display: block; height: 100%; width: var(--w); background: var(--ink); }
+.s-since { margin-top: 10px !important; font-size: 11px; color: var(--muted); }
+.s-btns { display: flex; gap: 8px; justify-content: center; margin-top: 18px; }
+.s-btn { padding: 9px 14px; border-radius: 999px; font-size: 11.5px; font-weight: 500; border: 1px solid var(--line, var(--rule)); }
+.s-btn.s-tint { background: var(--tint); border-color: transparent; }
+.s-card { margin-top: 16px; padding: 14px 16px; border-radius: 16px; background: var(--card-solid); text-align: left; font-size: 13px; transition: background .5s; }
+.s-cap { font: 500 9.5px/1 var(--sans); letter-spacing: .16em; text-transform: uppercase; color: var(--muted); margin-bottom: 6px !important; }
+.s-cap-out { margin: 18px 0 0 2px !important; }
+.s-stats { display: flex; justify-content: space-between; margin-top: 0; }
+.s-stats b, .s-list em { display: block; font: 400 24px/1 var(--serif); font-style: normal; }
+.s-stats span, .s-row span, .s-list span { display: block; margin-top: 4px; font-size: 10px; color: var(--muted); }
+.s-row { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; }
+.s-row b, .s-list b { font-size: 12.5px; font-weight: 600; }
+.s-row > span { font-size: 18px; margin: 0; }
+.s-list { padding: 4px 16px; margin-top: 8px; }
+.s-list div { display: grid; grid-template-columns: 1fr auto; padding: 10px 0; border-bottom: 1px solid var(--rule); }
+.s-list div:last-child { border-bottom: 0; }
+.s-list span { grid-column: 1; }
+.s-list em { grid-row: 1 / span 2; grid-column: 2; align-self: center; font-size: 22px; }
+/* Your year: on the dusk gradient, as in the app, whatever the palette */
+.s-yearcard { padding: 18px 18px 14px; border-radius: 18px; background: linear-gradient(155deg, #2a2b38 0%, #34303a 55%, #43362f 100%); color: #f2ede4; }
+.s-yearcard .s-cap { color: rgb(242 237 228 / .6); }
+.s-yearcard .s-big { font-size: 64px; margin-top: 4px !important; }
+.s-sub { font-size: 11px; color: rgb(242 237 228 / .75); margin-top: 4px !important; }
+.s-trio { display: flex; gap: 16px; margin-top: 14px; }
+.s-trio b { display: block; font: 400 20px/1 var(--serif); }
+.s-trio b.g { color: #d0ae74; }
+.s-trio span { display: block; margin-top: 3px; font-size: 9.5px; color: rgb(242 237 228 / .65); }
+.s-yearcard ul { list-style: none; margin: 14px 0 0; padding: 10px 0 0; border-top: 1px solid rgb(242 237 228 / .15); font-size: 11.5px; }
+.s-yearcard li { display: flex; justify-content: space-between; padding: 4px 0; }
+.s-yearcard li span { color: rgb(242 237 228 / .65); }
+@media (prefers-reduced-motion: reduce) { .screen, .s-card { transition: none; } .slides { scroll-behavior: auto; } }

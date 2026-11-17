@@ -32,7 +32,8 @@
   </script>
   <link rel="preload" href="{{ '/assets/fonts/inter.woff2' | relative_url }}" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="{{ '/assets/fonts/eb-garamond.woff2' | relative_url }}" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="{{ '/assets/site.css' | relative_url }}?v={{ site.time | date: '%s' }}">
+  <link rel="stylesheet" href="{{ '/assets/site.css' | relative_url }}?v={{ site.time | date: '%s' }}">{% if page.body_class == 'home' %}
+  <script src="{{ '/assets/palettes.js' | relative_url }}?v={{ site.time | date: '%s' }}"></script>{% endif %}
 </head>
 <body class="{{ page.body_class | default: 'page' }}">
   <a class="skip" href="#main">Skip to content</a>
@@ -94,6 +95,39 @@
       }
       /* Morning light behind the top of the home page: plays only while on screen, and never
          with reduced motion or data saver on (the still image shows instead). */
+      /* The phone on the home page: swipe between screens (or use the dots, or the arrow keys),
+         and try the app's eight palettes, in light or dark to match the page. */
+      var screen=document.getElementById('screen'), slides=document.getElementById('slides');
+      if(screen&&slides&&window.STAGIRA_PALETTES){
+        var dots=[].slice.call(document.querySelectorAll('.dot-btn')), sw=[].slice.call(document.querySelectorAll('.swatch'));
+        var nameEl=document.getElementById('palette-name'), chosen='Paper';
+        var isDark=function(){return (root.getAttribute('data-theme')||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'))==='dark';};
+        var paint=function(){
+          var t=STAGIRA_PALETTES[chosen][isDark()?'dark':'light'], st=screen.style;
+          st.setProperty('--paper',t.page);st.setProperty('--card-solid',t.card);st.setProperty('--tint',t.tint);
+          st.setProperty('--ink',t.ink);st.setProperty('--muted',t.muted);st.setProperty('--gold',t.accent);
+          st.setProperty('--line',t.line);st.setProperty('--rule',t.hairline);
+          sw.forEach(function(b){var p=STAGIRA_PALETTES[b.getAttribute('data-palette')][isDark()?'dark':'light'];b.style.setProperty('--sw-page',p.page);b.style.setProperty('--sw-ink',p.ink);});
+        };
+        sw.forEach(function(b){b.addEventListener('click',function(){
+          chosen=b.getAttribute('data-palette');sw.forEach(function(x){x.setAttribute('aria-pressed',x===b?'true':'false');});
+          nameEl.textContent=chosen;paint();
+        });});
+        var go=function(i){slides.scrollTo({left:i*slides.clientWidth,behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});};
+        dots.forEach(function(d,i){d.addEventListener('click',function(){go(i);});});
+        var at=function(){return Math.round(slides.scrollLeft/slides.clientWidth);};
+        slides.addEventListener('scroll',function(){var i=at();dots.forEach(function(d,j){if(j===i)d.setAttribute('aria-current','true');else d.removeAttribute('aria-current');});},{passive:true});
+        slides.addEventListener('keydown',function(e){if(e.key==='ArrowRight'){go(Math.min(at()+1,dots.length-1));e.preventDefault();}if(e.key==='ArrowLeft'){go(Math.max(at()-1,0));e.preventDefault();}});
+        /* Drag with a mouse, too: phones swipe natively. */
+        var dragX=null,startLeft=0;
+        slides.addEventListener('pointerdown',function(e){if(e.pointerType!=='mouse')return;dragX=e.clientX;startLeft=slides.scrollLeft;slides.style.scrollSnapType='none';});
+        addEventListener('pointermove',function(e){if(dragX===null)return;slides.scrollLeft=startLeft-(e.clientX-dragX);});
+        addEventListener('pointerup',function(e){if(dragX===null)return;var moved=e.clientX-dragX;dragX=null;slides.style.scrollSnapType='';
+          var i=Math.round(startLeft/slides.clientWidth)+(moved<-40?1:moved>40?-1:0);go(Math.max(0,Math.min(dots.length-1,i)));});
+        btn.addEventListener('click',function(){setTimeout(paint,0);});
+        matchMedia('(prefers-color-scheme: dark)').addEventListener('change',paint);
+        paint();
+      }
       var v=document.getElementById('dawn');
       if(v&&!matchMedia('(prefers-reduced-motion: reduce)').matches&&!(navigator.connection&&navigator.connection.saveData)){
         var play=function(){var p=v.play();if(p&&p.catch)p.catch(function(){});};
