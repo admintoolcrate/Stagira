@@ -137,7 +137,7 @@ class StoreScreenshots {
 
     /** Draws [screen] at phone size, framed under the caption, and saves it as a PNG. */
     @Test
-    fun s7_palettes() = shoot("7-palettes", "Eight palettes.", "Make it yours.", framed = false) { Palettes() }
+    fun s7_palettes() = shoot("7-palettes", "Nine palettes.", "Make it yours.", framed = false) { Palettes() }
 
     private fun shoot(name: String, caption: String, accent: String, dark: Boolean = false, framed: Boolean = true, screen: @Composable () -> Unit) {
         // Some screens keep a clock or an animation running, so they're never "idle": drive the

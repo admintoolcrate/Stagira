@@ -76,10 +76,15 @@ enum class Tone(val label: String, val blurb: String, val light: Tokens, val dar
         Tokens(0xFF2A2B38, 0xFF34303A, 0xFF4A4250, 0xFFF2EDE4, 0xFFB9B0A6, 0xFFD0AE74, 0xFF5E5560, 0xFF3F3A45, 0xFF3A3540, 0xFF37323D, 0xFF1F1F29),
         Tokens(0xFF1C1C26, 0xFF26242E, 0xFF3D3644, 0xFFF2EDE4, 0xFFADA59C, 0xFFD6B47A, 0xFF524A55, 0xFF302C38, 0xFF2E2A35, 0xFF2A2631, 0xFF13131A),
     ),
+    Black(
+        "Black", "True black with white ink: dark always, and kindest to OLED screens at night.",
+        Tokens(0xFF000000, 0xFF0E0E0E, 0xFF1F1F1F, 0xFFFFFFFF, 0xFF8E8E8E, 0xFFD6B47A, 0xFF3A3A3A, 0xFF1A1A1A, 0xFF161616, 0xFF121212, 0xFF000000),
+        Tokens(0xFF000000, 0xFF0E0E0E, 0xFF1F1F1F, 0xFFFFFFFF, 0xFF8E8E8E, 0xFFD6B47A, 0xFF3A3A3A, 0xFF1A1A1A, 0xFF161616, 0xFF121212, 0xFF000000),
+    ),
     ;
 
-    /** Dusk is an evening palette: it stays dark whatever the light/dark setting. */
-    val alwaysDark: Boolean get() = this == Dusk
+    /** Dusk and Black are night palettes: they stay dark whatever the light/dark setting. */
+    val alwaysDark: Boolean get() = this == Dusk || this == Black
 
     companion object {
         /** New users start on Snow: plain white, the cleanest first look. */
