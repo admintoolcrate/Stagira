@@ -22,6 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.activity.ComponentActivity
 import android.graphics.Canvas
@@ -155,7 +156,10 @@ class StoreScreenshots {
 private fun Frame(caption: String, accent: String, dark: Boolean, screen: @Composable () -> Unit) {
     val gold = MaterialTheme.colorScheme.tertiary
     val background = if (dark) Brush.linearGradient(DuskGradient)
-    else Brush.verticalGradient(listOf(Color(0xFFF7EBDD), Color(0xFFF3F0EA), Color(0xFFE9EEE4)))
+    else MaterialTheme.colorScheme.let { c ->
+        // Washes of the palette's own tint, so the frame matches the app inside it.
+        Brush.verticalGradient(listOf(lerp(c.background, c.secondaryContainer, 0.7f), c.background, lerp(c.background, c.secondaryContainer, 0.45f)))
+    }
     val ink = if (dark) Color(0xFFF2EDE4) else MaterialTheme.colorScheme.onBackground
     Column(
         Modifier.fillMaxSize().background(background).padding(top = 34.dp),
