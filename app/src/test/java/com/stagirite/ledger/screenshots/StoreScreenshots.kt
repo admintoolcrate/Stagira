@@ -5,6 +5,10 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import com.stagirite.ledger.ui.Tone
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -132,12 +136,15 @@ class StoreScreenshots {
     }
 
     /** Draws [screen] at phone size, framed under the caption, and saves it as a PNG. */
-    private fun shoot(name: String, caption: String, accent: String, dark: Boolean = false, screen: @Composable () -> Unit) {
+    @Test
+    fun s7_palettes() = shoot("7-palettes", "Eight palettes.", "Make it yours.", framed = false) { Palettes() }
+
+    private fun shoot(name: String, caption: String, accent: String, dark: Boolean = false, framed: Boolean = true, screen: @Composable () -> Unit) {
         // Some screens keep a clock or an animation running, so they're never "idle": drive the
         // clock by hand and let entrance animations finish before taking the picture.
         compose.mainClock.autoAdvance = false
         compose.setContent {
-            LedgerTheme(dark) { Frame(caption, accent, dark, screen) }
+            LedgerTheme(dark) { Frame(caption, accent, dark, framed, screen) }
         }
         compose.mainClock.advanceTimeBy(3_000)
         shadowOf(Looper.getMainLooper()).idle()
@@ -153,7 +160,7 @@ class StoreScreenshots {
 
 /** The website's look: warm paper (or dusk, in dark), the caption in EB Garamond with a gold italic turn. */
 @Composable
-private fun Frame(caption: String, accent: String, dark: Boolean, screen: @Composable () -> Unit) {
+private fun Frame(caption: String, accent: String, dark: Boolean, framed: Boolean, screen: @Composable () -> Unit) {
     val gold = MaterialTheme.colorScheme.tertiary
     val background = if (dark) Brush.linearGradient(DuskGradient)
     else MaterialTheme.colorScheme.let { c ->
@@ -178,6 +185,10 @@ private fun Frame(caption: String, accent: String, dark: Boolean, screen: @Compo
             modifier = Modifier.padding(horizontal = 24.dp),
         )
         Spacer(Modifier.height(22.dp))
+        if (!framed) {
+            screen()
+            return@Column
+        }
         // The screen itself at a real phone size (360 × 760 dp), shown at 70%.
         Box(
             Modifier
@@ -193,4 +204,61 @@ private fun Frame(caption: String, accent: String, dark: Boolean, screen: @Compo
             ) { screen() }
         }
     }
+}
+
+/**
+ * Five phones fanned out, each in its own palette, over a row of all eight swatches:
+ * the Goals list, drawn for real in each palette.
+ */
+@Composable
+private fun Palettes() {
+    val shown = listOf(Tone.Snow, Tone.Sage, Tone.Ocean, Tone.Rose, Tone.Dusk)
+    Box(Modifier.fillMaxWidth().height(360.dp)) {
+        shown.forEachIndexed { i, tone ->
+            val angle = (i - 2) * 5f
+            Box(
+                Modifier
+                    .offset(x = (18 + i * 46).dp, y = (20 + kotlin.math.abs(i - 2) * 14).dp)
+                    .graphicsLayer { rotationZ = angle }
+                    .size(140.dp, 296.dp)
+                    .clip(RoundedCornerShape(20.dp))
+                    .border(1.dp, Color(0x33000000), RoundedCornerShape(20.dp)),
+            ) {
+                Box(Modifier.requiredSize(360.dp, 760.dp).graphicsLayer { scaleX = 140f / 360f; scaleY = 140f / 360f }) {
+                    LedgerTheme(false, tone) {
+                        GoalListScreen(
+                            Samples.goals, Samples.today, SnackbarHostState(), Samples.privacy, emptyList(), SortOrder.Added,
+                            onSort = {}, onOpen = {}, onAdd = {}, onQuickSlip = { _, _ -> }, onQuickUrge = {},
+                            onArchive = { _, _ -> }, onTitleLongPress = {}, onSettings = {}, onWeekly = {},
+                            bottomBar = { HomeNav(false) {} },
+                        )
+                    }
+                }
+            }
+        }
+    }
+    Spacer(Modifier.height(18.dp))
+    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+        Tone.entries.forEach { tone ->
+            val t = if (tone.alwaysDark) tone.dark else tone.light
+            Box(
+                Modifier
+                    .size(28.dp)
+                    .clip(RoundedCornerShape(14.dp))
+                    .background(Color(t.page))
+                    .border(1.dp, Color(0x33000000), RoundedCornerShape(14.dp)),
+                contentAlignment = Alignment.Center,
+            ) {
+                Box(Modifier.size(12.dp).clip(RoundedCornerShape(6.dp)).background(Color(t.ink)))
+            }
+        }
+    }
+    Spacer(Modifier.height(10.dp))
+    Text(
+        Tone.entries.joinToString(" \u00B7 ") { it.label },
+        style = MaterialTheme.typography.labelMedium,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        textAlign = TextAlign.Center,
+        modifier = Modifier.padding(horizontal = 24.dp),
+    )
 }

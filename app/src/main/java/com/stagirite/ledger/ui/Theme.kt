@@ -82,8 +82,8 @@ enum class Tone(val label: String, val blurb: String, val light: Tokens, val dar
     val alwaysDark: Boolean get() = this == Dusk
 
     companion object {
-        /** New users start fresh with Sage. */
-        val Default = Sage
+        /** New users start on Snow: plain white, the cleanest first look. */
+        val Default = Snow
 
         fun of(name: String?): Tone = entries.firstOrNull { it.name == name } ?: Default
     }
