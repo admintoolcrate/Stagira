@@ -10,17 +10,15 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import com.stagirite.ledger.BuildConfig
 import com.stagirite.ledger.security.AppLock
 
-/** The developer's Ko-fi page, shown in GitHub test builds only (see below). */
-const val KOFI_URL = "https://ko-fi.com/toolcratetips"
+/** The website's start page: from there, people can find the ways to support Stagira. */
+private const val SITE_URL = "https://stagira.toolcrate.cc"
 
 /**
- * Settings → Support Stagira. The app is free, with no ads and nothing to buy.
- * Copies installed from GitHub may link to Ko-fi; the Google Play copy doesn't,
- * since Play requires support for a developer inside an app to go through Play
- * billing. The website carries the link for everyone.
+ * Settings → Support Stagira. The app is free, with no ads and nothing to buy. The link goes
+ * to the website's start page rather than straight to a donation page: Google Play doesn't
+ * allow apps to point people to outside payments.
  */
 @Composable
 fun SupportNote(lock: AppLock) {
@@ -31,11 +29,9 @@ fun SupportNote(lock: AppLock) {
         style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
-    if (BuildConfig.BETA_UPDATES && KOFI_URL.isNotEmpty()) {
-        Spacer(Modifier.height(Space.m))
-        OutlinedButton(onClick = {
-            lock.expectReturn()
-            runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(KOFI_URL))) }
-        }) { Text("Buy me a coffee on Ko-fi") }
-    }
+    Spacer(Modifier.height(Space.m))
+    OutlinedButton(onClick = {
+        lock.expectReturn()
+        runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(SITE_URL))) }
+    }) { Text("Find out how you can support Stagira") }
 }
