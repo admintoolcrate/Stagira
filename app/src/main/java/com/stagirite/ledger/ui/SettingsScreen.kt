@@ -1,4 +1,15 @@
 package com.stagirite.ledger.ui
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 
 import com.stagirite.ledger.LedgerApplication
 import com.stagirite.ledger.data.plural
@@ -126,6 +137,10 @@ fun SettingsScreen(
                         ) { Text(mode.name) }
                     }
                 }
+                Spacer(Modifier.height(20.dp))
+                Text("Palette", style = MaterialTheme.typography.bodyLarge)
+                Spacer(Modifier.height(8.dp))
+                PalettePicker(Tone.of(settings.palette)) { settings.updatePalette(it.name) }
                 Spacer(Modifier.height(20.dp))
                 Text("Widget background", style = MaterialTheme.typography.bodyLarge)
                 Spacer(Modifier.height(8.dp))
@@ -886,5 +901,48 @@ private fun WeeklySection(settings: Settings, lock: AppLock) {
             },
             dismissButton = { TextButton(onClick = { pickingTime = false }) { Text("Cancel") } },
         )
+    }
+}
+
+
+/** The palettes as small swatches: each one's page, its tint, its ink and the gold. */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun PalettePicker(current: Tone, onPick: (Tone) -> Unit) {
+    FlowRow(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Tone.entries.forEach { tone ->
+            val t = if (tone.alwaysDark) tone.dark else tone.light
+            val selected = tone == current
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier
+                    .width(66.dp)
+                    .clickable(role = androidx.compose.ui.semantics.Role.RadioButton) { onPick(tone) }
+                    .semantics { contentDescription = "${tone.label} palette" + if (selected) ", chosen" else "" },
+            ) {
+                Box(
+                    Modifier
+                        .size(width = 60.dp, height = 44.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(Color(t.page))
+                        .border(
+                            if (selected) 2.dp else 1.dp,
+                            if (selected) MaterialTheme.colorScheme.onBackground else MaterialTheme.colorScheme.outlineVariant,
+                            RoundedCornerShape(12.dp),
+                        )
+                        .padding(8.dp),
+                ) {
+                    Box(Modifier.align(Alignment.TopStart).size(width = 30.dp, height = 10.dp).background(Color(t.tint), RoundedCornerShape(5.dp)))
+                    Box(Modifier.align(Alignment.BottomStart).size(width = 22.dp, height = 3.dp).background(Color(t.ink), RoundedCornerShape(2.dp)))
+                    Box(Modifier.align(Alignment.BottomEnd).size(8.dp).background(Color(t.accent), CircleShape))
+                }
+                Spacer(Modifier.height(4.dp))
+                Text(
+                    tone.label,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = if (selected) MaterialTheme.colorScheme.onBackground else MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
     }
 }

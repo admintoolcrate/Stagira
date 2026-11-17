@@ -25,6 +25,7 @@ import androidx.fragment.app.FragmentActivity
 import com.stagirite.ledger.data.ThemeMode
 import com.stagirite.ledger.ui.LedgerApp
 import com.stagirite.ledger.ui.LedgerTheme
+import com.stagirite.ledger.ui.Tone
 import com.stagirite.ledger.ui.LocalUiPrefs
 import com.stagirite.ledger.ui.LockScreen
 import com.stagirite.ledger.ui.UiPrefs
@@ -61,7 +62,8 @@ class MainActivity : FragmentActivity() {
         setContent {
             val settings = app.settings
             val lock = app.lock
-            val dark = when (settings.theme) {
+            val tone = Tone.of(settings.palette)
+            val dark = tone.alwaysDark || when (settings.theme) {
                 ThemeMode.System -> isSystemInDarkTheme()
                 ThemeMode.Light -> false
                 ThemeMode.Dark -> true
@@ -86,7 +88,7 @@ class MainActivity : FragmentActivity() {
                 homeExtras = settings.homeExtras,
             )
             CompositionLocalProvider(LocalUiPrefs provides prefs) {
-                LedgerTheme(dark) {
+                LedgerTheme(dark, tone) {
                     if (lock.locked) {
                         LockScreen(onUnlock = { unlock() })
                     } else {

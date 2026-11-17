@@ -31,38 +31,66 @@ class Tokens(
 )
 
 /**
- * A palette: ink on a page, white-ish cards, one soft tint for what's selected or
- * kept, and one accent, a muted gold, kept for milestones and the Aristotle marks.
+ * A palette: a page, cards, one soft tint for what's selected or kept, its own ink,
+ * and one accent, a muted gold, kept for milestones and the Aristotle marks.
+ * People choose one under Settings → Theme.
  */
-enum class Tone(val label: String, val light: Tokens, val dark: Tokens) {
-    /** Warm paper, as on the website: soft and bookish. */
+enum class Tone(val label: String, val blurb: String, val light: Tokens, val dark: Tokens) {
     Paper(
-        "Paper",
-        Tokens(0xFFF3F0EA, 0xFFFCFBF8, 0xFFE6DDCF, 0xFF1F1D1A, 0xFF7A756C, 0xFFA4814F, 0xFFC8BEB0, 0xFFE3DDD3, 0xFFEAE5DC, 0xFFEFEBE4, 0xFFFFFFFF),
-        Tokens(0xFF121214, 0xFF1C1B1E, 0xFF34312D, 0xFFEFEBE4, 0xFF9C968C, 0xFFD0AE74, 0xFF57524B, 0xFF2A2826, 0xFF26252A, 0xFF212024, 0xFF0C0C0E),
+        "Paper", "Warm cream and brown-black ink: the original, bookish look.",
+        Tokens(0xFFF3EEE4, 0xFFFCFAF5, 0xFFE4D6BF, 0xFF2A2217, 0xFF7D7062, 0xFFA4814F, 0xFFC9B9A0, 0xFFE4DACB, 0xFFECE4D6, 0xFFEFE9DE, 0xFFFFFFFF),
+        Tokens(0xFF15120E, 0xFF1F1B16, 0xFF3A3227, 0xFFF0E8DA, 0xFFA39887, 0xFFD6B47A, 0xFF5A4F42, 0xFF2C2620, 0xFF2A241D, 0xFF241F19, 0xFF0C0A08),
     ),
-    /** Brighter linen: nearly white, still warm. */
-    Linen(
-        "Linen",
-        Tokens(0xFFFAF8F4, 0xFFFFFFFF, 0xFFF0EAE0, 0xFF1C1B19, 0xFF77726A, 0xFFAD8750, 0xFFD3CBBF, 0xFFECE7DF, 0xFFF2EEE7, 0xFFF5F2EC, 0xFFFFFFFF),
-        Tokens(0xFF101012, 0xFF1A1A1D, 0xFF2E2B27, 0xFFF2EFEA, 0xFF9D978E, 0xFFD6B47A, 0xFF4F4A44, 0xFF26252A, 0xFF242327, 0xFF1F1E22, 0xFF0A0A0C),
+    Snow(
+        "Snow", "Pure white and true black: the plainest of all.",
+        Tokens(0xFFFFFFFF, 0xFFF6F6F5, 0xFFECECEA, 0xFF111111, 0xFF6E6E6E, 0xFFA8834E, 0xFFCFCFCC, 0xFFEAEAE8, 0xFFF0F0EE, 0xFFF3F3F2, 0xFFFFFFFF),
+        Tokens(0xFF000000, 0xFF121212, 0xFF262626, 0xFFFFFFFF, 0xFF9A9A9A, 0xFFD6B47A, 0xFF4A4A4A, 0xFF1E1E1E, 0xFF1C1C1C, 0xFF171717, 0xFF000000),
     ),
-    /** Fresh sage: a breath of green in the tint, crisp white cards. */
+    Stone(
+        "Stone", "Soft greys and graphite, quiet and neutral.",
+        Tokens(0xFFE9E9E6, 0xFFF5F5F3, 0xFFD6D6D2, 0xFF1C1C1E, 0xFF66666A, 0xFFA8834E, 0xFFBDBDB8, 0xFFDADAD6, 0xFFE0E0DC, 0xFFE4E4E1, 0xFFFFFFFF),
+        Tokens(0xFF18181A, 0xFF222225, 0xFF35353A, 0xFFECECEE, 0xFF9A9AA0, 0xFFD2AF75, 0xFF4E4E55, 0xFF2A2A2E, 0xFF2A2A2F, 0xFF25252A, 0xFF0E0E10),
+    ),
     Sage(
-        "Sage",
-        Tokens(0xFFF6F8F5, 0xFFFFFFFF, 0xFFE1EBE2, 0xFF1A1D1A, 0xFF6C756D, 0xFFAE8650, 0xFFC5D0C6, 0xFFE4EAE4, 0xFFEDF2ED, 0xFFF1F5F1, 0xFFFFFFFF),
-        Tokens(0xFF0F1210, 0xFF181C19, 0xFF243028, 0xFFE8EEE9, 0xFF919B93, 0xFFD3B074, 0xFF46514A, 0xFF222925, 0xFF212823, 0xFF1C221E, 0xFF0A0C0B),
+        "Sage", "Pale green with deep forest ink: fresh and calm.",
+        Tokens(0xFFEDF2EC, 0xFFFAFCF9, 0xFFCCDDCD, 0xFF1F3326, 0xFF5D7363, 0xFFA88550, 0xFFB3C7B6, 0xFFD9E3D9, 0xFFE3EBE3, 0xFFE8EFE8, 0xFFFFFFFF),
+        Tokens(0xFF0F1A14, 0xFF17241C, 0xFF254232, 0xFFE3EFE6, 0xFF8FA898, 0xFFD3B074, 0xFF3D5747, 0xFF1E2E24, 0xFF1F2F25, 0xFF1A2820, 0xFF0A120D),
     ),
-    /** Cool mist: clean blue-grey, the most modern of the four. */
-    Mist(
-        "Mist",
-        Tokens(0xFFF6F7F9, 0xFFFFFFFF, 0xFFE2E8F0, 0xFF1A1C20, 0xFF6A7180, 0xFFB0874C, 0xFFC7CED9, 0xFFE5E9EF, 0xFFEDF0F5, 0xFFF1F3F7, 0xFFFFFFFF),
-        Tokens(0xFF0F1115, 0xFF181B21, 0xFF252C38, 0xFFE9ECF1, 0xFF959CAA, 0xFFD4B077, 0xFF474F5E, 0xFF222731, 0xFF20252E, 0xFF1B1F27, 0xFF0A0B0E),
+    Ocean(
+        "Ocean", "Sea-glass blue with navy ink: clear and modern.",
+        Tokens(0xFFECF2F8, 0xFFFAFCFE, 0xFFC9DBEE, 0xFF17304D, 0xFF586E88, 0xFFAA8550, 0xFFB0C6DE, 0xFFD7E3EF, 0xFFE1EBF5, 0xFFE7EFF7, 0xFFFFFFFF),
+        Tokens(0xFF0C1622, 0xFF13202F, 0xFF1F3650, 0xFFE2ECF7, 0xFF8DA2BA, 0xFFD3B074, 0xFF3B536F, 0xFF1B2A3B, 0xFF1C2B3D, 0xFF182536, 0xFF070E16),
     ),
+    Rose(
+        "Rose", "Blush with deep wine ink: warm and gentle.",
+        Tokens(0xFFF8EDEB, 0xFFFFFAF9, 0xFFEDCFCA, 0xFF3B1F24, 0xFF86656A, 0xFFA98149, 0xFFD8BCB7, 0xFFEEDDDA, 0xFFF2E4E1, 0xFFF5E9E7, 0xFFFFFFFF),
+        Tokens(0xFF1A1012, 0xFF25171A, 0xFF46262C, 0xFFF5E6E6, 0xFFAE9295, 0xFFD6B278, 0xFF5E4045, 0xFF32222A, 0xFF2F1F23, 0xFF2A1B1F, 0xFF100A0B),
+    ),
+    Lavender(
+        "Lavender", "Soft lilac with indigo ink: dreamy but composed.",
+        Tokens(0xFFF1EFF8, 0xFFFCFBFF, 0xFFD8D1EF, 0xFF29234A, 0xFF6C6690, 0xFFAC8550, 0xFFC2BBDE, 0xFFE2DEF0, 0xFFE9E6F4, 0xFFEDEBF6, 0xFFFFFFFF),
+        Tokens(0xFF13111F, 0xFF1C192C, 0xFF332C55, 0xFFECE8FA, 0xFF9F98C0, 0xFFD4B077, 0xFF4A4370, 0xFF262140, 0xFF25203B, 0xFF201C33, 0xFF0B0A13),
+    ),
+    Dusk(
+        "Dusk", "The website's evening: blue-violet into warm brown, by day and night.",
+        Tokens(0xFF2A2B38, 0xFF34303A, 0xFF4A4250, 0xFFF2EDE4, 0xFFB9B0A6, 0xFFD0AE74, 0xFF5E5560, 0xFF3F3A45, 0xFF3A3540, 0xFF37323D, 0xFF1F1F29),
+        Tokens(0xFF1C1C26, 0xFF26242E, 0xFF3D3644, 0xFFF2EDE4, 0xFFADA59C, 0xFFD6B47A, 0xFF524A55, 0xFF302C38, 0xFF2E2A35, 0xFF2A2631, 0xFF13131A),
+    ),
+    ;
+
+    /** Dusk is an evening palette: it stays dark whatever the light/dark setting. */
+    val alwaysDark: Boolean get() = this == Dusk
+
+    companion object {
+        /** New users start fresh with Sage. */
+        val Default = Sage
+
+        fun of(name: String?): Tone = entries.firstOrNull { it.name == name } ?: Default
+    }
 }
 
 /** The palette the app uses. */
-val AppTone = Tone.Paper
+val AppTone = Tone.Default
 
 internal fun colorsFor(tone: Tone, dark: Boolean) = (if (dark) tone.dark else tone.light).let { t ->
     val c = { v: Long -> Color(v) }
@@ -204,7 +232,7 @@ private val LedgerTypography = Typography().run {
 @Composable
 fun LedgerTheme(dark: Boolean, tone: Tone = AppTone, content: @Composable () -> Unit) {
     MaterialTheme(
-        colorScheme = colorsFor(tone, dark),
+        colorScheme = colorsFor(tone, dark || tone.alwaysDark),
         typography = LedgerTypography,
         content = content,
     )

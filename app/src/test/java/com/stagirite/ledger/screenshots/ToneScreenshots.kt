@@ -51,7 +51,7 @@ import java.io.File
  */
 @RunWith(RobolectricTestRunner::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
-@Config(sdk = [35], qualifiers = "w760dp-h600dp-xhdpi")
+@Config(sdk = [35], qualifiers = "w820dp-h1000dp-xhdpi")
 class ToneScreenshots {
     @get:Rule
     val compose = createAndroidComposeRule<ComponentActivity>()
@@ -59,10 +59,9 @@ class ToneScreenshots {
     @Before
     fun onlyWhenAsked() = assumeTrue(System.getProperty("screenshots") == "true")
 
-    @Test fun paper() = draw(Tone.Paper)
-    @Test fun linen() = draw(Tone.Linen)
-    @Test fun sage() = draw(Tone.Sage)
-    @Test fun mist() = draw(Tone.Mist)
+    @Test fun allByDay() = grid(dark = false, name = "tones-day") { List() }
+    @Test fun allByNight() = grid(dark = true, name = "tones-night") { List() }
+    @Test fun goalsByDay() = grid(dark = false, name = "tones-goal") { Goal() }
 
     private val s = Samples
 
@@ -84,26 +83,32 @@ class ToneScreenshots {
     private fun Phone(tone: Tone, dark: Boolean, screen: @Composable () -> Unit) {
         Box(
             Modifier
-                .size(223.dp, 471.dp)
-                .clip(RoundedCornerShape(20.dp))
-                .border(1.dp, Color(0x22000000), RoundedCornerShape(20.dp)),
+                .size(180.dp, 380.dp)
+                .clip(RoundedCornerShape(18.dp))
+                .border(1.dp, Color(0x22000000), RoundedCornerShape(18.dp)),
         ) {
-            Box(Modifier.requiredSize(360.dp, 760.dp).graphicsLayer { scaleX = 0.62f; scaleY = 0.62f }) {
+            Box(Modifier.requiredSize(360.dp, 760.dp).graphicsLayer { scaleX = 0.5f; scaleY = 0.5f }) {
                 LedgerTheme(dark, tone) { screen() }
             }
         }
     }
 
-    private fun draw(tone: Tone) {
+    /** All eight palettes, four to a row, each labelled. */
+    private fun grid(dark: Boolean, name: String, screen: @Composable () -> Unit) {
         compose.mainClock.autoAdvance = false
         compose.setContent {
             Column(Modifier.fillMaxSize().background(Color(0xFFE9E9E7)).padding(20.dp)) {
-                Text(tone.label, style = LedgerType.title.copy(fontSize = 30.sp), color = Color(0xFF1C1C1C))
-                Spacer(Modifier.height(12.dp))
-                Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                    Phone(tone, false) { List() }
-                    Phone(tone, false) { Goal() }
-                    Phone(tone, true) { List() }
+                Tone.entries.chunked(4).forEach { row ->
+                    Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                        row.forEach { tone ->
+                            Column {
+                                Text(tone.label, style = LedgerType.title.copy(fontSize = 22.sp), color = Color(0xFF1C1C1C))
+                                Spacer(Modifier.height(6.dp))
+                                Phone(tone, dark, screen)
+                            }
+                        }
+                    }
+                    Spacer(Modifier.height(18.dp))
                 }
             }
         }
@@ -113,6 +118,6 @@ class ToneScreenshots {
         val bitmap = Bitmap.createBitmap(view.width, view.height, Bitmap.Config.ARGB_8888)
         view.draw(Canvas(bitmap))
         val dir = File("build/review-screenshots").apply { mkdirs() }
-        File(dir, "tone-${tone.name.lowercase()}.png").outputStream().use { bitmap.compress(Bitmap.CompressFormat.PNG, 100, it) }
+        File(dir, "$name.png").outputStream().use { bitmap.compress(Bitmap.CompressFormat.PNG, 100, it) }
     }
 }

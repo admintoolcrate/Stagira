@@ -76,6 +76,15 @@ class Settings(context: Context) {
     /** The recents preview is hidden whenever the app is locked too. */
     val secureWindow: Boolean get() = hideInRecents || appLock
 
+    /** The chosen palette, by name (see ui.Tone); null until one is chosen. */
+    var palette by mutableStateOf(prefs.getString("palette", null))
+        private set
+
+    fun updatePalette(name: String) {
+        palette = name
+        prefs.edit().putString("palette", name).apply()
+    }
+
     fun updateTheme(mode: ThemeMode) {
         theme = mode
         prefs.edit().putString("theme", mode.name).apply()

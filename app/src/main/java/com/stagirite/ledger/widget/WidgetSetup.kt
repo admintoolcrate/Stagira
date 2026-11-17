@@ -52,6 +52,7 @@ import com.stagirite.ledger.data.WidgetStyle
 import com.stagirite.ledger.ui.DuskGradient
 import com.stagirite.ledger.ui.EmojiGlyph
 import com.stagirite.ledger.ui.LedgerTheme
+import com.stagirite.ledger.ui.Tone
 import com.stagirite.ledger.ui.SectionHeading
 import com.stagirite.ledger.ui.Space
 import kotlinx.coroutines.launch
@@ -105,7 +106,7 @@ class WidgetSetup : FragmentActivity() {
                 ThemeMode.Light -> false
                 ThemeMode.Dark -> true
             }
-            LedgerTheme(dark) {
+            LedgerTheme(dark, Tone.of(app.settings.palette)) {
                 Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
                     Column(
                         Modifier
