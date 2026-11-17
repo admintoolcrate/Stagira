@@ -100,7 +100,8 @@
       var screen=document.getElementById('screen'), slides=document.getElementById('slides');
       if(screen&&slides&&window.STAGIRA_PALETTES){
         var dots=[].slice.call(document.querySelectorAll('.dot-btn')), sw=[].slice.call(document.querySelectorAll('.swatch'));
-        var nameEl=document.getElementById('palette-name'), chosen='Paper';
+        var nameEl=document.getElementById('palette-name'), descEl=document.getElementById('palette-desc'), chosen='Paper';
+        var prev=document.getElementById('prev'), next=document.getElementById('next'), tabs=[].slice.call(document.querySelectorAll('.tab'));
         var isDark=function(){return (root.getAttribute('data-theme')||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'))==='dark';};
         var paint=function(){
           var t=STAGIRA_PALETTES[chosen][isDark()?'dark':'light'], st=screen.style;
@@ -111,12 +112,17 @@
         };
         sw.forEach(function(b){b.addEventListener('click',function(){
           chosen=b.getAttribute('data-palette');sw.forEach(function(x){x.setAttribute('aria-pressed',x===b?'true':'false');});
-          nameEl.textContent=chosen;paint();
+          nameEl.textContent=chosen;descEl.textContent=STAGIRA_PALETTES[chosen].desc;paint();
         });});
         var go=function(i){slides.scrollTo({left:i*slides.clientWidth,behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});};
         dots.forEach(function(d,i){d.addEventListener('click',function(){go(i);});});
         var at=function(){return Math.round(slides.scrollLeft/slides.clientWidth);};
-        slides.addEventListener('scroll',function(){var i=at();dots.forEach(function(d,j){if(j===i)d.setAttribute('aria-current','true');else d.removeAttribute('aria-current');});},{passive:true});
+        /* Dots, arrows and the app's own tab bar follow the screen in view (Goals: the list and a goal; Overview: the rest). */
+        var sync=function(){var i=at();dots.forEach(function(d,j){if(j===i)d.setAttribute('aria-current','true');else d.removeAttribute('aria-current');});
+          prev.disabled=i===0;next.disabled=i===dots.length-1;tabs.forEach(function(t,j){t.classList.toggle('on',j===(i<2?0:1));});};
+        slides.addEventListener('scroll',sync,{passive:true});sync();
+        prev.addEventListener('click',function(){go(Math.max(at()-1,0));});
+        next.addEventListener('click',function(){go(Math.min(at()+1,dots.length-1));});
         slides.addEventListener('keydown',function(e){if(e.key==='ArrowRight'){go(Math.min(at()+1,dots.length-1));e.preventDefault();}if(e.key==='ArrowLeft'){go(Math.max(at()-1,0));e.preventDefault();}});
         /* Drag with a mouse, too: phones swipe natively. */
         var dragX=null,startLeft=0;
