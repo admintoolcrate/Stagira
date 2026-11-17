@@ -24,61 +24,65 @@ import androidx.compose.ui.platform.LocalDensity
 import com.stagirite.ledger.R
 import androidx.compose.ui.unit.sp
 
-// Ink on warm paper, as on the website: a soft, bookish off-white by day and a
-// deep near-black by night, with one quiet accent, a muted gold, kept for
-// milestones and the Aristotle marks.
-private val LightColors = lightColorScheme(
-    primary = Color(0xFF1F1D1A),
-    onPrimary = Color(0xFFF3F0EA),
-    primaryContainer = Color(0xFFEAE5DC),
-    onPrimaryContainer = Color(0xFF1F1D1A),
-    secondary = Color(0xFF7A756C),
-    // The soft tint for selected and kept: warm sand, a quieter stand-in for solid ink.
-    secondaryContainer = Color(0xFFE6DDCF),
-    onSecondaryContainer = Color(0xFF1F1D1A),
-    tertiary = Color(0xFFA4814F),
-    onTertiary = Color(0xFFFCFBF8),
-    background = Color(0xFFF3F0EA),
-    onBackground = Color(0xFF1F1D1A),
-    surface = Color(0xFFF3F0EA),
-    onSurface = Color(0xFF1F1D1A),
-    surfaceVariant = Color(0xFFEAE5DC),
-    onSurfaceVariant = Color(0xFF7A756C),
-    surfaceContainerLowest = Color(0xFFFFFFFF),
-    surfaceContainerLow = Color(0xFFFCFBF8),
-    surfaceContainer = Color(0xFFF3F0EA),
-    surfaceContainerHigh = Color(0xFFEFEBE4),
-    surfaceContainerHighest = Color(0xFFEAE5DC),
-    outline = Color(0xFFC8BEB0),
-    outlineVariant = Color(0xFFE3DDD3),
-    error = Color(0xFFB3261E),
+/** The handful of colours a palette is built from. */
+class Tokens(
+    val page: Long, val card: Long, val tint: Long, val ink: Long, val muted: Long,
+    val accent: Long, val line: Long, val hairline: Long, val raised: Long, val high: Long, val lowest: Long,
 )
 
-private val DarkColors = darkColorScheme(
-    primary = Color(0xFFEFEBE4),
-    onPrimary = Color(0xFF121214),
-    primaryContainer = Color(0xFF26252A),
-    onPrimaryContainer = Color(0xFFEFEBE4),
-    secondary = Color(0xFF9C968C),
-    secondaryContainer = Color(0xFF34312D),
-    onSecondaryContainer = Color(0xFFEFEBE4),
-    tertiary = Color(0xFFD0AE74),
-    onTertiary = Color(0xFF121214),
-    background = Color(0xFF121214),
-    onBackground = Color(0xFFEFEBE4),
-    surface = Color(0xFF121214),
-    onSurface = Color(0xFFEFEBE4),
-    surfaceVariant = Color(0xFF26252A),
-    onSurfaceVariant = Color(0xFF9C968C),
-    surfaceContainerLowest = Color(0xFF0C0C0E),
-    surfaceContainerLow = Color(0xFF1C1B1E),
-    surfaceContainer = Color(0xFF18181B),
-    surfaceContainerHigh = Color(0xFF212024),
-    surfaceContainerHighest = Color(0xFF26252A),
-    outline = Color(0xFF57524B),
-    outlineVariant = Color(0xFF2A2826),
-    error = Color(0xFFF2B8B5),
-)
+/**
+ * A palette: ink on a page, white-ish cards, one soft tint for what's selected or
+ * kept, and one accent, a muted gold, kept for milestones and the Aristotle marks.
+ */
+enum class Tone(val label: String, val light: Tokens, val dark: Tokens) {
+    /** Warm paper, as on the website: soft and bookish. */
+    Paper(
+        "Paper",
+        Tokens(0xFFF3F0EA, 0xFFFCFBF8, 0xFFE6DDCF, 0xFF1F1D1A, 0xFF7A756C, 0xFFA4814F, 0xFFC8BEB0, 0xFFE3DDD3, 0xFFEAE5DC, 0xFFEFEBE4, 0xFFFFFFFF),
+        Tokens(0xFF121214, 0xFF1C1B1E, 0xFF34312D, 0xFFEFEBE4, 0xFF9C968C, 0xFFD0AE74, 0xFF57524B, 0xFF2A2826, 0xFF26252A, 0xFF212024, 0xFF0C0C0E),
+    ),
+    /** Brighter linen: nearly white, still warm. */
+    Linen(
+        "Linen",
+        Tokens(0xFFFAF8F4, 0xFFFFFFFF, 0xFFF0EAE0, 0xFF1C1B19, 0xFF77726A, 0xFFAD8750, 0xFFD3CBBF, 0xFFECE7DF, 0xFFF2EEE7, 0xFFF5F2EC, 0xFFFFFFFF),
+        Tokens(0xFF101012, 0xFF1A1A1D, 0xFF2E2B27, 0xFFF2EFEA, 0xFF9D978E, 0xFFD6B47A, 0xFF4F4A44, 0xFF26252A, 0xFF242327, 0xFF1F1E22, 0xFF0A0A0C),
+    ),
+    /** Fresh sage: a breath of green in the tint, crisp white cards. */
+    Sage(
+        "Sage",
+        Tokens(0xFFF6F8F5, 0xFFFFFFFF, 0xFFE1EBE2, 0xFF1A1D1A, 0xFF6C756D, 0xFFAE8650, 0xFFC5D0C6, 0xFFE4EAE4, 0xFFEDF2ED, 0xFFF1F5F1, 0xFFFFFFFF),
+        Tokens(0xFF0F1210, 0xFF181C19, 0xFF243028, 0xFFE8EEE9, 0xFF919B93, 0xFFD3B074, 0xFF46514A, 0xFF222925, 0xFF212823, 0xFF1C221E, 0xFF0A0C0B),
+    ),
+    /** Cool mist: clean blue-grey, the most modern of the four. */
+    Mist(
+        "Mist",
+        Tokens(0xFFF6F7F9, 0xFFFFFFFF, 0xFFE2E8F0, 0xFF1A1C20, 0xFF6A7180, 0xFFB0874C, 0xFFC7CED9, 0xFFE5E9EF, 0xFFEDF0F5, 0xFFF1F3F7, 0xFFFFFFFF),
+        Tokens(0xFF0F1115, 0xFF181B21, 0xFF252C38, 0xFFE9ECF1, 0xFF959CAA, 0xFFD4B077, 0xFF474F5E, 0xFF222731, 0xFF20252E, 0xFF1B1F27, 0xFF0A0B0E),
+    ),
+}
+
+/** The palette the app uses. */
+val AppTone = Tone.Paper
+
+internal fun colorsFor(tone: Tone, dark: Boolean) = (if (dark) tone.dark else tone.light).let { t ->
+    val c = { v: Long -> Color(v) }
+    val base = if (dark) darkColorScheme() else lightColorScheme()
+    base.copy(
+        primary = c(t.ink), onPrimary = c(t.page),
+        primaryContainer = c(t.raised), onPrimaryContainer = c(t.ink),
+        secondary = c(t.muted),
+        // The soft tint for selected and kept, a quieter stand-in for solid ink.
+        secondaryContainer = c(t.tint), onSecondaryContainer = c(t.ink),
+        tertiary = c(t.accent), onTertiary = c(t.card),
+        background = c(t.page), onBackground = c(t.ink),
+        surface = c(t.page), onSurface = c(t.ink),
+        surfaceVariant = c(t.raised), onSurfaceVariant = c(t.muted),
+        surfaceContainerLowest = c(t.lowest), surfaceContainerLow = c(t.card),
+        surfaceContainer = c(t.page), surfaceContainerHigh = c(t.high), surfaceContainerHighest = c(t.raised),
+        outline = c(t.line), outlineVariant = c(t.hairline),
+        error = if (dark) Color(0xFFF2B8B5) else Color(0xFFB3261E),
+    )
+}
 
 /** The website's "dusk" panel: a deep blue-violet into warm brown, for the year card. */
 val DuskGradient = listOf(Color(0xFF2A2B38), Color(0xFF34303A), Color(0xFF43362F))
@@ -198,9 +202,9 @@ private val LedgerTypography = Typography().run {
 }
 
 @Composable
-fun LedgerTheme(dark: Boolean, content: @Composable () -> Unit) {
+fun LedgerTheme(dark: Boolean, tone: Tone = AppTone, content: @Composable () -> Unit) {
     MaterialTheme(
-        colorScheme = if (dark) DarkColors else LightColors,
+        colorScheme = colorsFor(tone, dark),
         typography = LedgerTypography,
         content = content,
     )
