@@ -1,6 +1,11 @@
 package com.stagirite.ledger.screenshots
 
 import android.graphics.Bitmap
+import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.background
 import android.graphics.Canvas
 import android.os.Looper
 import androidx.activity.ComponentActivity
@@ -68,6 +73,17 @@ class ReviewScreenshots {
     }
     @Test fun r4_week() = draw("r4-week") { WeeklyReviewScreen(s.goals, s.today, onOpen = {}, onBack = {}) }
     @Test fun r6_guide() = draw("r6-guide") { GuideScreen(onDone = {}, onCreate = {}) }
+    @Test fun r9_palettes() = draw("r9-palettes") {
+        androidx.compose.foundation.layout.Column(
+            androidx.compose.ui.Modifier.fillMaxSize().background(androidx.compose.material3.MaterialTheme.colorScheme.background).padding(16.dp),
+        ) {
+            com.stagirite.ledger.ui.LedgerCard {
+                androidx.compose.material3.Text("Appearance", style = androidx.compose.material3.MaterialTheme.typography.titleSmall)
+                androidx.compose.foundation.layout.Spacer(androidx.compose.ui.Modifier.height(12.dp))
+                com.stagirite.ledger.ui.PalettePicker(com.stagirite.ledger.ui.Tone.Sage) {}
+            }
+        }
+    }
     @Test fun r7_list_dark() = list(true, "r7-list-dark")
     @Test fun r8_goal_dark() = goal(true, "r8-goal-dark")
 

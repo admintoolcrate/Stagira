@@ -237,8 +237,28 @@ private val LedgerTypography = Typography().run {
 @Composable
 fun LedgerTheme(dark: Boolean, tone: Tone = AppTone, content: @Composable () -> Unit) {
     MaterialTheme(
-        colorScheme = colorsFor(tone, dark || tone.alwaysDark),
+        colorScheme = animated(colorsFor(tone, dark || tone.alwaysDark)),
         typography = LedgerTypography,
         content = content,
+    )
+}
+
+/** Changing palette (or day to night) fades the colours across rather than snapping. */
+@Composable
+private fun animated(target: androidx.compose.material3.ColorScheme): androidx.compose.material3.ColorScheme {
+    @Composable
+    fun Color.eased(): Color = androidx.compose.animation.animateColorAsState(
+        this, androidx.compose.animation.core.tween(450), label = "theme",
+    ).value
+    return target.copy(
+        primary = target.primary.eased(), onPrimary = target.onPrimary.eased(),
+        secondaryContainer = target.secondaryContainer.eased(), onSecondaryContainer = target.onSecondaryContainer.eased(),
+        tertiary = target.tertiary.eased(),
+        background = target.background.eased(), onBackground = target.onBackground.eased(),
+        surface = target.surface.eased(), onSurface = target.onSurface.eased(),
+        surfaceVariant = target.surfaceVariant.eased(), onSurfaceVariant = target.onSurfaceVariant.eased(),
+        surfaceContainerLow = target.surfaceContainerLow.eased(), surfaceContainer = target.surfaceContainer.eased(),
+        surfaceContainerHigh = target.surfaceContainerHigh.eased(), surfaceContainerHighest = target.surfaceContainerHighest.eased(),
+        outline = target.outline.eased(), outlineVariant = target.outlineVariant.eased(),
     )
 }

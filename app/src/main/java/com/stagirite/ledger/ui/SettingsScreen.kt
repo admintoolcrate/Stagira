@@ -124,23 +124,19 @@ fun SettingsScreen(
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 16.dp),
         ) {
-            Section("Theme and widget", group = "Look & feel") {
-                val modes = ThemeMode.entries
-                SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
-                    modes.forEachIndexed { i, mode ->
-                        SegmentedButton(
-                            selected = settings.theme == mode,
-                            onClick = { settings.updateTheme(mode) },
-                            shape = SegmentedButtonDefaults.itemShape(i, modes.size),
-                            icon = {},
-                            colors = ledgerSegmentColors(),
-                        ) { Text(mode.name) }
-                    }
-                }
-                Spacer(Modifier.height(20.dp))
-                Text("Palette", style = MaterialTheme.typography.bodyLarge)
-                Spacer(Modifier.height(8.dp))
-                PalettePicker(Tone.of(settings.palette)) { settings.updatePalette(it.name) }
+            Section("Appearance", group = "Look & feel") {
+                // One choice: a palette, which comes with its own night colours.
+                val tone = Tone.of(settings.palette)
+                PalettePicker(tone) { settings.updatePalette(it.name) }
+                Spacer(Modifier.height(12.dp))
+                SwitchRow(
+                    title = "Dark when your phone is dark",
+                    detail = if (tone.alwaysDark) "${tone.label} is a night palette, so it\u2019s dark all the time."
+                    else "${tone.label} switches to its night colours with your phone\u2019s dark mode.",
+                    checked = tone.alwaysDark || settings.theme != ThemeMode.Light,
+                    onChange = { settings.updateTheme(if (it) ThemeMode.System else ThemeMode.Light) },
+                    enabled = !tone.alwaysDark,
+                )
                 Spacer(Modifier.height(20.dp))
                 Text("Widget background", style = MaterialTheme.typography.bodyLarge)
                 Spacer(Modifier.height(8.dp))
@@ -905,44 +901,3 @@ private fun WeeklySection(settings: Settings, lock: AppLock) {
 }
 
 
-/** The palettes as small swatches: each one's page, its tint, its ink and the gold. */
-@OptIn(ExperimentalLayoutApi::class)
-@Composable
-private fun PalettePicker(current: Tone, onPick: (Tone) -> Unit) {
-    FlowRow(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Tone.entries.forEach { tone ->
-            val t = if (tone.alwaysDark) tone.dark else tone.light
-            val selected = tone == current
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier
-                    .width(66.dp)
-                    .clickable(role = androidx.compose.ui.semantics.Role.RadioButton) { onPick(tone) }
-                    .semantics { contentDescription = "${tone.label} palette" + if (selected) ", chosen" else "" },
-            ) {
-                Box(
-                    Modifier
-                        .size(width = 60.dp, height = 44.dp)
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(Color(t.page))
-                        .border(
-                            if (selected) 2.dp else 1.dp,
-                            if (selected) MaterialTheme.colorScheme.onBackground else MaterialTheme.colorScheme.outlineVariant,
-                            RoundedCornerShape(12.dp),
-                        )
-                        .padding(8.dp),
-                ) {
-                    Box(Modifier.align(Alignment.TopStart).size(width = 30.dp, height = 10.dp).background(Color(t.tint), RoundedCornerShape(5.dp)))
-                    Box(Modifier.align(Alignment.BottomStart).size(width = 22.dp, height = 3.dp).background(Color(t.ink), RoundedCornerShape(2.dp)))
-                    Box(Modifier.align(Alignment.BottomEnd).size(8.dp).background(Color(t.accent), CircleShape))
-                }
-                Spacer(Modifier.height(4.dp))
-                Text(
-                    tone.label,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = if (selected) MaterialTheme.colorScheme.onBackground else MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-        }
-    }
-}
