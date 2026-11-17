@@ -408,3 +408,6 @@ section:first-child, .hero-bg + section { margin-top: 0; }
   .swatches { position: absolute; left: calc(100% + 22px); top: 46%; transform: translateY(-50%); flex-direction: column; flex-wrap: nowrap; gap: 11px; margin: 0; padding: 10px 7px; border: 1px solid var(--rule); border-radius: 999px; background: var(--card); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
   .swatch:hover { transform: translateX(2px); }
 }
+
+/* Narrower screens: all nine swatches in one row */
+@media (max-width: 1100px) { .swatches { flex-wrap: nowrap; gap: 8px; } .swatch { width: 27px; height: 27px; flex: none; } }

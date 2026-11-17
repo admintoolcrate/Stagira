@@ -91,8 +91,9 @@ A minimal Android app (**Stagira** on your home screen) that does one thing: nam
   days and once a slip is logged; shows the cover name for a private goal, and no name with the
   app lock on.
 - Undo after deleting a goal; edit a goal's name, note or start date.
-- **Palettes** — eight, each with its own ink colours, in light and dark: Paper, Snow (the
-  default), Stone, Sage, Ocean, Rose, Lavender and Dusk. Pick one in Settings → Palette.
+- **Palettes** — nine, each with its own ink colours, in light and dark: Paper, Snow (the
+  default), Stone, Sage, Ocean, Rose, Lavender, Dusk, and Black (true black, dark always, for OLED
+  screens). Pick one in Settings → Palette.
 - Light, dark, or follow the system. Optional Google sync. Export / import as JSON.
 
 ## Privacy
