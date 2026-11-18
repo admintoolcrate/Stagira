@@ -222,7 +222,8 @@ private fun MockPhone(tone: Tone, dark: Boolean, black: Boolean, screen: @Compos
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun ColourSwatches(current: Tone, dark: Boolean, black: Boolean, onPick: (Tone) -> Unit) {
-    FlowRow(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+    // All eight on one line on a phone; they wrap only on very narrow screens.
+    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Tone.entries.forEach { tone ->
             val t = if (black) tone.black else if (dark) tone.dark else tone.light
             val selected = tone == current
@@ -232,7 +233,7 @@ private fun ColourSwatches(current: Tone, dark: Boolean, black: Boolean, onPick:
             )
             Box(
                 Modifier
-                    .size(34.dp)
+                    .size(32.dp)
                     .clip(CircleShape)
                     .border(if (selected) 2.dp else 1.dp, ring, CircleShape)
                     .padding(if (selected) 4.dp else 0.dp)
@@ -245,7 +246,7 @@ private fun ColourSwatches(current: Tone, dark: Boolean, black: Boolean, onPick:
                     },
                 contentAlignment = Alignment.Center,
             ) {
-                Box(Modifier.size(12.dp).background(Color(t.ink), CircleShape))
+                Box(Modifier.size(11.dp).background(Color(t.ink), CircleShape))
             }
         }
     }
