@@ -84,8 +84,8 @@ private val Gold = ColorProvider(day = Color(0xFFA4814F), night = Color(0xFFD0AE
 
 internal fun palette(style: WidgetStyle, tone: Tone = Tone.Default, mode: ThemeMode = ThemeMode.System): Palette {
     // The app's colour, in the version its mode calls for, by day and by night.
-    val day = when (mode) { ThemeMode.Dark -> tone.dark; ThemeMode.Black -> tone.black; else -> tone.light }
-    val night = when (mode) { ThemeMode.Light -> tone.light; ThemeMode.Black -> tone.black; else -> tone.dark }
+    val day = when (mode) { ThemeMode.Dark -> tone.dark; else -> tone.light }
+    val night = when (mode) { ThemeMode.Light -> tone.light; else -> tone.dark }
     fun pair(d: Long, n: Long) = ColorProvider(day = Color(d), night = Color(n))
     return when (style) {
     WidgetStyle.Solid -> Palette(

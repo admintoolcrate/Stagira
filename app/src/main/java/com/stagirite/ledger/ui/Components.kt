@@ -123,7 +123,7 @@ fun ThinProgress(progress: Float, modifier: Modifier = Modifier, gold: Boolean =
             .fillMaxWidth()
             .height(2.dp),
         // On a milestone day the line is full, in the one accent colour.
-        color = if (gold) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.onBackground,
+        color = if (gold) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.secondary,
         trackColor = MaterialTheme.colorScheme.outlineVariant,
         strokeCap = StrokeCap.Butt,
         gapSize = 0.dp,
@@ -460,7 +460,8 @@ fun TextTabs(labels: List<String>, selected: Int, onSelect: (Int) -> Unit) {
                         Modifier
                             .width(28.dp)
                             .height(2.dp)
-                            .background(if (on) MaterialTheme.colorScheme.onBackground else Color.Transparent),
+                            // The current tab is underlined in the accent.
+                            .background(if (on) MaterialTheme.colorScheme.secondary else Color.Transparent),
                     )
                 }
             }

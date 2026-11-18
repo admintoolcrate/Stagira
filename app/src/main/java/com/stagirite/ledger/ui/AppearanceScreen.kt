@@ -105,9 +105,9 @@ fun AppearanceScreen(
             val dark = when (mode) {
                 ThemeMode.System -> systemDark
                 ThemeMode.Light -> false
-                ThemeMode.Dark, ThemeMode.Black -> true
+                ThemeMode.Dark -> true
             }
-            Preview(goals, tone, dark, mode == ThemeMode.Black)
+            Preview(goals, tone, dark, false)
 
             Spacer(Modifier.height(Space.xl))
             SectionHeading("Mode")
@@ -126,18 +126,17 @@ fun AppearanceScreen(
             Spacer(Modifier.height(Space.s))
             Text(
                 when (mode) {
-                    ThemeMode.System -> "Light by day, dark when your phone switches to dark mode."
-                    ThemeMode.Light -> "Always light."
-                    ThemeMode.Dark -> "Always dark."
-                    ThemeMode.Black -> "Always dark, on true black: easiest on the eyes at night, and on OLED screens."
+                    ThemeMode.System -> "White by day, black when your phone switches to dark mode."
+                    ThemeMode.Light -> "Always white."
+                    ThemeMode.Dark -> "Always true black: easiest on the eyes at night, and on OLED screens."
                 },
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
 
             Spacer(Modifier.height(Space.xl))
-            SectionHeading("Colour")
-            ColourSwatches(tone, dark, mode == ThemeMode.Black, onTone)
+            SectionHeading("Accent")
+            ColourSwatches(tone, dark, false, onTone)
             Spacer(Modifier.height(Space.m))
             // As the website names them: the colour in the serif's italic, then a line about it.
             Text(
@@ -152,7 +151,7 @@ fun AppearanceScreen(
             WidgetStyles(widgetStyle, onWidgetStyle)
             Spacer(Modifier.height(Space.s))
             Text(
-                "Match app follows the colour and mode above. Each widget can also have its own: " +
+                "Match app follows the mode and accent above. Each widget can also have its own: " +
                     "long-press it on your home screen and choose its settings.",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -218,7 +217,7 @@ private fun MockPhone(tone: Tone, dark: Boolean, black: Boolean, screen: @Compos
     }
 }
 
-/** The colours as round swatches, as on the website: each one's page with a dot of its ink. */
+/** The accents as round swatches, each filled with its colour as it shows in the current mode. */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun ColourSwatches(current: Tone, dark: Boolean, black: Boolean, onPick: (Tone) -> Unit) {
@@ -238,7 +237,7 @@ private fun ColourSwatches(current: Tone, dark: Boolean, black: Boolean, onPick:
                     .border(if (selected) 2.dp else 1.dp, ring, CircleShape)
                     .padding(if (selected) 4.dp else 0.dp)
                     .clip(CircleShape)
-                    .background(Color(t.page))
+                    .background(Color(t.brand))
                     .clickable(role = Role.RadioButton) { onPick(tone) }
                     .semantics {
                         contentDescription = "${tone.label}. ${tone.blurb}"
@@ -246,7 +245,8 @@ private fun ColourSwatches(current: Tone, dark: Boolean, black: Boolean, onPick:
                     },
                 contentAlignment = Alignment.Center,
             ) {
-                Box(Modifier.size(11.dp).background(Color(t.ink), CircleShape))
+                // A small dot of the page inside, so Mono reads as a ring on either page.
+                if (selected) Box(Modifier.size(8.dp).background(Color(t.page), CircleShape))
             }
         }
     }

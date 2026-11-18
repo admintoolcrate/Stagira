@@ -63,11 +63,11 @@ class MainActivity : FragmentActivity() {
             val settings = app.settings
             val lock = app.lock
             val tone = Tone.of(settings.palette)
-            val black = settings.theme == ThemeMode.Black
+            val black = false
             val dark = when (settings.theme) {
                 ThemeMode.System -> isSystemInDarkTheme()
                 ThemeMode.Light -> false
-                ThemeMode.Dark, ThemeMode.Black -> true
+                ThemeMode.Dark -> true
             }
             DisposableEffect(dark) {
                 val style = SystemBarStyle.auto(Color.TRANSPARENT, Color.TRANSPARENT) { dark }

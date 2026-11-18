@@ -104,9 +104,9 @@ class WidgetSetup : FragmentActivity() {
             val dark = when (app.settings.theme) {
                 ThemeMode.System -> isSystemInDarkTheme()
                 ThemeMode.Light -> false
-                ThemeMode.Dark, ThemeMode.Black -> true
+                ThemeMode.Dark -> true
             }
-            LedgerTheme(dark, Tone.of(app.settings.palette), app.settings.theme == ThemeMode.Black) {
+            LedgerTheme(dark, Tone.of(app.settings.palette), false) {
                 Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
                     Column(
                         Modifier

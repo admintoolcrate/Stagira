@@ -160,10 +160,9 @@ fun SettingsScreen(
                         )
                     }
                     Box(
-                        Modifier.size(28.dp).clip(CircleShape).background(MaterialTheme.colorScheme.secondaryContainer)
+                        Modifier.size(24.dp).clip(CircleShape).background(MaterialTheme.colorScheme.secondary)
                             .border(1.dp, MaterialTheme.colorScheme.outlineVariant, CircleShape),
-                        contentAlignment = Alignment.Center,
-                    ) { Box(Modifier.size(10.dp).background(MaterialTheme.colorScheme.onBackground, CircleShape)) }
+                    ) {}
                     Spacer(Modifier.width(Space.s))
                     Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
                 }

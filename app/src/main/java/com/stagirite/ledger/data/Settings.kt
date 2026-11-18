@@ -5,8 +5,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 
-/** Light or dark: Auto follows the phone; Black is dark on a true-black page. */
-enum class ThemeMode(val label: String) { System("Auto"), Light("Light"), Dark("Dark"), Black("Black") }
+/** White or black pages: Auto follows the phone's dark mode. */
+enum class ThemeMode(val label: String) { System("Auto"), Light("White"), Dark("Black") }
 
 enum class SortOrder(val label: String) {
     Added("As added"),
@@ -85,11 +85,10 @@ class Settings(context: Context) {
         private set
 
     init {
-        // Black used to be a palette; it's now a mode, with Snow's black and white.
-        if (prefs.getString("palette", null) == "Black") {
-            prefs.edit().putString("palette", "Snow").putString("theme", ThemeMode.Black.name).apply()
-            palette = "Snow"
-            theme = ThemeMode.Black
+        // Black used to be a palette, then a mode of its own; it's now simply the dark mode.
+        if (prefs.getString("palette", null) == "Black" || prefs.getString("theme", null) == "Black") {
+            prefs.edit().putString("theme", ThemeMode.Dark.name).apply()
+            theme = ThemeMode.Dark
         }
     }
 

@@ -24,73 +24,86 @@ import androidx.compose.ui.platform.LocalDensity
 import com.stagirite.ledger.R
 import androidx.compose.ui.unit.sp
 
-/** The handful of colours a palette is built from. */
+/** The handful of colours the app is drawn with, in one mode. */
 data class Tokens(
     val page: Long, val card: Long, val tint: Long, val ink: Long, val muted: Long,
     val accent: Long, val line: Long, val hairline: Long, val raised: Long, val high: Long, val lowest: Long,
+    /** The accent colour itself: progress lines, tabs, the chosen things. */
+    val brand: Long = ink,
+)
+
+/** White mode: a pure white page and black ink; [brand] and [tint] carry the accent. */
+private fun white(brand: Long, tint: Long) = Tokens(
+    page = 0xFFFFFFFF, card = 0xFFF7F7F6, tint = tint, ink = 0xFF111111, muted = 0xFF6E6E6E,
+    accent = 0xFFA8834E, line = 0xFFCFCFCC, hairline = 0xFFEAEAE8, raised = 0xFFF0F0EE, high = 0xFFF3F3F2,
+    lowest = 0xFFFFFFFF, brand = brand,
+)
+
+/** Black mode: a true-black page and white ink, with the accent lightened to read on black. */
+private fun black(brand: Long, tint: Long) = Tokens(
+    page = 0xFF000000, card = 0xFF0E0E0E, tint = tint, ink = 0xFFFFFFFF, muted = 0xFF9A9A9A,
+    accent = 0xFFD6B47A, line = 0xFF3A3A3A, hairline = 0xFF1C1C1C, raised = 0xFF171717, high = 0xFF121212,
+    lowest = 0xFF000000, brand = brand,
 )
 
 /**
- * A colour: a page, cards, one soft tint for what's selected or kept, its own ink, and
- * one accent, a muted gold, kept for milestones and the Aristotle marks. Each comes in
- * light and dark; the mode (Auto, Light, Dark or Black) picks which, under
- * Settings → Appearance. Black is the dark version on a true-black page.
+ * The accent: the one colour on a white or black page. It tints what's chosen or kept,
+ * and draws the progress lines and tabs; the type stays black or white, and milestones
+ * keep their muted gold. Chosen under Settings → Appearance, with the mode (Auto, White
+ * or Black).
  */
 enum class Tone(val label: String, val blurb: String, val light: Tokens, val dark: Tokens) {
-    Paper(
-        "Paper", "Warm cream and brown-black ink: the original, bookish look.",
-        Tokens(0xFFF3EEE4, 0xFFFCFAF5, 0xFFE4D6BF, 0xFF2A2217, 0xFF7D7062, 0xFFA4814F, 0xFFC9B9A0, 0xFFE4DACB, 0xFFECE4D6, 0xFFEFE9DE, 0xFFFFFFFF),
-        Tokens(0xFF15120E, 0xFF1F1B16, 0xFF3A3227, 0xFFF0E8DA, 0xFFA39887, 0xFFD6B47A, 0xFF5A4F42, 0xFF2C2620, 0xFF2A241D, 0xFF241F19, 0xFF0C0A08),
+    Mono(
+        "Mono", "No colour at all: black on white, white on black.",
+        white(brand = 0xFF111111, tint = 0xFFECECEA),
+        black(brand = 0xFFFFFFFF, tint = 0xFF262626),
     ),
-    Snow(
-        "Snow", "Pure white and true black: the plainest of all.",
-        Tokens(0xFFFFFFFF, 0xFFF6F6F5, 0xFFECECEA, 0xFF111111, 0xFF6E6E6E, 0xFFA8834E, 0xFFCFCFCC, 0xFFEAEAE8, 0xFFF0F0EE, 0xFFF3F3F2, 0xFFFFFFFF),
-        Tokens(0xFF000000, 0xFF121212, 0xFF262626, 0xFFFFFFFF, 0xFF9A9A9A, 0xFFD6B47A, 0xFF4A4A4A, 0xFF1E1E1E, 0xFF1C1C1C, 0xFF171717, 0xFF000000),
-    ),
-    Stone(
-        "Stone", "Soft greys and graphite, quiet and neutral.",
-        Tokens(0xFFE9E9E6, 0xFFF5F5F3, 0xFFD6D6D2, 0xFF1C1C1E, 0xFF66666A, 0xFFA8834E, 0xFFBDBDB8, 0xFFDADAD6, 0xFFE0E0DC, 0xFFE4E4E1, 0xFFFFFFFF),
-        Tokens(0xFF18181A, 0xFF222225, 0xFF35353A, 0xFFECECEE, 0xFF9A9AA0, 0xFFD2AF75, 0xFF4E4E55, 0xFF2A2A2E, 0xFF2A2A2F, 0xFF25252A, 0xFF0E0E10),
+    Gold(
+        "Gold", "The muted gold of the milestones, everywhere.",
+        white(brand = 0xFF8F6E3C, tint = 0xFFF1E6D3),
+        black(brand = 0xFFD6B47A, tint = 0xFF3A3022),
     ),
     Sage(
-        "Sage", "Pale green with deep forest ink: fresh and calm.",
-        Tokens(0xFFEDF2EC, 0xFFFAFCF9, 0xFFCCDDCD, 0xFF1F3326, 0xFF5D7363, 0xFFA88550, 0xFFB3C7B6, 0xFFD9E3D9, 0xFFE3EBE3, 0xFFE8EFE8, 0xFFFFFFFF),
-        Tokens(0xFF0F1A14, 0xFF17241C, 0xFF254232, 0xFFE3EFE6, 0xFF8FA898, 0xFFD3B074, 0xFF3D5747, 0xFF1E2E24, 0xFF1F2F25, 0xFF1A2820, 0xFF0A120D),
+        "Sage", "A calm forest green.",
+        white(brand = 0xFF3F6B4E, tint = 0xFFDCE9DE),
+        black(brand = 0xFF9CC5A8, tint = 0xFF22362A),
     ),
     Ocean(
-        "Ocean", "Sea-glass blue with navy ink: clear and modern.",
-        Tokens(0xFFECF2F8, 0xFFFAFCFE, 0xFFC9DBEE, 0xFF17304D, 0xFF586E88, 0xFFAA8550, 0xFFB0C6DE, 0xFFD7E3EF, 0xFFE1EBF5, 0xFFE7EFF7, 0xFFFFFFFF),
-        Tokens(0xFF0C1622, 0xFF13202F, 0xFF1F3650, 0xFFE2ECF7, 0xFF8DA2BA, 0xFFD3B074, 0xFF3B536F, 0xFF1B2A3B, 0xFF1C2B3D, 0xFF182536, 0xFF070E16),
+        "Ocean", "A clear sea blue.",
+        white(brand = 0xFF2E5C8A, tint = 0xFFDCE8F4),
+        black(brand = 0xFF98BCE3, tint = 0xFF1D3248),
     ),
     Rose(
-        "Rose", "Blush with deep wine ink: warm and gentle.",
-        Tokens(0xFFF8EDEB, 0xFFFFFAF9, 0xFFEDCFCA, 0xFF3B1F24, 0xFF86656A, 0xFFA98149, 0xFFD8BCB7, 0xFFEEDDDA, 0xFFF2E4E1, 0xFFF5E9E7, 0xFFFFFFFF),
-        Tokens(0xFF1A1012, 0xFF25171A, 0xFF46262C, 0xFFF5E6E6, 0xFFAE9295, 0xFFD6B278, 0xFF5E4045, 0xFF32222A, 0xFF2F1F23, 0xFF2A1B1F, 0xFF100A0B),
+        "Rose", "A warm, deep rose.",
+        white(brand = 0xFF9B4A57, tint = 0xFFF4DEE0),
+        black(brand = 0xFFE3A5AE, tint = 0xFF3F2328),
     ),
     Lavender(
-        "Lavender", "Soft lilac with indigo ink: dreamy but composed.",
-        Tokens(0xFFF1EFF8, 0xFFFCFBFF, 0xFFD8D1EF, 0xFF29234A, 0xFF6C6690, 0xFFAC8550, 0xFFC2BBDE, 0xFFE2DEF0, 0xFFE9E6F4, 0xFFEDEBF6, 0xFFFFFFFF),
-        Tokens(0xFF13111F, 0xFF1C192C, 0xFF332C55, 0xFFECE8FA, 0xFF9F98C0, 0xFFD4B077, 0xFF4A4370, 0xFF262140, 0xFF25203B, 0xFF201C33, 0xFF0B0A13),
+        "Lavender", "A soft violet.",
+        white(brand = 0xFF5E4FA2, tint = 0xFFE5E0F5),
+        black(brand = 0xFFB6A9EC, tint = 0xFF2E2848),
     ),
-    Dusk(
-        "Dusk", "Dawn by day, dusk by night: peach and violet light, then the website\u2019s evening.",
-        Tokens(0xFFF6E6DE, 0xFFFFF8F4, 0xFFEBD3CF, 0xFF3A2F45, 0xFF7E6E7E, 0xFFA9804E, 0xFFD8C3C0, 0xFFEEDFDA, 0xFFF2E3DE, 0xFFF4E8E3, 0xFFFFFFFF),
-        Tokens(0xFF1C1C26, 0xFF26242E, 0xFF3D3644, 0xFFF2EDE4, 0xFFADA59C, 0xFFD6B47A, 0xFF524A55, 0xFF302C38, 0xFF2E2A35, 0xFF2A2631, 0xFF13131A),
+    Clay(
+        "Clay", "An earthy terracotta.",
+        white(brand = 0xFFA65733, tint = 0xFFF6E1D6),
+        black(brand = 0xFFE8A383, tint = 0xFF3E281E),
     ),
     ;
 
-    /** Its dark version on a true-black page, for the Black mode. */
-    val black: Tokens
-        get() = dark.copy(
-            page = 0xFF000000, card = 0xFF0D0D0D, lowest = 0xFF000000, high = 0xFF121212,
-            raised = 0xFF171717, hairline = 0xFF1C1C1C, line = 0xFF3A3A3A,
-        )
+    /** Black mode is the dark one; pages are always true black. */
+    val black: Tokens get() = dark
 
     companion object {
-        /** New users start on Snow: plain white, the cleanest first look. */
-        val Default = Snow
+        /** New users start with no colour: black on white, or white on black. */
+        val Default = Mono
 
-        fun of(name: String?): Tone = entries.firstOrNull { it.name == name } ?: Default
+        /** The accent saved under [name]; older palette names map to the nearest accent. */
+        fun of(name: String?): Tone = when (name) {
+            "Snow", "Stone", "Black" -> Mono
+            "Paper" -> Gold
+            "Dusk" -> Lavender
+            else -> entries.firstOrNull { it.name == name } ?: Default
+        }
     }
 }
 
@@ -103,7 +116,8 @@ internal fun colorsFor(tone: Tone, dark: Boolean, black: Boolean = false) = (if 
     base.copy(
         primary = c(t.ink), onPrimary = c(t.page),
         primaryContainer = c(t.raised), onPrimaryContainer = c(t.ink),
-        secondary = c(t.muted),
+        // The accent: progress lines, tabs and the chosen things.
+        secondary = c(t.brand), onSecondary = c(t.page),
         // The soft tint for selected and kept, a quieter stand-in for solid ink.
         secondaryContainer = c(t.tint), onSecondaryContainer = c(t.ink),
         tertiary = c(t.accent), onTertiary = c(t.card),
@@ -252,6 +266,7 @@ private fun animated(target: androidx.compose.material3.ColorScheme): androidx.c
     ).value
     return target.copy(
         primary = target.primary.eased(), onPrimary = target.onPrimary.eased(),
+        secondary = target.secondary.eased(),
         secondaryContainer = target.secondaryContainer.eased(), onSecondaryContainer = target.onSecondaryContainer.eased(),
         tertiary = target.tertiary.eased(),
         background = target.background.eased(), onBackground = target.onBackground.eased(),
