@@ -32,20 +32,6 @@ data class Tokens(
     val brand: Long = ink,
 )
 
-/** White mode: a pure white page and black ink; [brand] and [tint] carry the accent. */
-private fun white(brand: Long, tint: Long) = Tokens(
-    page = 0xFFFFFFFF, card = 0xFFF7F7F6, tint = tint, ink = 0xFF111111, muted = 0xFF6E6E6E,
-    accent = 0xFFA8834E, line = 0xFFCFCFCC, hairline = 0xFFEAEAE8, raised = 0xFFF0F0EE, high = 0xFFF3F3F2,
-    lowest = 0xFFFFFFFF, brand = brand,
-)
-
-/** Black mode: a true-black page and white ink, with the accent lightened to read on black. */
-private fun black(brand: Long, tint: Long) = Tokens(
-    page = 0xFF000000, card = 0xFF0E0E0E, tint = tint, ink = 0xFFFFFFFF, muted = 0xFF9A9A9A,
-    accent = 0xFFD6B47A, line = 0xFF3A3A3A, hairline = 0xFF1C1C1C, raised = 0xFF171717, high = 0xFF121212,
-    lowest = 0xFF000000, brand = brand,
-)
-
 /**
  * The accent: the one colour on a white or black page. It tints what's chosen or kept,
  * and draws the progress lines and tabs; the type stays black or white, and milestones
@@ -106,9 +92,6 @@ enum class Tone(val label: String, val blurb: String, val light: Tokens, val dar
         }
     }
 }
-
-/** The palette the app uses. */
-val AppTone = Tone.Default
 
 internal fun colorsFor(tone: Tone, dark: Boolean, black: Boolean = false) = (if (black) tone.black else if (dark) tone.dark else tone.light).let { t ->
     val c = { v: Long -> Color(v) }
@@ -249,7 +232,7 @@ private val LedgerTypography = Typography().run {
 }
 
 @Composable
-fun LedgerTheme(dark: Boolean, tone: Tone = AppTone, black: Boolean = false, content: @Composable () -> Unit) {
+fun LedgerTheme(dark: Boolean, tone: Tone = Tone.Default, black: Boolean = false, content: @Composable () -> Unit) {
     MaterialTheme(
         colorScheme = animated(colorsFor(tone, dark, black)),
         typography = LedgerTypography,
