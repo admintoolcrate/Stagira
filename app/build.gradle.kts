@@ -95,7 +95,11 @@ android {
 
 // Store screenshots are only drawn when asked for: ./gradlew testDebugUnitTest -Pscreenshots=true
 tasks.withType<Test>().configureEach {
-    systemProperty("screenshots", providers.gradleProperty("screenshots").getOrElse("false"))
+    val screenshots = providers.gradleProperty("screenshots").getOrElse("false")
+    systemProperty("screenshots", screenshots)
+    // Ordinary test runs leave the screenshot classes out entirely: they start Robolectric,
+    // which downloads Android's libraries first, and a failed download would fail the build.
+    if (screenshots != "true") exclude("**/screenshots/**")
 }
 
 kotlin {
