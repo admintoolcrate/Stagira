@@ -30,10 +30,16 @@ import com.stagirite.ledger.ui.LocalUiPrefs
 import com.stagirite.ledger.ui.LockScreen
 import com.stagirite.ledger.ui.UiPrefs
 import com.stagirite.ledger.widget.EXTRA_OPEN_GOAL
+import com.stagirite.ledger.feedback.CrashLog
+import com.stagirite.ledger.ui.CrashScreen
+import androidx.compose.runtime.withFrameNanos
 
 // A FragmentActivity because the fingerprint prompt needs one.
 class MainActivity : FragmentActivity() {
     private val app get() = application as LedgerApplication
+
+    /** Opened on the crash page: nothing else of the app is touched. */
+    private var safe = false
 
     /** Play's update screen; a "not now" there is fine, and asked again tomorrow at most. */
     private val updateFlow = registerForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) {}
@@ -59,7 +65,31 @@ class MainActivity : FragmentActivity() {
         if (savedInstanceState == null && intent.getBooleanExtra(Reminder.EXTRA_OPEN_WEEKLY, false)) openWeekly = true
         if (savedInstanceState == null) openGoal = intent.getStringExtra(EXTRA_OPEN_GOAL)
         if (savedInstanceState == null) quick = intent.getStringExtra(Reminder.EXTRA_QUICK)
+        // If the last launch crashed before drawing anything, show what went wrong instead of crashing again.
+        val startup = app.startupError ?: CrashLog.startupCrash(this)
+        if (startup != null) {
+            safe = true
+            setContent {
+                CrashScreen(
+                    startup,
+                    canRetry = app.startupError == null,
+                    onRetry = {
+                        CrashLog.clear(this)
+                        CrashLog.opened(this)
+                        recreate()
+                    },
+                )
+            }
+            return
+        }
+        CrashLog.opening(this)
         setContent {
+            // Two frames drawn means the app opened: a later crash is an ordinary one.
+            LaunchedEffect(Unit) {
+                withFrameNanos {}
+                withFrameNanos {}
+                CrashLog.opened(this@MainActivity)
+            }
             val settings = app.settings
             val lock = app.lock
             val tone = Tone.of(settings.palette)
@@ -110,6 +140,7 @@ class MainActivity : FragmentActivity() {
 
     override fun onStart() {
         super.onStart()
+        if (safe) return
         app.lock.onForeground()
         if (app.lock.locked) unlock()
         app.sync.requestSync()
@@ -121,6 +152,7 @@ class MainActivity : FragmentActivity() {
 
     override fun onStop() {
         super.onStop()
+        if (safe) return
         // Rotating the screen also stops the activity; that isn't leaving the app.
         if (!isChangingConfigurations) {
             app.lock.onBackground()

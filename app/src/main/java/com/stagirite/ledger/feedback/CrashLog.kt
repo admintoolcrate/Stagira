@@ -25,16 +25,33 @@ object CrashLog {
         val app = context.applicationContext
         val previous = Thread.getDefaultUncaughtExceptionHandler()
         Thread.setDefaultUncaughtExceptionHandler { thread, error ->
-            runCatching {
-                val trace = StringWriter().also { error.printStackTrace(PrintWriter(it)) }.toString()
-                file(app).writeText(
-                    "Stagira ${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE}), ${Instant.now()}, thread ${thread.name}\n\n" +
-                        trace.take(MAX_CHARS),
-                )
-            }
+            record(app, thread.name, error)
             previous?.uncaughtException(thread, error)
         }
     }
+
+    /** Writes [error] down, and returns what was written. */
+    fun record(context: Context, thread: String, error: Throwable): String {
+        val trace = StringWriter().also { error.printStackTrace(PrintWriter(it)) }.toString()
+        val text = "Stagira ${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE}), ${Instant.now()}, thread $thread\n\n" +
+            trace.take(MAX_CHARS)
+        runCatching { file(context.applicationContext).writeText(text) }
+        return text
+    }
+
+    private fun flags(context: Context) = context.getSharedPreferences("crash", Context.MODE_PRIVATE)
+
+    /** The app is starting to draw its first screen. */
+    fun opening(context: Context) = flags(context).edit().putBoolean("opening", true).commit()
+
+    /** The first screen was drawn. */
+    fun opened(context: Context) = flags(context).edit().putBoolean("opening", false).apply()
+
+    /**
+     * The crash that stopped the last launch before anything was drawn, if there was one.
+     * Then the app opens on a plain page showing it, rather than crashing over and over.
+     */
+    fun startupCrash(context: Context): String? = if (flags(context).getBoolean("opening", false)) pending(context) else null
 
     /** The last crash, if it hasn't been dealt with yet. */
     fun pending(context: Context): String? = runCatching { file(context).takeIf { it.exists() }?.readText() }.getOrNull()

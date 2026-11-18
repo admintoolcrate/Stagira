@@ -27,20 +27,28 @@ class LedgerApplication : Application() {
     lateinit var beta: BetaUpdates
     lateinit var play: PlayServices
 
+    /** What stopped the app setting itself up, if anything; the app then opens on a page showing it. */
+    var startupError: String? = null
+        private set
+
     override fun onCreate() {
         super.onCreate()
         CrashLog.install(this)
-        store = GoalStore(this)
-        settings = Settings(this)
-        sync = SyncManager(this, store, MainScope())
-        lock = AppLock(settings)
-        privateTitles = PrivateTitles(this)
-        val scope = MainScope()
-        beta = BetaUpdates(this)
-        play = PlayServices(this)
-        store.onChange = {
-            sync.requestSync(delayMs = 2_000)
-            scope.launch { runCatching { LedgerWidget.refresh(this@LedgerApplication) } }
+        try {
+            store = GoalStore(this)
+            settings = Settings(this)
+            sync = SyncManager(this, store, MainScope())
+            lock = AppLock(settings)
+            privateTitles = PrivateTitles(this)
+            val scope = MainScope()
+            beta = BetaUpdates(this)
+            play = PlayServices(this)
+            store.onChange = {
+                sync.requestSync(delayMs = 2_000)
+                scope.launch { runCatching { LedgerWidget.refresh(this@LedgerApplication) } }
+            }
+        } catch (e: Throwable) {
+            startupError = CrashLog.record(this, "main", e)
         }
     }
 }
