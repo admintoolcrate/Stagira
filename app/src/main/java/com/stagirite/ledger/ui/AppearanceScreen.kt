@@ -138,11 +138,11 @@ fun AppearanceScreen(
             SectionHeading("Accent")
             ColourSwatches(tone, dark, false, onTone)
             Spacer(Modifier.height(Space.m))
-            // As the website names them: the colour in the serif's italic, then a line about it.
+            // The accent's name in the serif's italic, in the accent itself, then a line about it.
             Text(
                 tone.label,
                 style = LedgerType.title.copy(fontSize = 24.sp, fontStyle = FontStyle.Italic),
-                color = MaterialTheme.colorScheme.tertiary,
+                color = MaterialTheme.colorScheme.secondary,
             )
             Text(tone.blurb, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
 
