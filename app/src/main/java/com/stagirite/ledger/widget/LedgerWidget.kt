@@ -63,6 +63,8 @@ import com.stagirite.ledger.R
 import com.stagirite.ledger.data.Goal
 import com.stagirite.ledger.data.Milestones
 import com.stagirite.ledger.data.WidgetStyle
+import com.stagirite.ledger.data.ThemeMode
+import com.stagirite.ledger.ui.Tone
 import com.stagirite.ledger.data.sortGoals
 import java.time.LocalDate
 
@@ -80,14 +82,25 @@ internal class Palette(
 
 private val Gold = ColorProvider(day = Color(0xFFA4814F), night = Color(0xFFD0AE74))
 
-internal fun palette(style: WidgetStyle): Palette = when (style) {
+internal fun palette(style: WidgetStyle, tone: Tone = Tone.Default, mode: ThemeMode = ThemeMode.System): Palette {
+    // The app's colour, in the version its mode calls for, by day and by night.
+    val day = when (mode) { ThemeMode.Dark -> tone.dark; ThemeMode.Black -> tone.black; else -> tone.light }
+    val night = when (mode) { ThemeMode.Light -> tone.light; ThemeMode.Black -> tone.black; else -> tone.dark }
+    fun pair(d: Long, n: Long) = ColorProvider(day = Color(d), night = Color(n))
+    return when (style) {
     WidgetStyle.Solid -> Palette(
-        // The app's warm paper and ink.
-        background = ColorProvider(day = Color(0xFFFCFBF8), night = Color(0xFF1C1B1E)),
-        ink = ColorProvider(day = Color(0xFF1F1D1A), night = Color(0xFFEFEBE4)),
-        muted = ColorProvider(day = Color(0xFF7A756C), night = Color(0xFF9C968C)),
-        track = ColorProvider(day = Color(0xFFE3DDD3), night = Color(0xFF2A2826)),
-        accent = Gold,
+        background = pair(day.page, night.page),
+        ink = pair(day.ink, night.ink),
+        muted = pair(day.muted, night.muted),
+        track = pair(day.hairline, night.hairline),
+        accent = pair(day.accent, night.accent),
+    )
+    WidgetStyle.Black -> Palette(
+        background = ColorProvider(day = Color.Black, night = Color.Black),
+        ink = ColorProvider(day = Color(tone.black.ink), night = Color(tone.black.ink)),
+        muted = ColorProvider(day = Color(tone.black.muted), night = Color(tone.black.muted)),
+        track = ColorProvider(day = Color(0xFF262626), night = Color(0xFF262626)),
+        accent = ColorProvider(day = Color(tone.black.accent), night = Color(tone.black.accent)),
     )
     WidgetStyle.Translucent -> Palette(
         background = ColorProvider(day = Color(0xB8FCFBF8), night = Color(0xA6121214)),
@@ -122,6 +135,7 @@ internal fun palette(style: WidgetStyle): Palette = when (style) {
         accent = ColorProvider(day = Color(0xFF94703F), night = Color(0xFF94703F)),
         image = R.drawable.widget_dawn,
     )
+    }
 }
 
 /** A widget's own style, kept in its Glance state; unset means "as the app's setting". */
@@ -160,7 +174,7 @@ class LedgerWidget : GlanceAppWidget() {
             val locked = app.settings.widgetsLocked
             val goals = if (locked) emptyList() else sortGoals(app.store.goals, app.settings.sortOrder, today).take(6)
             val style = widgetStyle(currentState(WidgetStyleKey), app.settings.widgetStyle)
-            WidgetContent(goals, iconsFor(context, goals), locked, today, palette(style))
+            WidgetContent(goals, iconsFor(context, goals), locked, today, palette(style, Tone.of(app.settings.palette), app.settings.theme))
         }
     }
 

@@ -37,6 +37,7 @@ import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
 import com.stagirite.ledger.LedgerApplication
+import com.stagirite.ledger.ui.Tone
 import com.stagirite.ledger.MainActivity
 import com.stagirite.ledger.data.Goal
 import com.stagirite.ledger.data.Milestones
@@ -77,7 +78,7 @@ class GoalWidget : GlanceAppWidget() {
             .putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
             .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         provideContent {
-            val colours = palette(widgetStyle(currentState(WidgetStyleKey), app.settings.widgetStyle))
+            val colours = palette(widgetStyle(currentState(WidgetStyleKey), app.settings.widgetStyle), Tone.of(app.settings.palette), app.settings.theme)
             val goalId = currentState(ChosenGoal) ?: WidgetGoals.goalFor(context, appWidgetId)
             val goal = goalId?.let(app.store::find)?.takeIf { !it.archived }
             val roomy = LocalSize.current.width >= 250.dp
@@ -121,7 +122,7 @@ class OverviewWidget : GlanceAppWidget() {
     override suspend fun provideGlance(context: Context, id: GlanceId) {
         val app = context.applicationContext as LedgerApplication
         provideContent {
-            val colours = palette(widgetStyle(currentState(WidgetStyleKey), app.settings.widgetStyle))
+            val colours = palette(widgetStyle(currentState(WidgetStyleKey), app.settings.widgetStyle), Tone.of(app.settings.palette), app.settings.theme)
             val locked = app.settings.widgetsLocked
             val goals = if (locked) emptyList() else app.store.goals
             Column(widgetRoot(colours).clickable(actionStartActivity<MainActivity>())) {

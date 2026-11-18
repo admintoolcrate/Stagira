@@ -104,9 +104,9 @@ class WidgetSetup : FragmentActivity() {
             val dark = when (app.settings.theme) {
                 ThemeMode.System -> isSystemInDarkTheme()
                 ThemeMode.Light -> false
-                ThemeMode.Dark -> true
+                ThemeMode.Dark, ThemeMode.Black -> true
             }
-            LedgerTheme(dark, Tone.of(app.settings.palette)) {
+            LedgerTheme(dark, Tone.of(app.settings.palette), app.settings.theme == ThemeMode.Black) {
                 Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
                     Column(
                         Modifier
@@ -125,7 +125,7 @@ class WidgetSetup : FragmentActivity() {
                         Column(Modifier.weight(1f).verticalScroll(rememberScrollState())) {
                             Spacer(Modifier.height(Space.l))
                             SectionHeading("Background")
-                            StyleRow(null, "Same as the app (${app.settings.widgetStyle.label})", style == null) { style = null }
+                            StyleRow(null, "As set in Appearance (${app.settings.widgetStyle.label})", style == null) { style = null }
                             WidgetStyle.entries.forEach { s -> StyleRow(s, s.label, style == s) { style = s } }
 
                             if (isGoal) {
@@ -221,11 +221,12 @@ private fun Swatch(style: WidgetStyle?) {
     val base = Modifier.size(width = 40.dp, height = 28.dp)
     val modifier = when (style) {
         null -> base.border(1.dp, MaterialTheme.colorScheme.outline, shape)
-        WidgetStyle.Solid -> base.background(Color(0xFFFCFBF8), shape).border(1.dp, edge, shape)
+        WidgetStyle.Solid -> base.background(MaterialTheme.colorScheme.background, shape).border(1.dp, edge, shape)
         WidgetStyle.Translucent -> base.background(Color(0x99FCFBF8), shape).border(1.dp, edge, shape)
         WidgetStyle.Clear -> base.background(Color(0xFF6B6F78), shape)
         WidgetStyle.Dusk -> base.background(Brush.linearGradient(DuskGradient), shape)
         WidgetStyle.Dawn -> base.background(Brush.linearGradient(listOf(Color(0xFFF7E1CC), Color(0xFFF3D9D8), Color(0xFFE6E1F0))), shape)
+        WidgetStyle.Black -> base.background(Color.Black, shape)
     }
     Box(modifier, contentAlignment = Alignment.Center) {
         if (style == WidgetStyle.Clear) Text("Aa", color = Color.White, style = MaterialTheme.typography.labelSmall)

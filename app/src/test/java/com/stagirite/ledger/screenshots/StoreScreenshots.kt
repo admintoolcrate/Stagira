@@ -137,7 +137,7 @@ class StoreScreenshots {
 
     /** Draws [screen] at phone size, framed under the caption, and saves it as a PNG. */
     @Test
-    fun s7_palettes() = shoot("7-palettes", "Nine palettes.", "Make it yours.", framed = false) { Palettes() }
+    fun s7_palettes() = shoot("7-palettes", "Eight colours.", "Light, dark or black.", framed = false) { Palettes() }
 
     private fun shoot(name: String, caption: String, accent: String, dark: Boolean = false, framed: Boolean = true, screen: @Composable () -> Unit) {
         // Some screens keep a clock or an animation running, so they're never "idle": drive the
@@ -212,9 +212,10 @@ private fun Frame(caption: String, accent: String, dark: Boolean, framed: Boolea
  */
 @Composable
 private fun Palettes() {
-    val shown = listOf(Tone.Snow, Tone.Sage, Tone.Ocean, Tone.Rose, Tone.Dusk)
+    // Light, dark and black: each phone a colour in one of the modes.
+    val shown = listOf(Triple(Tone.Snow, false, false), Triple(Tone.Sage, false, false), Triple(Tone.Ocean, true, false), Triple(Tone.Rose, false, false), Triple(Tone.Snow, true, true))
     Box(Modifier.fillMaxWidth().height(360.dp)) {
-        shown.forEachIndexed { i, tone ->
+        shown.forEachIndexed { i, (tone, dark, black) ->
             val angle = (i - 2) * 5f
             Box(
                 Modifier
@@ -225,7 +226,7 @@ private fun Palettes() {
                     .border(1.dp, Color(0x33000000), RoundedCornerShape(20.dp)),
             ) {
                 Box(Modifier.requiredSize(360.dp, 760.dp).graphicsLayer { scaleX = 140f / 360f; scaleY = 140f / 360f }) {
-                    LedgerTheme(false, tone) {
+                    LedgerTheme(dark, tone, black) {
                         GoalListScreen(
                             Samples.goals, Samples.today, SnackbarHostState(), Samples.privacy, emptyList(), SortOrder.Added,
                             onSort = {}, onOpen = {}, onAdd = {}, onQuickSlip = { _, _ -> }, onQuickUrge = {},
@@ -240,7 +241,7 @@ private fun Palettes() {
     Spacer(Modifier.height(18.dp))
     Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
         Tone.entries.forEach { tone ->
-            val t = if (tone.alwaysDark) tone.dark else tone.light
+            val t = tone.light
             Box(
                 Modifier
                     .size(28.dp)

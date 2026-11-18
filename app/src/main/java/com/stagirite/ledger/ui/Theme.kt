@@ -25,15 +25,16 @@ import com.stagirite.ledger.R
 import androidx.compose.ui.unit.sp
 
 /** The handful of colours a palette is built from. */
-class Tokens(
+data class Tokens(
     val page: Long, val card: Long, val tint: Long, val ink: Long, val muted: Long,
     val accent: Long, val line: Long, val hairline: Long, val raised: Long, val high: Long, val lowest: Long,
 )
 
 /**
- * A palette: a page, cards, one soft tint for what's selected or kept, its own ink,
- * and one accent, a muted gold, kept for milestones and the Aristotle marks.
- * People choose one under Settings → Theme.
+ * A colour: a page, cards, one soft tint for what's selected or kept, its own ink, and
+ * one accent, a muted gold, kept for milestones and the Aristotle marks. Each comes in
+ * light and dark; the mode (Auto, Light, Dark or Black) picks which, under
+ * Settings → Appearance. Black is the dark version on a true-black page.
  */
 enum class Tone(val label: String, val blurb: String, val light: Tokens, val dark: Tokens) {
     Paper(
@@ -72,19 +73,18 @@ enum class Tone(val label: String, val blurb: String, val light: Tokens, val dar
         Tokens(0xFF13111F, 0xFF1C192C, 0xFF332C55, 0xFFECE8FA, 0xFF9F98C0, 0xFFD4B077, 0xFF4A4370, 0xFF262140, 0xFF25203B, 0xFF201C33, 0xFF0B0A13),
     ),
     Dusk(
-        "Dusk", "The website's evening: blue-violet into warm brown, by day and night.",
-        Tokens(0xFF2A2B38, 0xFF34303A, 0xFF4A4250, 0xFFF2EDE4, 0xFFB9B0A6, 0xFFD0AE74, 0xFF5E5560, 0xFF3F3A45, 0xFF3A3540, 0xFF37323D, 0xFF1F1F29),
+        "Dusk", "Dawn by day, dusk by night: peach and violet light, then the website\u2019s evening.",
+        Tokens(0xFFF6E6DE, 0xFFFFF8F4, 0xFFEBD3CF, 0xFF3A2F45, 0xFF7E6E7E, 0xFFA9804E, 0xFFD8C3C0, 0xFFEEDFDA, 0xFFF2E3DE, 0xFFF4E8E3, 0xFFFFFFFF),
         Tokens(0xFF1C1C26, 0xFF26242E, 0xFF3D3644, 0xFFF2EDE4, 0xFFADA59C, 0xFFD6B47A, 0xFF524A55, 0xFF302C38, 0xFF2E2A35, 0xFF2A2631, 0xFF13131A),
-    ),
-    Black(
-        "Black", "True black with white ink: dark always, and kindest to OLED screens at night.",
-        Tokens(0xFF000000, 0xFF0E0E0E, 0xFF1F1F1F, 0xFFFFFFFF, 0xFF8E8E8E, 0xFFD6B47A, 0xFF3A3A3A, 0xFF1A1A1A, 0xFF161616, 0xFF121212, 0xFF000000),
-        Tokens(0xFF000000, 0xFF0E0E0E, 0xFF1F1F1F, 0xFFFFFFFF, 0xFF8E8E8E, 0xFFD6B47A, 0xFF3A3A3A, 0xFF1A1A1A, 0xFF161616, 0xFF121212, 0xFF000000),
     ),
     ;
 
-    /** Dusk and Black are night palettes: they stay dark whatever the light/dark setting. */
-    val alwaysDark: Boolean get() = this == Dusk || this == Black
+    /** Its dark version on a true-black page, for the Black mode. */
+    val black: Tokens
+        get() = dark.copy(
+            page = 0xFF000000, card = 0xFF0D0D0D, lowest = 0xFF000000, high = 0xFF121212,
+            raised = 0xFF171717, hairline = 0xFF1C1C1C, line = 0xFF3A3A3A,
+        )
 
     companion object {
         /** New users start on Snow: plain white, the cleanest first look. */
@@ -97,9 +97,9 @@ enum class Tone(val label: String, val blurb: String, val light: Tokens, val dar
 /** The palette the app uses. */
 val AppTone = Tone.Default
 
-internal fun colorsFor(tone: Tone, dark: Boolean) = (if (dark) tone.dark else tone.light).let { t ->
+internal fun colorsFor(tone: Tone, dark: Boolean, black: Boolean = false) = (if (black) tone.black else if (dark) tone.dark else tone.light).let { t ->
     val c = { v: Long -> Color(v) }
-    val base = if (dark) darkColorScheme() else lightColorScheme()
+    val base = if (dark || black) darkColorScheme() else lightColorScheme()
     base.copy(
         primary = c(t.ink), onPrimary = c(t.page),
         primaryContainer = c(t.raised), onPrimaryContainer = c(t.ink),
@@ -113,7 +113,7 @@ internal fun colorsFor(tone: Tone, dark: Boolean) = (if (dark) tone.dark else to
         surfaceContainerLowest = c(t.lowest), surfaceContainerLow = c(t.card),
         surfaceContainer = c(t.page), surfaceContainerHigh = c(t.high), surfaceContainerHighest = c(t.raised),
         outline = c(t.line), outlineVariant = c(t.hairline),
-        error = if (dark) Color(0xFFF2B8B5) else Color(0xFFB3261E),
+        error = if (dark || black) Color(0xFFF2B8B5) else Color(0xFFB3261E),
     )
 }
 
@@ -235,9 +235,9 @@ private val LedgerTypography = Typography().run {
 }
 
 @Composable
-fun LedgerTheme(dark: Boolean, tone: Tone = AppTone, content: @Composable () -> Unit) {
+fun LedgerTheme(dark: Boolean, tone: Tone = AppTone, black: Boolean = false, content: @Composable () -> Unit) {
     MaterialTheme(
-        colorScheme = animated(colorsFor(tone, dark || tone.alwaysDark)),
+        colorScheme = animated(colorsFor(tone, dark, black)),
         typography = LedgerTypography,
         content = content,
     )

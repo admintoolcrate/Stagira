@@ -5,7 +5,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 
-enum class ThemeMode { System, Light, Dark }
+/** Light or dark: Auto follows the phone; Black is dark on a true-black page. */
+enum class ThemeMode(val label: String) { System("Auto"), Light("Light"), Dark("Dark"), Black("Black") }
 
 enum class SortOrder(val label: String) {
     Added("As added"),
@@ -16,13 +17,16 @@ enum class SortOrder(val label: String) {
 
 /** How the home-screen widget's background is drawn. */
 enum class WidgetStyle(val label: String) {
-    Solid("Solid"),
+    /** The app's own colour and mode (light, dark or black). */
+    Solid("Match app"),
     Translucent("Glass"),
     Clear("Clear"),
+    /** Soft peach, rose and lavender, with dark ink. */
+    Dawn("Dawn"),
     /** The website's dusk gradient, with gold for milestones. */
     Dusk("Dusk"),
-    /** Its morning twin: soft peach, rose and lavender, with dark ink. */
-    Dawn("Dawn"),
+    /** True black with white ink. */
+    Black("Black"),
 }
 
 enum class LockDelay(val label: String, val millis: Long) {
@@ -79,6 +83,15 @@ class Settings(context: Context) {
     /** The chosen palette, by name (see ui.Tone); null until one is chosen. */
     var palette by mutableStateOf(prefs.getString("palette", null))
         private set
+
+    init {
+        // Black used to be a palette; it's now a mode, with Snow's black and white.
+        if (prefs.getString("palette", null) == "Black") {
+            prefs.edit().putString("palette", "Snow").putString("theme", ThemeMode.Black.name).apply()
+            palette = "Snow"
+            theme = ThemeMode.Black
+        }
+    }
 
     fun updatePalette(name: String) {
         palette = name

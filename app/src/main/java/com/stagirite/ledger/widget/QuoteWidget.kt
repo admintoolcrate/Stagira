@@ -41,6 +41,7 @@ import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
 import com.stagirite.ledger.LedgerApplication
+import com.stagirite.ledger.ui.Tone
 import com.stagirite.ledger.MainActivity
 import com.stagirite.ledger.R
 import com.stagirite.ledger.data.Quote
@@ -65,7 +66,7 @@ class QuoteWidget : GlanceAppWidget() {
     override suspend fun provideGlance(context: Context, id: GlanceId) {
         val app = context.applicationContext as LedgerApplication
         provideContent {
-            val c = palette(widgetStyle(currentState(WidgetStyleKey), app.settings.widgetStyle))
+            val c = palette(widgetStyle(currentState(WidgetStyleKey), app.settings.widgetStyle), Tone.of(app.settings.palette), app.settings.theme)
             Column(widgetRoot(c).clickable(actionStartActivity<MainActivity>())) {
                 QuoteContent(LocalDate.now(), c)
             }

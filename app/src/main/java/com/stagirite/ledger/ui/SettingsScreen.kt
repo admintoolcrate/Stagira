@@ -1,4 +1,6 @@
 package com.stagirite.ledger.ui
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.activity.compose.BackHandler
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.graphics.Color
@@ -104,6 +106,25 @@ fun SettingsScreen(
     onShowGuide: () -> Unit,
     onBack: () -> Unit,
 ) {
+    var appearance by rememberSaveable { mutableStateOf(false) }
+    val widgetScope = rememberCoroutineScope()
+    val widgetContext = LocalContext.current
+    // Widgets that match the app redraw when its colour or mode changes.
+    val redrawWidgets = { widgetScope.launch { runCatching { LedgerWidget.refresh(widgetContext) } }; Unit }
+    if (appearance) {
+        BackHandler { appearance = false }
+        AppearanceScreen(
+            mode = settings.theme,
+            tone = Tone.of(settings.palette),
+            widgetStyle = settings.widgetStyle,
+            goals = store.goals,
+            onMode = { settings.updateTheme(it); redrawWidgets() },
+            onTone = { settings.updatePalette(it.name); redrawWidgets() },
+            onWidgetStyle = settings::updateWidgetStyle,
+            onBack = { appearance = false },
+        )
+        return
+    }
     Scaffold(
         topBar = {
             TopAppBar(
@@ -124,46 +145,28 @@ fun SettingsScreen(
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 16.dp),
         ) {
-            Section("Appearance", group = "Look & feel") {
-                // One choice: a palette, which comes with its own night colours.
-                val tone = Tone.of(settings.palette)
-                PalettePicker(tone) { settings.updatePalette(it.name) }
-                Spacer(Modifier.height(12.dp))
-                SwitchRow(
-                    title = "Dark when your phone is dark",
-                    detail = if (tone.alwaysDark) "${tone.label} is a night palette, so it\u2019s dark all the time."
-                    else "${tone.label} switches to its night colours with your phone\u2019s dark mode.",
-                    checked = tone.alwaysDark || settings.theme != ThemeMode.Light,
-                    onChange = { settings.updateTheme(if (it) ThemeMode.System else ThemeMode.Light) },
-                    enabled = !tone.alwaysDark,
-                )
-                Spacer(Modifier.height(20.dp))
-                Text("Widget background", style = MaterialTheme.typography.bodyLarge)
-                Spacer(Modifier.height(8.dp))
-                val styles = WidgetStyle.entries
-                val widgetScope = rememberCoroutineScope()
-                val widgetContext = LocalContext.current
-                SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
-                    styles.forEachIndexed { i, style ->
-                        SegmentedButton(
-                            selected = settings.widgetStyle == style,
-                            onClick = {
-                                settings.updateWidgetStyle(style)
-                                // Redraw placed widgets now rather than at their next update.
-                                widgetScope.launch { runCatching { LedgerWidget.refresh(widgetContext) } }
-                            },
-                            shape = SegmentedButtonDefaults.itemShape(i, styles.size),
-                            icon = {},
-                            colors = ledgerSegmentColors(),
-                        ) { Text(style.label) }
+            // Appearance has its own page: one tidy row here, with a glimpse of the colour.
+            Spacer(Modifier.height(Space.xxl))
+            SectionHeading("Look & feel")
+            val tone = Tone.of(settings.palette)
+            LedgerCard(onClick = { appearance = true }) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Column(Modifier.weight(1f)) {
+                        Text("Appearance", style = MaterialTheme.typography.titleSmall)
+                        Text(
+                            "${tone.label} \u00B7 ${settings.theme.label} \u00B7 widgets: ${settings.widgetStyle.label}",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
                     }
+                    Box(
+                        Modifier.size(28.dp).clip(CircleShape).background(MaterialTheme.colorScheme.secondaryContainer)
+                            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, CircleShape),
+                        contentAlignment = Alignment.Center,
+                    ) { Box(Modifier.size(10.dp).background(MaterialTheme.colorScheme.onBackground, CircleShape)) }
+                    Spacer(Modifier.width(Space.s))
+                    Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
-                Spacer(Modifier.height(6.dp))
-                Text(
-                    "Glass lets the wallpaper show through. Clear drops the card for white text on darker wallpapers. Dusk and Dawn are the website\u2019s evening and morning colours. Each widget can also have its own: long-press it and choose its settings.",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
             }
 
             Section("Personalise") { PersonaliseSection(settings) }

@@ -63,10 +63,11 @@ class MainActivity : FragmentActivity() {
             val settings = app.settings
             val lock = app.lock
             val tone = Tone.of(settings.palette)
-            val dark = tone.alwaysDark || when (settings.theme) {
+            val black = settings.theme == ThemeMode.Black
+            val dark = when (settings.theme) {
                 ThemeMode.System -> isSystemInDarkTheme()
                 ThemeMode.Light -> false
-                ThemeMode.Dark -> true
+                ThemeMode.Dark, ThemeMode.Black -> true
             }
             DisposableEffect(dark) {
                 val style = SystemBarStyle.auto(Color.TRANSPARENT, Color.TRANSPARENT) { dark }
@@ -88,7 +89,7 @@ class MainActivity : FragmentActivity() {
                 homeExtras = settings.homeExtras,
             )
             CompositionLocalProvider(LocalUiPrefs provides prefs) {
-                LedgerTheme(dark, tone) {
+                LedgerTheme(dark, tone, black) {
                     if (lock.locked) {
                         LockScreen(onUnlock = { unlock() })
                     } else {
