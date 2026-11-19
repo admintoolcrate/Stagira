@@ -98,6 +98,21 @@
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/share_paths" />
         </provider>
+        <!--
+            Lets Kairos, on this phone, ask to record an urge resisted. Always shows a
+            confirmation and a goal picker first; respects the app lock; no data returned.
+        -->
+        <activity
+            android:name=".intake.RecordUrgeActivity"
+            android:exported="true"
+            android:excludeFromRecents="true"
+            android:taskAffinity=""
+            android:theme="@style/Theme.Ledger">
+            <intent-filter>
+                <action android:name="cc.toolcrate.stagira.action.RECORD_URGE" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
         <receiver
             android:name=".reminders.ReminderReceiver"
             android:exported="false" />
