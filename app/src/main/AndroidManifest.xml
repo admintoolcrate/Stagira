@@ -98,6 +98,47 @@
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/share_paths" />
         </provider>
+        <!--
+            Lets Kairos, on this phone, ask to record an urge resisted. Always shows a
+            confirmation and a goal picker first; respects the app lock; no data returned.
+        -->
+        <activity
+            android:name=".intake.RecordUrgeActivity"
+            android:exported="true"
+            android:excludeFromRecents="true"
+            android:taskAffinity=""
+            android:theme="@style/Theme.Ledger">
+            <intent-filter>
+                <action android:name="cc.toolcrate.stagira.action.RECORD_URGE" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+        <!--
+            Lets Lyceum, on this phone, ask the person to choose a goal to link (the result is the
+            goal's id and its shown title only), and open a goal's page. Both respect the app lock.
+        -->
+        <activity
+            android:name=".intake.PickGoalActivity"
+            android:exported="true"
+            android:excludeFromRecents="true"
+            android:taskAffinity=""
+            android:theme="@style/Theme.Ledger">
+            <intent-filter>
+                <action android:name="cc.toolcrate.stagira.action.PICK_GOAL" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+        <activity
+            android:name=".intake.ViewGoalActivity"
+            android:exported="true"
+            android:excludeFromRecents="true"
+            android:noHistory="true"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar">
+            <intent-filter>
+                <action android:name="cc.toolcrate.stagira.action.VIEW_GOAL" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
         <receiver
             android:name=".reminders.ReminderReceiver"
             android:exported="false" />

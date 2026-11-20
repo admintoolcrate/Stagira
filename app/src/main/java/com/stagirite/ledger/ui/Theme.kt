@@ -110,7 +110,8 @@ internal fun colorsFor(tone: Tone, dark: Boolean, black: Boolean = false) = (if 
         surfaceContainerLowest = c(t.lowest), surfaceContainerLow = c(t.card),
         surfaceContainer = c(t.page), surfaceContainerHigh = c(t.high), surfaceContainerHighest = c(t.raised),
         outline = c(t.line), outlineVariant = c(t.hairline),
-        error = if (dark || black) Color(0xFFF2B8B5) else Color(0xFFB3261E),
+        // No alarm red (docs/family-look.md): errors are said in words, in ink.
+        error = c(t.ink), onError = c(t.page),
     )
 }
 

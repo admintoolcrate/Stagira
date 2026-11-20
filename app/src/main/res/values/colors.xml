@@ -1,4 +1,6 @@
 <resources>
-    <color name="paper">#FFF3F0EA</color>
+    <!-- The window behind the first frame: Mono page colours (docs/family-look.md). -->
+    <color name="page">#FFFFFFFF</color>
     <color name="ink">#FF121214</color>
+    <color name="page_night">#FF000000</color>
 </resources>
